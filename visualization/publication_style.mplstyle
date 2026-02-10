@@ -1,0 +1,11 @@
+axes.labelsize       : 10
+axes.titlesize       : 10
+
+xtick.labelsize     : 10
+ytick.labelsize     : 10
+
+legend.fontsize    : 10
+
+axes.grid            : False
+
+image.cmap            : viridis
