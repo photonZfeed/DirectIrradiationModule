@@ -19,7 +19,7 @@ Follow these steps to set up the project:
 3. Type this command to copy the project to your computer:
 
 	```bash
-	git clone [https://github.com/photonZfeed/DirectIrradiationModule](https://github.com/photonZfeed/DirectIrradiationModule)
+	git clone https://github.com/photonZfeed/DirectIrradiationModule
 	```
 
 4. Move into the project folder by typing:
