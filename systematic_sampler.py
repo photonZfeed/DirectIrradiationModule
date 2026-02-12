@@ -1147,12 +1147,10 @@ def save_configurations(configurations: np.ndarray,
     )
     print(f"Saved {len(configurations)} configurations to {filename}")
 
-
+G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
+Sampler1 = Sampler(G=G, led_count=8, height=13)
 
 if __name__ == "__main__":
-
-    G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
-    Sampler1 = Sampler(G=G, led_count=8, height=13)
 
     # generate all configurations
     configurations = Sampler1.generate_all_configurations()

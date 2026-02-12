@@ -42,8 +42,8 @@ def create_ray_independence_plots_SI():
     plt.style.use("ICIWstyle")
     plt.style.use("visualization/publication_style.mplstyle")
 
-    # read data/raytracing/ray_indepence_test.xlsx
-    path = 'data\\raytracing\\ray_independence_test.xlsx'
+    # read results/raytracing/ray_indepence_test.xlsx
+    path = 'results\\raytracing\\ray_independence_test.xlsx'
     df = pd.read_excel(path, sheet_name=None)
 
     data = {}

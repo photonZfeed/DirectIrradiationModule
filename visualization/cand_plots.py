@@ -32,9 +32,9 @@ def plot_cand(conf_name):
         plot_cand('best_manual')
     """
     if "UV" in conf_name:
-        conf_path = f"results/sampled_configs/LST1-01G01-UV01-00/{conf_name}.json"
+        conf_path = f"results/sampled_configs/near_optimal_configs/LST1-01G01-UV01-00/{conf_name}.json"
     elif "GRN" in conf_name:
-        conf_path = f"results/sampled_configs/LST1-01F06-GRN1-00/{conf_name}.json"
+        conf_path = f"results/sampled_configs/near_optimal_configs/LST1-01F06-GRN1-00/{conf_name}.json"
     else:
         conf_path = f"results/sampled_configs/best_manual.json"
     

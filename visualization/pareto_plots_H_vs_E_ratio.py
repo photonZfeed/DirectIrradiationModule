@@ -210,7 +210,7 @@ def create_pareto_1_16_leds_5_15cm():
     - ``leds`` (list): List of tuples with LED objects and subplot titles.
     - ``t_values`` (:class:`numpy.ndarray`): Array of t values (unitless, shape (100,)) for Pareto front calculation.
     - ``results_path`` (str): Path to the directory containing simulation and result files (default: "results/").
-    - ``sim_filename`` (str): Filename of the simulation results (default: "simulation_results_MonteCarlo_1-16_leds_5-15_cm_5_Mio_samples.npz").
+    - ``sim_filename`` (str): Filename of the simulation results (default: "simulation_results_MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz").
     - ``figure_path`` (str): Path to the directory for saving figures (default: "figures/").
 
     **Usage Example:**
@@ -221,16 +221,16 @@ def create_pareto_1_16_leds_5_15cm():
         create_pareto_1_16_leds_5_15cm()
 
     """
-    grid: Grid = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
-    optimizer: Optimizer = Optimizer(irradiance_bound=150.0)
-    leds: list = [
+    grid = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
+    optimizer = Optimizer(irradiance_bound=150.0)
+    leds  = [
         (LST1_01G01_UV01_00, "a) 365 nm LEDs"),
         (LST1_01F06_GRN1_00, "b) 530 nm LEDs"),
     ]
-    t_values: np.ndarray = np.linspace(0, 1, 100)
-    results_path: str = "results/"
-    sim_filename: str = "simulation_results_MonteCarlo_1-16_leds_5-15_cm_5_Mio_samples.npz"
-    figure_path: str = "figures/"
+    t_values = np.linspace(0, 1, 100)
+    results_path = "results/"
+    sim_filename = "simulation_results_MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz"
+    figure_path = "figures/"
     fig = plt.figure(figsize=(19*cm2inch, 12*cm2inch))
     axs = make_square_subplots(
         fig=fig,
@@ -324,5 +324,5 @@ def create_pareto_8_leds_13cm():
         process_led(ax, led, optimizer, grid, t_values, results_path, sim_filename, title, load_previous=True, plot_near_optimal_configs=False)
     handles, labels = axs[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', ncol=4, bbox_to_anchor=(0.5, 0.94))
-    # plt.savefig(os.path.join(figure_path, f"pareto_plots_{results_path.split('/')[-2]}.svg"))
+    plt.savefig(os.path.join(figure_path, f"pareto_plots_{results_path.split('/')[-2]}.svg"))
     plt.show()

@@ -29,7 +29,7 @@ def create_bar_plot_final_comparison():
         - Displays a matplotlib window with the generated plot.
 
     **Notes**
-        - Assumes the existence of radiometry data files in the ``data/radiometry/{led.name}/`` directory structure.
+        - Assumes the existence of radiometry data files in the ``results/radiometry/{led.name}/`` directory structure.
         - Requires custom matplotlib stylesheets: ``ICIWstyle`` and ``visualization/publication_style.mplstyle``.
         - Uses external utility functions for data processing and correction factor calculation.
         - The number of LEDs per configuration is hardcoded (8 for manual, 16 for model-based).
@@ -51,14 +51,14 @@ def create_bar_plot_final_comparison():
     bar_data = {}
     for led in [LST1_01G01_UV01_00, LST1_01F06_GRN1_00]:
         # Indirect Irradiation
-        filepath_indirect = f"data/radiometry/{led.name}/indirect_irradiation.csv"
+        filepath_indirect = f"results/radiometry/{led.name}/indirect_irradiation.csv"
         irr_indirect, I_mean_indirect, H_indirect = process_radiometry_indirect_data(filepath_indirect)
         
         # Manually Optimized Configuration
         N_LEDs = 8 # number of in the module
         expected_value = N_LEDs * led.total_power  # W m⁻²
-        filepath_manual = f"data/radiometry/{led.name}/best_manual_reflector.csv"
-        filepath_manual_ref = f"data/radiometry/{led.name}/best_manual_no_reflector.csv"
+        filepath_manual = f"results/radiometry/{led.name}/best_manual_reflector.csv"
+        filepath_manual_ref = f"results/radiometry/{led.name}/best_manual_no_reflector.csv"
         correction_factor = calculate_correction_factor(filepath_manual_ref, expected_value)
         irr_manual, I_mean_manual, H_manual = process_radiometry_file(filepath_manual, correction_factor)
         
@@ -66,11 +66,11 @@ def create_bar_plot_final_comparison():
         N_LEDs = 16 # number of in the module
         expected_value = N_LEDs * led.total_power  # W m⁻²
         if led == LST1_01G01_UV01_00:
-            filepath_model = f"data/radiometry/{led.name}/UV3_reflector.csv"
-            filepath_model_ref = f"data/radiometry/{led.name}/UV3_reflector.csv"
+            filepath_model = f"results/radiometry/{led.name}/UV3_reflector.csv"
+            filepath_model_ref = f"results/radiometry/{led.name}/UV3_reflector.csv"
         else:
-            filepath_model = f"data/radiometry/{led.name}/GRN3_reflector.csv"
-            filepath_model_ref = f"data/radiometry/{led.name}/GRN3_reflector.csv"
+            filepath_model = f"results/radiometry/{led.name}/GRN3_reflector.csv"
+            filepath_model_ref = f"results/radiometry/{led.name}/GRN3_reflector.csv"
         correction_factor = calculate_correction_factor(filepath_model_ref, expected_value)
         irr_model, I_mean_model, H_model = process_radiometry_file(filepath_model, correction_factor)
         

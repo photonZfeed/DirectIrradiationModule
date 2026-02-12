@@ -36,8 +36,8 @@ def create_irradiance_plots_SI():
         - Displays figures using matplotlib's interactive window.
 
     :notes:
-        - Assumes the presence of radiometry and raytracing data in the 'data/radiometry' and 'data/raytracing' directories, respectively.
-        - Assumes LED configuration JSONs are present in 'sampled_configs/near_optimal_configs/<led_name>/<label>.json'.
+        - Assumes the presence of radiometry and raytracing data in the 'results/radiometry' and 'results/raytracing' directories, respectively.
+        - Assumes LED configuration JSONs are present in 'results/sampled_configs/near_optimal_configs/<led_name>/<label>.json'.
         - Uses external utility functions for data processing and plotting.
         - The function does not return any value; it is intended for side effects (plotting and saving figures).
 
@@ -55,13 +55,13 @@ def create_irradiance_plots_SI():
     """
     import numpy as np
     # Define directories
-    radiometry_dir = os.path.join('data', 'radiometry')
-    raytracing_dir = os.path.join('data', 'raytracing')
+    radiometry_dir = os.path.join('results', 'radiometry')
+    raytracing_dir = os.path.join('results', 'raytracing')
 
     led_configs = [
        {
            "label": "best_manual",
-           "ref_file_radiometry": "best_manual_no_reflector.csv",          
+           "ref_file_radiometry": "best_manual_reflector.csv",          
            "led_obj": LST1_01G01_UV01_00,
        },
        {
@@ -162,7 +162,7 @@ def create_irradiance_plots_SI():
             conf = [(-7.5,0), (7.5,0), (-10, -10), (10, 10), (-10, 10), (10, -10), (0,12.5), (0,-12.5)]
             height = 13
         else:
-            conf, height = sampler.read_configuration_from_json(os.path.join('sampled_configs', 'near_optimal_configs', f'{config["led_obj"].name}', f'{config["label"]}.json'))
+            conf, height = sampler.read_configuration_from_json(os.path.join('results', 'sampled_configs', 'near_optimal_configs', f'{config["led_obj"].name}', f'{config["label"]}.json'))
         model = GeometricModel(G=G, led=config['led_obj'])
         irr = model.simulate(config=conf, z=height)
 

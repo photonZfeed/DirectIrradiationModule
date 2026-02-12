@@ -209,11 +209,11 @@ def create_bar_plot_screened_cands():
             keys = ["GRN1", "GRN2", "GRN3", "GRN1 - Reflector", "GRN2 - Reflector", "GRN3 - Reflector"]
 
         # get radiometric data
-        folder = f"./data/radiometry/{led.name}" # folder with all candidate files
+        folder = f"./results/radiometry/{led.name}" # folder with all candidate files
         if led_name == "LST1-01G01-UV01-00":
-            reference_file = f"./data/radiometry/{led.name}/UV3_reflector.csv" # reference file for correction factor
+            reference_file = f"./results/radiometry/{led.name}/UV3_reflector.csv" # reference file for correction factor
         else:
-            reference_file = f"./data/radiometry/{led.name}/GRN3_reflector.csv" # reference file for correction factor
+            reference_file = f"./results/radiometry/{led.name}/GRN3_reflector.csv" # reference file for correction factor
         N_led = 16 # number of LEDs in the module
         expected_value = N_led*led.total_power # expected irradiance value in W m^-2 according to LED datasheet
         correction_factor = calculate_correction_factor(reference_file, expected_value) # calculate correction factor based on reference file
@@ -238,9 +238,9 @@ def create_bar_plot_screened_cands():
         geometric = {}
 
         # read all json files from the folder with near optimal configurations
-        for file in os.listdir(f"./sampled_configs/near_optimal_configs/{led.name}"):
+        for file in os.listdir(f"./results/sampled_configs/near_optimal_configs/{led.name}"):
             if file.endswith('.json'):
-                config, height = Sampler1.read_configuration_from_json(os.path.join(f"./sampled_configs/near_optimal_configs/{led.name}", file))
+                config, height = Sampler1.read_configuration_from_json(os.path.join(f"./results/sampled_configs/near_optimal_configs/{led.name}", file))
                 irr = model.simulate(config, height)
                 geometric[file.replace(".json","")] = {
                     "E_mean": np.mean(irr),
@@ -254,9 +254,9 @@ def create_bar_plot_screened_cands():
                 file_name = key.replace(" - Reflector", "_reflector.txt")
             else:
                 file_name = key + "_no_reflector.txt"
-            file_path = os.path.join(f"./data/raytracing/{led.name}", file_name)
+            file_path = os.path.join(f"./results/raytracing/{led.name}", file_name)
             if os.path.exists(file_path):
-                raytracing_data = process_raytracing_file(file_name, os.path.join(f"./data/raytracing/{led.name}"))
+                raytracing_data = process_raytracing_file(file_name, os.path.join(f"./results/raytracing/{led.name}"))
                 raytracing_result = calc_metrics(raytracing_data["Irradiance"])
                 raytracing[key] = {
                     "E_mean": raytracing_result[0],
