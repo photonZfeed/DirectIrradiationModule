@@ -144,7 +144,6 @@ __MACOSX/
 
 # Custom project folders
 figures/
-*.png
 *.svg
 results/sampled_configs/MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz
 results/geometric/LST1-01G01-UV01-00/optimization_results_MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz
