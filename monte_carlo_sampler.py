@@ -37,20 +37,6 @@ class MonteCarloSampler():
         - The grid must be square and have an odd number of points per side to ensure a unique center point for symmetry.
         - The class precomputes all valid symmetric configurations for each LED count in the specified range.
         - All random sampling is performed using the provided seed for reproducibility, if specified.
-
-    
-    **Usage Example:**
-
-    .. code-block:: python
-
-        from utils.grid import Grid
-        from monte_carlo_sampler import MonteCarloSampler
-
-        # Create a 34x33 grid with 2.5 cm step size
-        G = Grid(width=34, height=33, step=2.5)
-        sampler = MonteCarloSampler(G, led_min=1, led_max=16, height_min=5.0, height_max=15.0, height_step=1.0, seed=42)
-        sample = sampler.generate_unique_samples(num_samples=10)
-        print(sample)
     """
     
     def __init__(self, G: Grid, led_min: int = 1, led_max: int = 16,
@@ -527,9 +513,6 @@ class MonteCarloSampler():
 
         :side effects:
             - May print debug information to stdout if configuration generation fails or is invalid.
-
-        :raises:
-            None
 
         :notes:
             - Attempts up to 1000 times to generate a valid configuration.
@@ -1116,9 +1099,6 @@ class MonteCarloSampler():
         :returns:
             List[Dict[str, Any]]: A list of unique configuration dictionaries, each containing LED positions, count, height, and metadata.
 
-        :raises:
-            None
-
         :side effects:
             - Prints progress and distribution information to stdout.
             - May use parallel processing and spawn worker processes.
@@ -1208,9 +1188,6 @@ class MonteCarloSampler():
         :returns:
             List[Dict[str, Any]]: A list of unique configuration dictionaries, each containing LED positions, count, height, and metadata.
 
-        :raises:
-            None
-
         :side effects:
             - Prints progress and distribution information to stdout.
             - May use parallel processing and spawn worker processes.
@@ -1272,9 +1249,6 @@ def save_configurations(configurations: List[Dict[str, Any]],
     :returns:
         None
 
-    :raises:
-        None
-
     :side effects:
         - Writes a compressed NPZ file to disk at the specified filename.
         - Prints a summary message to stdout upon successful save.
@@ -1324,9 +1298,6 @@ def analyze_configurations(configurations: List[Dict[str, Any]],
     :param generator: The MonteCarloSampler instance used to generate or verify the configurations. (MonteCarloSampler)
 
     :returns:
-        None
-
-    :raises:
         None
 
     :side effects:

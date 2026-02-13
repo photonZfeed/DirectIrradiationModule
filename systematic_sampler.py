@@ -68,19 +68,6 @@ class Sampler:
     - Quadrant balance ensures that the sum of LED contributions to each quadrant is equal.
     - The class supports parallel processing for efficient configuration generation on large grids.
 
-    Usage Example
-    -------------
-    >>> from utils.grid import Grid
-    >>> G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
-    >>> sampler = Sampler(G=G, led_count=8, height=13)
-    >>> configs = sampler.generate_all_configurations()
-    >>> sampler.save_configuration_to_json(configs[0], height=13, filename="example_config.json")
-    >>> # Plot a configuration
-    >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> sampler.plot_configuration(ax, configs[0], z=13)
-    >>> plt.show()
-
     """
 
     def __init__(self, G: Grid, led_count: int = 8, height: int = 13, verbose: bool = True):
@@ -154,8 +141,6 @@ class Sampler:
             - The grid is assumed to be square and centered at (0, 0).
             - The center point (0, 0) is excluded from all quadrant and axis lists.
             - This method should be called during initialization and whenever the grid changes.
-        :example:
-            After calling this method, ``self.Q1_points`` contains all points in the first quadrant.
         """
         for x in self.coords:
             for y in self.coords:
@@ -194,8 +179,6 @@ class Sampler:
             The (x, y) coordinates of the grid point (in grid index units, not cm).
         :return: Tuple[float, float, float, float]
             The weights for quadrants Q1, Q2, Q3, Q4, respectively. Each value is in [0, 1].
-        :raises: None
-        :side effects: None
         :notes:
             - The sum of the returned weights is always 1.0 for the center, and 1.0 for all other points except those not on the grid (which return all zeros).
             - Quadrant definitions:
@@ -204,13 +187,6 @@ class Sampler:
                 Q3: x < 0, y < 0
                 Q4: x > 0, y < 0
             - Axis points split their contribution between adjacent quadrants.
-        :example:
-            >>> sampler.get_quadrant_weight((1, 1))
-            (1.0, 0.0, 0.0, 0.0)
-            >>> sampler.get_quadrant_weight((0, 0))
-            (0.25, 0.25, 0.25, 0.25)
-            >>> sampler.get_quadrant_weight((2, 0))
-            (0.5, 0.0, 0.0, 0.5)
         """
         x, y = point
         if x == 0 and y == 0:
@@ -242,15 +218,8 @@ class Sampler:
         :returns: Tuple containing the total weights for quadrants Q1, Q2, Q3, and Q4, respectively. Each value is a float representing the sum of contributions from all LEDs to that quadrant.
         :rtype: Tuple[float, float, float, float]
 
-        :raises: None
-        :side effects: None
-
         .. note::
             The sum of the returned weights should equal the total number of LEDs in the configuration.
-
-        **Example**::
-
-            q1, q2, q3, q4 = sampler.calculate_quadrant_weights([(1,1), (0,0), (2,0)])
         """
         q1, q2, q3, q4 = 0.0, 0.0, 0.0, 0.0
         for point in configuration:
@@ -276,15 +245,9 @@ class Sampler:
         :returns: True if the configuration is symmetric and balanced; False otherwise.
         :rtype: bool
 
-        :raises: None
-        :side effects: None
-
         .. note::
             The function assumes the configuration is on a square, odd-sized grid centered at (0, 0).
 
-        **Example**::
-
-            is_valid = sampler.verify_configuration([(1,1), (-1,-1), (0,0), (2,0), (-2,0)])
         """
         # Check point symmetry
         config_set = set(configuration)
@@ -317,10 +280,6 @@ class Sampler:
 
         .. note::
             The returned configurations are sorted, unique, and scaled to real-world units. The method may take significant time for large grids or high LED counts.
-
-        **Example**::
-
-            configs = sampler.generate_all_configurations(max_workers=8)
         """
         
         if self.verbose:
@@ -378,18 +337,10 @@ class Sampler:
             - c (int): Number of axis pairs
         :rtype: List[Tuple[int, int, int]]
 
-        :raises: None
-        :side effects: None
-
         .. note::
             - The method uses the current object's ``led_count``, ``pair_count``, and ``center_used`` attributes.
             - The grid is assumed to be square and centered at (0, 0).
             - The center LED (if present) is accounted for by adjusting the target quadrant weight.
-
-        **Example**::
-
-            valid_combos = sampler._find_valid_abc_combinations()
-            # Each entry in valid_combos is a tuple (a, b, c)
         """
         valid_combinations = []
         target_weight = self.led_count / 4
@@ -439,7 +390,6 @@ class Sampler:
         :returns: List of valid configurations for the given (a, b, c) case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises: None
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
             - May print progress information if verbosity is enabled.
@@ -447,11 +397,6 @@ class Sampler:
         .. note::
             - The method assumes the grid and LED count are compatible with the requested (a, b, c) values.
             - The returned configurations are not guaranteed to be unique across different (a, b, c) cases; deduplication is performed at a higher level.
-
-        **Example**::
-
-            configs = sampler._process_case_parallel(a=2, b=1, c=1, max_workers=4)
-            # configs is a list of valid LED arrangements for this case
         """
 
         if max_workers is None:
@@ -479,9 +424,6 @@ class Sampler:
             List of valid configurations for the axis-only case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises:
-            None
-
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
             - May print progress information if verbosity is enabled.
@@ -489,11 +431,6 @@ class Sampler:
         .. note::
             - The method assumes the grid and LED count are compatible with the requested number of axis pairs.
             - The returned configurations are not guaranteed to be unique across different cases; deduplication is performed at a higher level.
-
-        **Example**::
-
-            configs = sampler._process_axis_only_case(c=2, max_workers=4)
-            # configs is a list of valid LED arrangements for this axis-only case
         """
         if c > len(self.all_pos_axis):
             return []
@@ -535,20 +472,9 @@ class Sampler:
             List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises:
-            None
-
-        :side effects:
-            None
-
         .. note::
             - This method is intended for internal use with parallel processing.
             - The returned configurations are not guaranteed to be unique across all chunks; deduplication is performed at a higher level.
-
-        **Example**::
-
-            chunk = [((5,0), (0,7)), ((5,0), (0,5))]
-            configs = sampler._process_axis_chunk(chunk)
         """
         chunk_configs = []
         for axis_points in axis_chunk:
@@ -585,9 +511,6 @@ class Sampler:
             List of valid configurations for the given case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises:
-            None
-
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
             - May print progress information if verbosity is enabled.
@@ -596,11 +519,6 @@ class Sampler:
             - The method assumes the grid and LED count are compatible with the requested values of ``a`` and ``b``.
             - The returned configurations are not guaranteed to be unique across all cases; deduplication is performed at a higher level.
             - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.
-
-        **Example**::
-
-            configs = sampler._process_no_axis_case(a=2, b=2, max_workers=4)
-            # configs is a list of valid LED arrangements for this case
         """
 
         if a > len(self.Q1_points) or b > len(self.Q2_points):
@@ -648,21 +566,10 @@ class Sampler:
             List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises:
-            None
-
-        :side effects:
-            None
-
         .. note::
             - This method is intended for internal use with parallel processing in the no-axis-pair case.
             - The returned configurations are not guaranteed to be unique across all chunks; deduplication is performed at a higher level.
             - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.
-
-        **Example**::
-
-            chunk = [((5, 5), (7, 7)), ((3, 3), (9, 9))]
-            configs = sampler._process_no_axis_chunk(chunk, q2_combinations)
         """
         chunk_configs = []
         for q1_selection in q1_chunk:
@@ -711,9 +618,6 @@ class Sampler:
             List of valid configurations for the given (a, b, c) case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises:
-            None
-
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
             - May print progress information if verbosity is enabled.
@@ -722,11 +626,6 @@ class Sampler:
             - The method assumes the grid and LED count are compatible with the requested values of ``a``, ``b``, and ``c``.
             - The returned configurations are not guaranteed to be unique across all cases; deduplication is performed at a higher level.
             - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.
-
-        **Usage Example**::
-
-            configs = sampler._process_mixed_case(a=2, b=1, c=1, max_workers=4)
-            # configs is a list of valid LED arrangements for this mixed case
         """
         if (a > len(self.Q1_points) or b > len(self.Q2_points) or 
             c > len(self.all_pos_axis)):
@@ -780,22 +679,11 @@ class Sampler:
             List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises:
-            None
-
-        :side effects:
-            None
-
         .. note::
             - This method is intended for internal use with parallel processing in the mixed-pair case.
             - The returned configurations are not guaranteed to be unique across all chunks; deduplication is performed at a higher level.
             - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.
             - The method assumes the grid and LED count are compatible with the requested values of ``a``, ``b``, and ``c``.
-
-        **Usage Example**::
-
-            chunk = [((5, 5), (7, 7)), ((3, 3), (9, 9))]
-            configs = sampler._process_mixed_chunk(chunk, q2_combinations, axis_combinations)
         """
         chunk_configs = []
         for q1_selection in q1_chunk:
@@ -839,21 +727,10 @@ class Sampler:
         :returns: List of unique configurations, with duplicates removed. Each configuration is a list of (x, y) tuples as in the input.
         :rtype: List[List[Tuple[int, int]]]
 
-        :raises: None
-
-        :side effects:
-            - None. The input list is not modified; a new list is returned.
-
         .. note::
             - Configurations are considered duplicates if their sorted list of (x, y) tuples matches exactly.
             - The method does not sort the input list; it preserves the order of first occurrence.
             - This method is typically used after generating all possible configurations to ensure uniqueness before further processing or saving.
-
-        **Example**::
-
-            configs = [[(0, 0), (1, 1)], [(1, 1), (0, 0)], [(2, 2), (3, 3)]]
-            unique = sampler._remove_duplicates(configs)
-            # unique will contain two configurations: [(0, 0), (1, 1)] and [(2, 2), (3, 3)]
         """
         seen = set()
         unique_configs = []
@@ -888,8 +765,6 @@ class Sampler:
         :return: The Matplotlib Axes object with the plotted configuration.
         :rtype: matplotlib.axes.Axes
 
-        :raises: None
-
         :side effects:
             - Modifies the provided Axes object by adding scatter points, grid lines, and labels.
             - Sets Matplotlib styles for consistent appearance.
@@ -898,12 +773,6 @@ class Sampler:
             - The configuration coordinates are interpreted as grid indices and are not automatically scaled to centimeters; scaling should be handled prior to plotting if needed.
             - The grid limits and ticks are determined by the associated Grid object.
             - The method does not display the plot; it only modifies the Axes object.
-
-        **Example usage:**
-
-            >>> fig, ax = plt.subplots()
-            >>> sampler.plot_configuration(ax, [(0, 0), (2, 2), (-2, -2)], z=13, point_size=30, set_title=True)
-            >>> plt.show()
         """
 
         # set style
@@ -952,8 +821,6 @@ class Sampler:
         :return: The Matplotlib Axes object with the plotted configuration.
         :rtype: matplotlib.axes.Axes
 
-        :raises: None
-
         :side effects:
             - Modifies the provided Axes object by adding scatter points, grid lines, and hiding axis labels and tick labels.
             - Sets Matplotlib styles for consistent appearance.
@@ -962,14 +829,6 @@ class Sampler:
             - This method is intended for use in multi-panel figures or summary plots where space is limited.
             - The configuration coordinates are interpreted as grid indices and are not automatically scaled to centimeters.
             - The plot does not display axis labels or tick labels, and the grid is shown behind the points.
-
-        **Example usage:**
-
-            >>> fig, axs = plt.subplots(1, 3, figsize=(6, 2))
-            >>> config_list = [[(0, 0), (2, 2)], [(1, 1), (-1, -1)], [(3, 3), (-3, -3)]]
-            >>> for i, conf in enumerate(config_list):
-            ...     sampler.plot_configuration_small(axs[i], conf)
-            >>> plt.show()
         """
 
         plt.style.use("ICIWstyle")
@@ -1019,10 +878,6 @@ class Sampler:
         :param save_fig_type: File type for saving a plot of the configuration (e.g., 'png', 'svg'). If empty (default), no plot is saved.
         :type save_fig_type: str, optional
 
-        :return: None
-
-        :raises: None
-
         :side effects:
             - Writes a JSON file to disk containing the configuration data.
             - If ``save_fig_type`` is provided, creates and saves a plot image file in the same directory.
@@ -1031,15 +886,6 @@ class Sampler:
         .. note::
             - The configuration is saved as provided; coordinates are not scaled to centimeters unless done prior to calling this method.
             - The plot image, if saved, uses the ``plot_configuration`` method for visualization.
-
-        **Example usage:**
-
-            >>> sampler.save_configuration_to_json(
-            ...     configuration=[(0, 0), (2, 2), (-2, -2)],
-            ...     height=13,
-            ...     filename="example_config.json",
-            ...     save_fig_type="png"
-            ... )
         """
 
         with open(filename, 'w') as f:
@@ -1079,14 +925,6 @@ class Sampler:
 
         .. note::
             The coordinates are returned as tuples, and the height is returned as an integer or float depending on the file content.
-
-        **Example usage:**
-
-            >>> config, height = sampler.read_configuration_from_json('example_config.json')
-            >>> print(config)
-            [(-7.5, 0), (7.5, 0), ...]
-            >>> print(height)
-            13
         """
         import json
         with open(filename, 'r') as f:
@@ -1129,11 +967,6 @@ def save_configurations(configurations: np.ndarray,
 
     .. note::
         The configurations are saved as provided; ensure they are scaled to the desired units (e.g., centimeters) before calling this function.
-
-    **Example usage:**
-
-        >>> save_configurations(configurations, sampler, 'results/configs.npz')
-        Saved 128 configurations to results/configs.npz
     """
     np.savez_compressed(
         filename,

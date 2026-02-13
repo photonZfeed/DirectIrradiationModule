@@ -20,7 +20,7 @@ class LED:
     angle_data : np.ndarray
         Array of angles (in degrees) loaded from the intensity data file.
     intensity_data : np.ndarray
-        Array of absolute radiant intensity values (in W/sr) after calculation.
+        Array of absolute radiant intensity values (in W sr⁻¹) after calculation.
     """
 
     def __init__(self, name, optical_power, intensity_data_file):

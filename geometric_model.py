@@ -51,32 +51,6 @@ class GeometricModel:
         - The LED object must provide angle and intensity data arrays.
         - Designed for use with batch simulation and parallel processing for a large number of configurations.
         - For visualization, use the :meth:`plot_irradiance` method with a Matplotlib Axes object as an argument.
-
-    **Usage Example:**
-
-    .. code-block:: python
-
-        from utils.grid import Grid
-        from utils.led import LST1_01G01_UV01_00
-        from geometric_model import GeometricModel
-
-        # Define grid and LED
-        G = Grid(width=20, height=20, step=2.5)
-        led = LST1_01G01_UV01_00
-        model = GeometricModel(G, led, resolution_xy=0.5)
-
-        # Define LED configuration and height
-        config = [(-5, 0), (5, 0)]  # two LEDs at (-5,0) and (5,0) cm
-        z = 10  # height above grid in cm
-
-        # Simulate irradiance
-        irr = model.simulate(config, z)
-
-        # Visualize
-        import matplotlib.pyplot as plt
-        fig, ax = plt.subplots()
-        model.plot_irradiance(ax, irr)
-        plt.show()
     """
 
     def __init__(self, G: Grid, led: LED, resolution_xy: float = 0.5):
