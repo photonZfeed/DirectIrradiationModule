@@ -21,12 +21,6 @@ class LED:
         Array of angles (in degrees) loaded from the intensity data file.
     intensity_data : np.ndarray
         Array of absolute radiant intensity values (in W/sr) after calculation.
-
-    Examples
-    --------
-    >>> led = LED("Example-LED", 0.5, "path/to/intensity.csv")
-    >>> abs_intensity = led.calc_radiant_intensity()
-    >>> print(abs_intensity)
     """
 
     def __init__(self, name, optical_power, intensity_data_file):
@@ -75,21 +69,11 @@ class LED:
         ValueError
             If the intensity data file does not have the expected format or contains invalid data.
 
-        Side Effects
-        ------------
-        Updates `self.angle_data` and `self.intensity_data` with the loaded angles and calculated absolute intensities.
-
         Notes
         -----
         - Assumes rotational symmetry around the optical axis.
         - Uses the trapezoidal rule for numerical integration.
         - The calculation normalizes the relative intensity data such that the total emitted power matches `self.total_power`.
-
-        Examples
-        --------
-        >>> led = LED("Example-LED", 0.5, "path/to/intensity.csv")
-        >>> abs_intensity = led.calc_radiant_intensity()
-        >>> print(abs_intensity)
         """
         try:
             intensity_data = np.loadtxt(self.intensity_data_file, dtype=np.float64, delimiter=",", skiprows=1)

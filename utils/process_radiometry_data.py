@@ -28,10 +28,6 @@ def read_radiometry_file(filepath: str) -> pd.DataFrame:
         - Assumes the first row and column of the CSV are headers and indices, respectively.
         - Handles both European and standard CSV formats.
         - All positions are assumed to be in centimeters unless otherwise specified.
-
-    :usage example:
-        >>> df = read_radiometry_file('data/radiometry.csv')
-        >>> print(df.head())
     """
 
     # Read the CSV file
@@ -76,16 +72,11 @@ def process_radiometry_file(filepath: str, correction_factor: float = 1.0, heigh
         - The homogeneity is defined as 1 - (std/mean) of the irradiance values.
         - The region is centered based on the mean of the column positions.
         - Assumes spatial units are centimeters.
-
-    :usage example:
-        >>> irr, mean, homo = process_radiometry_file('data/radiometry.csv', correction_factor=1.05)
-        >>> print(mean, homo)
     """
 
     # Read the CSV file
     df = read_radiometry_file(filepath)
     center = df.columns.to_numpy().mean()
-
 
     half_width = width / 2
     half_height = height / 2
@@ -129,11 +120,6 @@ def process_all_cand_files(folder, correction_factor=1.0, height=33, width=34):
     :notes:
         - Only files ending with '.csv' and containing 'UV' or 'GRN' in the filename are processed.
         - The irradiance DataFrame is centered and corrected as in :func:`process_radiometry_file`.
-
-    :usage example:
-        >>> results = process_all_cand_files('data/candidates', correction_factor=1.02)
-        >>> for fname, stats in results.items():
-        ...     print(fname, stats['mean_irradiance'])
     """
     results = {}
     for file in os.listdir(folder):
@@ -147,7 +133,6 @@ def process_all_cand_files(folder, correction_factor=1.0, height=33, width=34):
             }
     return results
 
-# calculate correction factor based on reference measurement
 def calculate_correction_factor(reference_filepath: str, expected_value: float) -> float:
     """
     Computes a correction factor for radiometry data using a reference measurement and an expected total irradiance value.
@@ -171,10 +156,6 @@ def calculate_correction_factor(reference_filepath: str, expected_value: float) 
     :notes:
         - The units of the original data (e.g., umol m⁻² s⁻¹ or W m⁻²) do not affect the correction factor calculation.
         - Assumes uniform pixel size and that index/columns are in centimeters.
-
-    :usage example:
-        >>> factor = calculate_correction_factor('data/reference.csv', expected_value=12.5)
-        >>> print(factor)
     """
 
     df = read_radiometry_file(reference_filepath)
@@ -216,11 +197,6 @@ def plot_irradiance_radiometry(ax: Axes, irr: pd.DataFrame, title: str = "", y_t
             - The color scale is set to start at 0 and end at v_max.
             - The function auto-determines contour levels based on v_max.
             - The colorbar is labeled with '$E$ / W m⁻²'.
-
-        :usage example:
-            >>> fig, ax = plt.subplots()
-            >>> plot_irradiance_radiometry(ax, irr, title='Irradiance Map')
-            >>> plt.show()
         """
 
         # Set color bar limits
@@ -237,8 +213,6 @@ def plot_irradiance_radiometry(ax: Axes, irr: pd.DataFrame, title: str = "", y_t
             step = 10
         elif vmax <= 100:
             step = 20
-        # elif vmax <= 150:
-        #     step = 50  
         else:
             step = 50 
         levels = np.arange(0, vmax + step, step)
@@ -277,8 +251,3 @@ def plot_irradiance_radiometry(ax: Axes, irr: pd.DataFrame, title: str = "", y_t
         ax.set_ylim(extent[2], extent[3])
 
         return ax
-
-
-
-
-    

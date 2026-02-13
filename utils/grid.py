@@ -4,13 +4,13 @@ class Grid:
     """
     Represents a two-dimensional, symmetric grid of points centered at the origin (0, 0).
 
-    This class allows for the creation of a customizable 2D grid, where the user can specify the total width and height, the margin (space) to leave on the sides and top/bottom, and the step size (distance) between adjacent grid points. The grid points are generated as a NumPy array of (x, y) coordinates, suitable for geometric modeling, simulation, or spatial analysis tasks.
+    This class allows for the creation of a customizable 2D grid, where the user can specify the total width and height, the margin (space) to leave on the sides and top/bottom, and the step size (distance) between adjacent grid points. The grid points are generated as a NumPy array of (x, y) coordinates.
 
     **Usage Notes:**
         - The grid is always centered at (0, 0).
         - Margins are excluded from the grid area; no points are placed within the specified margins.
         - The step size determines the spacing between adjacent points and must be positive.
-        - All dimensions and spacings are in arbitrary but consistent units (e.g., meters).
+        - All dimensions and spacings are in arbitrary but consistent units (e.g., centimeters).
     """
 
     def __init__(self, width: float = 10.0, height: float = 10.0, side_space: float = 1.0, top_bottom_space: float = 1.0, step: float = 2.0):
@@ -67,9 +67,6 @@ class Grid:
             - The grid is symmetric and centered at (0, 0).
             - Points are spaced by `step` units in both x and y directions.
             - Margins are respected; no points are placed within the specified margins.
-
-        **Assumptions:**
-            - All class attributes are valid and checked during initialization.
         """
         n_x = int((self.width / 2 - self.side_margin) // self.step)  # number of grid points in x direction (one side)
         n_y = int((self.height / 2 - self.top_bottom_margin) // self.step)  # number of grid points in y direction (one side)

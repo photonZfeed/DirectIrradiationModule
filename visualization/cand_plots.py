@@ -1,4 +1,5 @@
-from systematic_sampler import Sampler1
+from utils.grid import Grid
+from systematic_sampler import Sampler
 import matplotlib.pyplot as plt
 
 def plot_cand(conf_name):
@@ -20,16 +21,15 @@ def plot_cand(conf_name):
 
     .. note::
         - The function assumes that the directories 'results/sampled_configs/' and 'figures/' exist and are writable.
-        - The configuration JSON files must be compatible with ``Sampler1.read_configuration_from_json``.
+        - The configuration JSON files must be compatible with ``Sampler.read_configuration_from_json``.
         - The function does not display the plot; it only saves it to disk.
 
     **Example usage:**
 
     .. code-block:: python
 
-        plot_cand('LST1-01G01-UV01-00-001')
-        plot_cand('LST1-01F06-GRN1-00-002')
         plot_cand('best_manual')
+        plot_cand('UV1')
     """
     if "UV" in conf_name:
         conf_path = f"results/sampled_configs/near_optimal_configs/LST1-01G01-UV01-00/{conf_name}.json"
@@ -41,6 +41,8 @@ def plot_cand(conf_name):
         
     filename = f"figures/{conf_name}.svg"
     fig, ax = plt.subplots(figsize=(2,2))
+    G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
+    Sampler1 = Sampler(G=G)
     conf, height = Sampler1.read_configuration_from_json(conf_path)
     ax = Sampler1.plot_configuration(ax, conf, z=height, point_size=20, set_title=False)
     fig.savefig(filename, bbox_inches='tight')
