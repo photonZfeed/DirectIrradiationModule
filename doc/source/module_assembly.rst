@@ -52,11 +52,11 @@ To operate the LEDs, up to 2 × 8 LEDs were connected in series. The LED rows we
    * - 1
      - Aluminum LED mounting plate, 400 mm × 400 mm
      - Aluminum, custom made
-     - `LED_mount_400x400.stl <https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/02_heatsink_and_LED_mounting_plate/LED_mount_400x400.stl>`_
+     - `LED_mount_400x400.stl <https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/02_heatsink_and%20_LED_mounting_plate/LED_mount_400x400.stl>`_
    * - 2
      - Aluminum heat sink, 200 mm × 200 mm
      - RS PRO, 9033090
-     - `heatsink_200.stl <https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/02_heatsink_and_LED_mounting_plate/heatsink_200.stl>`_
+     - `heatsink_200.stl <https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/02_heatsink_and%20_LED_mounting_plate/heatsink_200x200.stl>`_
    * - 3
      - LEDs (e.g. LST1-01G01-UV00-00)
      - —
