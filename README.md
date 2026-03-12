@@ -57,6 +57,9 @@ Refer to the [documentation](https://photonzfeed.github.io/DirectIrradiationModu
 ## Documentation
 Documentation is available at [https://photonzfeed.github.io/DirectIrradiationModule](https://photonzfeed.github.io/DirectIrradiationModule) and includes guides on how to build the direct irradiation module, how to run the radiometry measurements, how to perform the raytracing simulations and how to use the optimization code including a detailed overview on the API.
 
-## AI Assistance
+## AI Assistance Disclosure
 
-Parts of the documentation and docstrings in this repository, as well as several minor code correctness fixes, were produced with the assistance of AI language model tools. See [AI_DISCLOSURE.md](AI_DISCLOSURE.md) for a full account of which tools were used, what they were applied to, and the scope of human review.
+This repository was developed with assistance from AI language models. These tools were used to support code development, documentation creation, and identification of code correctness issues. All AI-generated changes were reviewed and approved by the authors before being committed. For this purpose, the following AI tools were used:
+
+- **Claude Code** (command-line interface by Anthropic), powered by the **Claude Sonnet 4.6** model (Anthropic, PBC).
+- **GitHub Copilot** (Visual Studio Code extension by GitHub, Inc.), powered by the **OpenAI GPT-4** model (OpenAI, L.L.C.).
