@@ -59,7 +59,9 @@ Documentation is available at [https://photonzfeed.github.io/DirectIrradiationMo
 
 ## AI Assistance Disclosure
 
-This repository was developed with assistance from AI language models. These tools were used to support code development, documentation creation, and identification of code correctness issues. All AI-generated changes were reviewed and approved by the authors before being committed. For this purpose, the following AI tools were used:
+This repository was developed with assistance of AI language models. These tools were used to support code development, documentation creation, and identification of code correctness issues. All AI-generated changes were reviewed and approved by the authors before being committed. 
+
+The following AI tools were used:
 
 - **Claude Code** (command-line interface by Anthropic), powered by the **Claude Sonnet 4.6** model (Anthropic, PBC).
 - **GitHub Copilot** (Visual Studio Code extension by GitHub, Inc.), powered by the **OpenAI GPT-4** model (OpenAI, L.L.C.).
