@@ -129,14 +129,12 @@ def plot_irradiance_raytracing(ax: Axes, data : pd.DataFrame, title: str = "", y
     # define contour levels based on vmax
     if vmax <= 30:
         step = 5
-    if vmax <= 50:
+    elif vmax <= 50:
         step = 10
     elif vmax <= 100:
         step = 20
-    # elif vmax <= 150:
-    #     step = 50  
     else:
-        step = 50 
+        step = 50
     levels = np.arange(0, vmax + step, step)
 
     # Pivot the data to create a 2D grid for imshow

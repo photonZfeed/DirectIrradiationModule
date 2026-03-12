@@ -14,81 +14,79 @@ class Sampler:
 
     This class is designed for systematic sampling of LED positions for irradiation modules, ensuring that the resulting configurations are physically balanced and symmetric. It supports parallelized generation of all valid configurations, visualization, and export to standard formats.
 
-    Parameters
-    ----------
-    G : Grid
-        Grid object defining the grid parameters (dimensions, step size, margins, etc.).
-    led_count : int, optional
-        Total number of LEDs to place on the grid (default: 8).
-    height : int, optional
-        Height of LEDs above the grid in centimeters (default: 13).
-    verbose : bool, optional
-        If True, prints progress and diagnostic information during configuration generation (default: True).
+    :param G: Grid object defining the grid parameters (dimensions, step size, margins, etc.).
+    :type G: Grid
+    :param led_count: Total number of LEDs to place on the grid.
+    :type led_count: int
+    :param height: Height of LEDs above the grid in centimeters.
+    :type height: int
+    :param verbose: If True, prints progress and diagnostic information during configuration generation.
+    :type verbose: bool
 
-    Attributes
-    ----------
-    G : Grid
-        The grid object used for configuration.
-    grid_size : int
-        Number of grid points along one axis (assumes square grid).
-    grid_step : float
-        Step size between grid points (from Grid object).
-    led_count : int
-        Number of LEDs to place.
-    height : int
-        Height of LEDs above the grid (cm).
-    verbose : bool
-        Controls verbosity of output.
-    half_size : int
-        Half the grid size (used for coordinate calculations).
-    coords : list of int
-        List of coordinate values for grid points.
-    center_used : bool
-        Whether the grid center is used (True if led_count is odd).
-    pair_count : int
-        Number of symmetric LED pairs (led_count // 2 or (led_count-1)//2 if odd).
-    Q1_points, Q2_points, Q3_points, Q4_points : list of tuple
-        Lists of grid points in each quadrant.
-    pos_x_axis, pos_y_axis, all_pos_axis : list of tuple
-        Lists of grid points on positive axes.
-    neg_x_axis, neg_y_axis : list of tuple
-        Lists of grid points on negative axes.
-    center : tuple or None
-        Coordinates of the grid center, or None if not applicable.
+    :ivar G: The grid object used for configuration.
+    :vartype G: Grid
+    :ivar grid_size: Number of grid points along one axis (assumes square grid).
+    :vartype grid_size: int
+    :ivar grid_step: Step size between grid points (from Grid object).
+    :vartype grid_step: float
+    :ivar led_count: Number of LEDs to place.
+    :vartype led_count: int
+    :ivar height: Height of LEDs above the grid (cm).
+    :vartype height: int
+    :ivar verbose: Controls verbosity of output.
+    :vartype verbose: bool
+    :ivar half_size: Half the grid size (used for coordinate calculations).
+    :vartype half_size: int
+    :ivar coords: List of coordinate values for grid points.
+    :vartype coords: list[int]
+    :ivar center_used: Whether the grid center is used (True if led_count is odd).
+    :vartype center_used: bool
+    :ivar pair_count: Number of symmetric LED pairs (``led_count // 2``, or ``(led_count-1) // 2`` if odd).
+    :vartype pair_count: int
+    :ivar Q1_points: Grid points in the first quadrant (x > 0, y > 0).
+    :vartype Q1_points: list[tuple[int, int]]
+    :ivar Q2_points: Grid points in the second quadrant (x < 0, y > 0).
+    :vartype Q2_points: list[tuple[int, int]]
+    :ivar Q3_points: Grid points in the third quadrant (x < 0, y < 0).
+    :vartype Q3_points: list[tuple[int, int]]
+    :ivar Q4_points: Grid points in the fourth quadrant (x > 0, y < 0).
+    :vartype Q4_points: list[tuple[int, int]]
+    :ivar pos_x_axis: Grid points on the positive x-axis.
+    :vartype pos_x_axis: list[tuple[int, int]]
+    :ivar neg_x_axis: Grid points on the negative x-axis.
+    :vartype neg_x_axis: list[tuple[int, int]]
+    :ivar pos_y_axis: Grid points on the positive y-axis.
+    :vartype pos_y_axis: list[tuple[int, int]]
+    :ivar neg_y_axis: Grid points on the negative y-axis.
+    :vartype neg_y_axis: list[tuple[int, int]]
+    :ivar all_pos_axis: All axis points with positive coordinates (union of pos_x_axis and pos_y_axis).
+    :vartype all_pos_axis: list[tuple[int, int]]
+    :ivar center: Coordinates of the grid center, or None if not applicable.
+    :vartype center: tuple[int, int] or None
 
-    Raises
-    ------
-    ValueError
-        If the grid size is not odd (required for a clear center point).
+    :raises ValueError: If the grid size is not odd (required for a clear center point).
 
-    Notes
-    -----
-    - The grid must be square and have an odd number of points along each axis to ensure a unique center.
-    - Configurations are generated such that each LED has a symmetric counterpart with respect to the grid center, except possibly one at the center if led_count is odd.
-    - Quadrant balance ensures that the sum of LED contributions to each quadrant is equal.
-    - The class supports parallel processing for efficient configuration generation on large grids.
-
+    .. note::
+        - The grid must be square and have an odd number of points along each axis to ensure a unique center.
+        - Configurations are generated such that each LED has a symmetric counterpart with respect to the grid center, except possibly one at the center if led_count is odd.
+        - Quadrant balance ensures that the sum of LED contributions to each quadrant is equal.
+        - The class supports parallel processing for efficient configuration generation on large grids.
     """
 
     def __init__(self, G: Grid, led_count: int = 8, height: int = 13, verbose: bool = True):
         """
         Initialize the symmetric LED configuration generator.
 
-        Parameters
-        ----------
-        G : Grid
-            Grid object defining the grid parameters (dimensions, step size, margins, etc.).
-        led_count : int, optional
-            Total number of LEDs to place on the grid (default: 8).
-        height : int, optional
-            Height of LEDs above the grid in centimeters (default: 13).
-        verbose : bool, optional
-            If True, prints progress and diagnostic information during configuration generation (default: True).
+        :param G: Grid object defining the grid parameters (dimensions, step size, margins, etc.).
+        :type G: Grid
+        :param led_count: Total number of LEDs to place on the grid. Default is 8.
+        :type led_count: int
+        :param height: Height of LEDs above the grid in centimeters. Default is 13.
+        :type height: int
+        :param verbose: If True, prints progress and diagnostic information during configuration generation. Default is True.
+        :type verbose: bool
 
-        Raises
-        ------
-        ValueError
-            If the grid size is not odd (required for a clear center point).
+        :raises ValueError: If the grid size is not odd (required for a clear center point).
         """
 
         if np.sqrt(len(G.grid_points)).astype(int) % 2 == 0:
@@ -134,10 +132,10 @@ class Sampler:
         - ``neg_y_axis``: Points on the negative y-axis (x == 0, y < 0)
         - ``all_pos_axis``: Concatenation of ``pos_x_axis`` and ``pos_y_axis``
 
-        :raises: None
         :side effects:
             Modifies the instance attributes listed above in-place.
-        :notes:
+
+        .. note::
             - The grid is assumed to be square and centered at (0, 0).
             - The center point (0, 0) is excluded from all quadrant and axis lists.
             - This method should be called during initialization and whenever the grid changes.
@@ -166,7 +164,7 @@ class Sampler:
                         self.neg_y_axis.append((x, y))
         self.all_pos_axis = self.pos_x_axis + self.pos_y_axis
         
-    def get_quadrant_weight(self, point: Tuple[int, int]) -> Tuple[float, float, float, float]:
+    def get_quadrant_weight(self, point: tuple[int, int]) -> tuple[float, float, float, float]:
         """
         Determines the fractional contribution of a grid point to each of the four quadrants (Q1, Q2, Q3, Q4).
 
@@ -175,17 +173,14 @@ class Sampler:
         - Points on axes contribute fractionally to adjacent quadrants.
         - The center point (0, 0) contributes equally (0.25) to all quadrants.
 
-        :param point: Tuple[int, int]
-            The (x, y) coordinates of the grid point (in grid index units, not cm).
-        :return: Tuple[float, float, float, float]
-            The weights for quadrants Q1, Q2, Q3, Q4, respectively. Each value is in [0, 1].
-        :notes:
-            - The sum of the returned weights is always 1.0 for the center, and 1.0 for all other points except those not on the grid (which return all zeros).
-            - Quadrant definitions:
-                Q1: x > 0, y > 0
-                Q2: x < 0, y > 0
-                Q3: x < 0, y < 0
-                Q4: x > 0, y < 0
+        :param point: The (x, y) coordinates of the grid point (in grid index units, not cm).
+        :type point: tuple[int, int]
+        :returns: The weights for quadrants Q1, Q2, Q3, Q4, respectively. Each value is in [0, 1].
+        :rtype: tuple[float, float, float, float]
+
+        .. note::
+            - The sum of the returned weights is always 1.0 for the center, and 1.0 for all other points (except points not on the grid, which return all zeros).
+            - Quadrant definitions: Q1: x > 0, y > 0; Q2: x < 0, y > 0; Q3: x < 0, y < 0; Q4: x > 0, y < 0.
             - Axis points split their contribution between adjacent quadrants.
         """
         x, y = point
@@ -205,18 +200,17 @@ class Sampler:
             return (0.5, 0.5, 0.0, 0.0)
         return (0.0, 0.0, 0.0, 0.0)
     
-    def calculate_quadrant_weights(self, configuration: List[Tuple[int, int]]) -> Tuple[float, float, float, float]:
+    def calculate_quadrant_weights(self, configuration: list[tuple[int, int]]) -> tuple[float, float, float, float]:
         """
         Computes the total fractional contribution of a given LED configuration to each of the four quadrants (Q1, Q2, Q3, Q4) of the grid.
 
         Each LED position contributes to one or more quadrants depending on its location (quadrant, axis, or center). The sum of all contributions equals the total number of LEDs.
 
-        :param configuration: List of (x, y) tuples
-            List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).
-        :type configuration: List[Tuple[int, int]]
+        :param configuration: List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).
+        :type configuration: list[tuple[int, int]]
 
         :returns: Tuple containing the total weights for quadrants Q1, Q2, Q3, and Q4, respectively. Each value is a float representing the sum of contributions from all LEDs to that quadrant.
-        :rtype: Tuple[float, float, float, float]
+        :rtype: tuple[float, float, float, float]
 
         .. note::
             The sum of the returned weights should equal the total number of LEDs in the configuration.
@@ -230,7 +224,7 @@ class Sampler:
             q4 += w4
         return q1, q2, q3, q4
     
-    def verify_configuration(self, configuration: List[Tuple[int, int]]) -> bool:
+    def verify_configuration(self, configuration: list[tuple[int, int]]) -> bool:
         """
         Checks whether a given LED configuration satisfies both point symmetry (about the grid center) and quadrant balance constraints.
 
@@ -238,9 +232,8 @@ class Sampler:
         - For every LED at (x, y), there is also an LED at (-x, -y) (point symmetry).
         - The sum of fractional contributions to each quadrant is equal (quadrant balance).
 
-        :param configuration: List of (x, y) tuples
-            List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).
-        :type configuration: List[Tuple[int, int]]
+        :param configuration: List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).
+        :type configuration: list[tuple[int, int]]
 
         :returns: True if the configuration is symmetric and balanced; False otherwise.
         :rtype: bool
@@ -321,7 +314,7 @@ class Sampler:
         
         return unique_config_array
     
-    def _find_valid_abc_combinations(self) -> List[Tuple[int, int, int]]:
+    def _find_valid_abc_combinations(self) -> list[tuple[int, int, int]]:
         """
         Systematically determines all valid combinations of symmetric LED pair types (a, b, c) that satisfy the quadrant balance constraint for the current grid and LED count.
 
@@ -335,7 +328,7 @@ class Sampler:
             - a (int): Number of Type A pairs (Q1/Q3)
             - b (int): Number of Type B pairs (Q2/Q4)
             - c (int): Number of axis pairs
-        :rtype: List[Tuple[int, int, int]]
+        :rtype: list[tuple[int, int, int]]
 
         .. note::
             - The method uses the current object's ``led_count``, ``pair_count``, and ``center_used`` attributes.
@@ -368,7 +361,7 @@ class Sampler:
         
         return valid_combinations
 
-    def _process_case_parallel(self, a: int, b: int, c: int, max_workers: int | None) -> List[List[Tuple[int, int]]]:
+    def _process_case_parallel(self, a: int, b: int, c: int, max_workers: int | None) -> list[list[tuple[int, int]]]:
         """
         Efficiently generates all valid LED configurations for a specific (a, b, c) case using parallel processing.
 
@@ -388,7 +381,7 @@ class Sampler:
         :type max_workers: int or None, optional
 
         :returns: List of valid configurations for the given (a, b, c) case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
-        :rtype: List[List[Tuple[int, int]]]
+        :rtype: list[list[tuple[int, int]]]
 
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
@@ -409,7 +402,7 @@ class Sampler:
         else:
             return self._process_mixed_case(a, b, c, max_workers)
 
-    def _process_axis_only_case(self, c: int, max_workers: int | None) -> List[List[Tuple[int, int]]]:
+    def _process_axis_only_case(self, c: int, max_workers: int | None) -> list[list[tuple[int, int]]]:
         """
         Efficiently generates all valid LED configurations for the special case where only axis pairs (i.e., symmetric pairs on the axes) are present, using parallel processing for scalability.
 
@@ -420,9 +413,8 @@ class Sampler:
         :param max_workers: Maximum number of worker processes to use for parallel computation. If None, uses all available CPU cores.
         :type max_workers: int or None
 
-        :returns:
-            List of valid configurations for the axis-only case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
-        :rtype: List[List[Tuple[int, int]]]
+        :returns: List of valid configurations for the axis-only case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
+        :rtype: list[list[tuple[int, int]]]
 
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
@@ -459,18 +451,17 @@ class Sampler:
         
         return all_configs
     
-    def _process_axis_chunk(self, axis_chunk: List[Tuple]) -> List[List[Tuple[int, int]]]:
+    def _process_axis_chunk(self, axis_chunk: list[Tuple]) -> list[list[tuple[int, int]]]:
         """
         Processes a subset (chunk) of axis pair combinations to generate all valid symmetric LED configurations for the axis-only case.
 
         Each axis pair combination in the chunk is expanded to a full configuration by adding both the selected axis points and their symmetric counterparts. If the configuration requires a center LED, it is included. Only configurations with the correct total number of LEDs are returned.
 
         :param axis_chunk: List of axis point combinations, where each combination is a tuple of axis points (positive x- or y-axis).
-        :type axis_chunk: List[Tuple[int, int]]
+        :type axis_chunk: list[tuple[int, int]]
 
-        :returns:
-            List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
-        :rtype: List[List[Tuple[int, int]]]
+        :returns: List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
+        :rtype: list[list[tuple[int, int]]]
 
         .. note::
             - This method is intended for internal use with parallel processing.
@@ -494,7 +485,7 @@ class Sampler:
         
         return chunk_configs
 
-    def _process_no_axis_case(self, a: int, b: int, max_workers: int | None) -> List[List[Tuple[int, int]]]:
+    def _process_no_axis_case(self, a: int, b: int, max_workers: int | None) -> list[list[tuple[int, int]]]:
         """
         Systematically generates all valid LED configurations for the case where only Type A (Q1/Q3) and Type B (Q2/Q4) symmetric pairs are present, with no axis pairs included. Utilizes parallel processing to efficiently explore all possible combinations.
 
@@ -507,9 +498,8 @@ class Sampler:
         :param max_workers: Maximum number of worker processes for parallel computation. If None, uses all available CPU cores.
         :type max_workers: int or None, optional
 
-        :returns:
-            List of valid configurations for the given case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
-        :rtype: List[List[Tuple[int, int]]]
+        :returns: List of valid configurations for the given case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
+        :rtype: list[list[tuple[int, int]]]
 
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
@@ -551,20 +541,19 @@ class Sampler:
         
         return all_configs
     
-    def _process_no_axis_chunk(self, q1_chunk: List[Tuple], q2_combinations: List[Tuple]) -> List[List[Tuple[int, int]]]:
+    def _process_no_axis_chunk(self, q1_chunk: list[Tuple], q2_combinations: list[Tuple]) -> list[list[tuple[int, int]]]:
         """
         Processes a subset (chunk) of Q1 point combinations, pairing each with all possible Q2 combinations, to generate all valid symmetric LED configurations for the no-axis-pair case.
 
         For each combination of Q1 and Q2 points, constructs a configuration by adding both the selected points and their symmetric counterparts. If the configuration requires a center LED (odd LED count), it is included. Only configurations with the correct total number of LEDs are returned. This method is intended for use with parallel processing, where each chunk is processed independently.
 
         :param q1_chunk: List of Q1 point combinations to process in this chunk. Each entry is a tuple of (x, y) coordinates (integer grid indices).
-        :type q1_chunk: List[Tuple[int, int]]
+        :type q1_chunk: list[tuple[int, int]]
         :param q2_combinations: List of all Q2 point combinations to pair with each Q1 selection. Each entry is a tuple of (x, y) coordinates (integer grid indices).
-        :type q2_combinations: List[Tuple[int, int]]
+        :type q2_combinations: list[tuple[int, int]]
 
-        :returns:
-            List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
-        :rtype: List[List[Tuple[int, int]]]
+        :returns: List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
+        :rtype: list[list[tuple[int, int]]]
 
         .. note::
             - This method is intended for internal use with parallel processing in the no-axis-pair case.
@@ -595,7 +584,7 @@ class Sampler:
         
         return chunk_configs
 
-    def _process_mixed_case(self, a: int, b: int, c: int, max_workers: int | None) -> List[List[Tuple[int, int]]]:
+    def _process_mixed_case(self, a: int, b: int, c: int, max_workers: int | None) -> list[list[tuple[int, int]]]:
         """
         Efficiently generates all valid LED configurations for a specific case where the configuration consists of a mix of Type A (Q1/Q3), Type B (Q2/Q4), and axis-symmetric LED pairs, using parallel processing for scalability.
 
@@ -614,9 +603,8 @@ class Sampler:
         :param max_workers: Maximum number of worker processes for parallel computation. If None, uses all available CPU cores.
         :type max_workers: int or None, optional
 
-        :returns:
-            List of valid configurations for the given (a, b, c) case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
-        :rtype: List[List[Tuple[int, int]]]
+        :returns: List of valid configurations for the given (a, b, c) case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).
+        :rtype: list[list[tuple[int, int]]]
 
         :side effects:
             - Uses multiprocessing (may increase system resource usage).
@@ -661,23 +649,22 @@ class Sampler:
         
         return all_configs
     
-    def _process_mixed_chunk(self, q1_chunk: List[Tuple], q2_combinations: List[Tuple], 
-                           axis_combinations: List[Tuple]) -> List[List[Tuple[int, int]]]:
+    def _process_mixed_chunk(self, q1_chunk: list[Tuple], q2_combinations: list[Tuple], 
+                           axis_combinations: list[Tuple]) -> list[list[tuple[int, int]]]:
         """
         Generates all valid symmetric LED configurations for a subset (chunk) of possible combinations in the mixed case, where the configuration consists of a mix of Type A (Q1/Q3), Type B (Q2/Q4), and axis-symmetric LED pairs.
 
         This method is intended for internal use with parallel processing. For each combination of points from the provided Q1, Q2, and axis chunks, it constructs a configuration by adding both the selected points and their symmetric counterparts with respect to the grid center. If the configuration requires a center LED (odd LED count), it is included. Only configurations with the correct total number of LEDs are returned. The resulting configurations are sorted and returned as a list.
 
         :param q1_chunk: List of Q1 point combinations to process in this chunk. Each entry is a tuple of (x, y) coordinates (integer grid indices) representing points in the first quadrant.
-        :type q1_chunk: List[Tuple[int, int]]
+        :type q1_chunk: list[tuple[int, int]]
         :param q2_combinations: List of all Q2 point combinations to pair with each Q1 selection. Each entry is a tuple of (x, y) coordinates (integer grid indices) representing points in the second quadrant.
-        :type q2_combinations: List[Tuple[int, int]]
+        :type q2_combinations: list[tuple[int, int]]
         :param axis_combinations: List of all axis point combinations to pair with each Q1 and Q2 selection. Each entry is a tuple of (x, y) coordinates (integer grid indices) representing points on the positive axes.
-        :type axis_combinations: List[Tuple[int, int]]
+        :type axis_combinations: list[tuple[int, int]]
 
-        :returns:
-            List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
-        :rtype: List[List[Tuple[int, int]]]
+        :returns: List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).
+        :rtype: list[list[tuple[int, int]]]
 
         .. note::
             - This method is intended for internal use with parallel processing in the mixed-pair case.
@@ -715,17 +702,17 @@ class Sampler:
         
         return chunk_configs
     
-    def _remove_duplicates(self, configurations: List[List[Tuple[int, int]]]) -> List[List[Tuple[int, int]]]:
+    def _remove_duplicates(self, configurations: list[list[tuple[int, int]]]) -> list[list[tuple[int, int]]]:
         """
         Removes duplicate LED configurations from a list, ensuring each configuration is unique.
 
         This method compares each configuration (a list of (x, y) tuples representing LED positions) and eliminates duplicates by converting each configuration to a tuple of tuples and storing it in a set for fast lookup. Only the first occurrence of each unique configuration is retained in the output list. The order of configurations in the returned list corresponds to their first appearance in the input.
 
         :param configurations: List of configurations to process. Each configuration is a list of (x, y) tuples, where each tuple represents the integer grid coordinates of an LED position (not scaled by grid step).
-        :type configurations: List[List[Tuple[int, int]]]
+        :type configurations: list[list[tuple[int, int]]]
 
         :returns: List of unique configurations, with duplicates removed. Each configuration is a list of (x, y) tuples as in the input.
-        :rtype: List[List[Tuple[int, int]]]
+        :rtype: list[list[tuple[int, int]]]
 
         .. note::
             - Configurations are considered duplicates if their sorted list of (x, y) tuples matches exactly.
@@ -743,18 +730,16 @@ class Sampler:
         
         return unique_configs
     
-    def plot_configuration(self, ax: Axes, configuration: List[Tuple[int, int]], z: float = -1., point_size: int = 20, set_title: bool = False) -> Axes:
+    def plot_configuration(self, ax: Axes, configuration: list[tuple[int, int]], z: float = -1., point_size: int = 20, set_title: bool = False) -> Axes:
         """
         Visualizes a given LED configuration on a 2D grid using Matplotlib, displaying the LED positions and grid layout.
 
         This method plots the provided configuration of LED positions on the specified Matplotlib Axes object. The grid is scaled and labeled according to the underlying Grid object. Optionally, the plot can include a title indicating the number of LEDs and their height above the grid.
 
-        :param ax: Matplotlib Axes
-            The Axes object on which to plot the configuration.
+        :param ax: The Axes object on which to plot the configuration.
         :type ax: matplotlib.axes.Axes
-        :param configuration: List of (x, y) tuples
-            The LED positions to plot, as a list of tuples representing integer grid coordinates (not scaled by grid step).
-        :type configuration: List[Tuple[int, int]]
+        :param configuration: The LED positions to plot, as a list of (x, y) tuples representing integer grid coordinates (not scaled by grid step).
+        :type configuration: list[tuple[int, int]]
         :param z: Height of LEDs above the grid in centimeters, used for the plot title. If set to -1 (default), uses the Sampler's height attribute.
         :type z: float, optional
         :param point_size: Size of the plotted LED points.
@@ -801,18 +786,16 @@ class Sampler:
 
         return ax
 
-    def plot_configuration_small(self, ax: Axes, configuration: List[Tuple[int, int]], z: float = -1., point_size: int = 10) -> Axes:
+    def plot_configuration_small(self, ax: Axes, configuration: list[tuple[int, int]], z: float = -1., point_size: int = 10) -> Axes:
         """
         Creates a compact visualization of an LED configuration on a Matplotlib Axes, suitable for use in subplots or summary figures.
 
         This method plots the provided LED positions on the given Axes object, using smaller point sizes and minimal axis labeling for a cleaner, more compact appearance. The grid is drawn according to the associated Grid object, but axis labels and tick labels are hidden to save space.
 
-        :param ax: Matplotlib Axes
-            The Axes object on which to plot the configuration.
+        :param ax: The Axes object on which to plot the configuration.
         :type ax: matplotlib.axes.Axes
-        :param configuration: List of (x, y) tuples
-            The LED positions to plot, as a list of tuples representing integer grid coordinates (not scaled by grid step).
-        :type configuration: List[Tuple[int, int]]
+        :param configuration: The LED positions to plot, as a list of (x, y) tuples representing integer grid coordinates (not scaled by grid step).
+        :type configuration: list[tuple[int, int]]
         :param z: Height of LEDs above the grid in centimeters, used for the plot title (not shown in this small plot). Default is -1.
         :type z: float, optional
         :param point_size: Size of the plotted LED points (smaller than in the main plot).
@@ -862,15 +845,14 @@ class Sampler:
         
         return ax
     
-    def save_configuration_to_json(self, configuration: List[Tuple[int, int]], height: int, filename: str, save_fig_type: str = "") -> None:
+    def save_configuration_to_json(self, configuration: list[tuple[int, int]], height: int, filename: str, save_fig_type: str = "") -> None:
         """
         Serializes a single LED configuration to a JSON file, optionally saving a visualization of the configuration as an image file.
 
         The method writes the configuration, including the number of LEDs, their (x, y) positions (as provided), and the LED height, to a JSON file at the specified path. If a file type is specified via ``save_fig_type``, a plot of the configuration is also saved in the same location with the corresponding extension.
 
-        :param configuration: List of (x, y) tuples
-            The LED positions to save, as a list of tuples representing grid coordinates (not scaled by grid step).
-        :type configuration: List[Tuple[int, int]]
+        :param configuration: The LED positions to save, as a list of (x, y) tuples representing grid coordinates (not scaled by grid step).
+        :type configuration: list[tuple[int, int]]
         :param height: Height of LEDs above the grid in centimeters.
         :type height: int
         :param filename: Path to the output JSON file.
@@ -901,7 +883,7 @@ class Sampler:
             fig.savefig(filename.replace('.json', f'.{save_fig_type}'), dpi=300)
             plt.close(fig)
             
-    def read_configuration_from_json(self, filename: str) -> Tuple[List[Tuple[int, int]], int]:
+    def read_configuration_from_json(self, filename: str) -> tuple[list[tuple[int, int]], int]:
         """
         Loads a single LED configuration and its associated height from a JSON file.
 
@@ -912,8 +894,7 @@ class Sampler:
         :param filename: Path to the input JSON file containing the configuration.
         :type filename: str
 
-        :returns:
-            - configuration (List[Tuple[int, int]]): List of (x, y) tuples representing LED positions in centimeters.
+        :returns: - configuration (list[tuple[int, int]]): List of (x, y) tuples representing LED positions in centimeters.
             - height (int): Height of LEDs above the grid in centimeters.
 
         :raises FileNotFoundError: If the specified file does not exist.

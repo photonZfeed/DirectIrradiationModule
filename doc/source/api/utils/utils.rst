@@ -98,14 +98,15 @@ Example Usage
     .. code-block:: python
 
         # calculate mean irradiance and homogeneity index from an indirect irradiation measurement
-        irr, mean_irradiance, homogeneity = process_radiometry_indirect('results/radiometry/LST1-01G01-UV01-00/indirect_irradiation.csv')
+        irr, mean_irradiance, homogeneity = process_radiometry_data('results/radiometry/LST1-01G01-UV01-00/indirect_irradiation.csv')
         print(f'Mean Irradiance: {mean_irradiance:.2f} W/m²')
         print(f'Homogeneity Index: {homogeneity:.4f}')
 
-        # Visualize the irradiance distribution
-        from utils.process_radiometry_data import plot_irradiance_radiometry
+        # Visualize the irradiance distribution using the raytracing plot helper
+        # (irr is a DataFrame with columns ['x', 'y', 'z'])
+        from utils.process_raytracing_data import plot_irradiance_raytracing
         from matplotlib import pyplot as plt
 
         fig, ax = plt.subplots(figsize=(8, 6))
-        plot_irradiance_radiometry(ax, irr, title='Indirect Irradiation - Irradiance Distribution')
+        plot_irradiance_raytracing(ax, irr.rename(columns={'z': 'Irradiance'}), title='Indirect Irradiation - Irradiance Distribution')
         plt.show()

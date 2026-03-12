@@ -1,6 +1,9 @@
 # Direct Irradiation Module Optimization
 
-**ToDo** Add nice figure
+## Overview
+
+![Geometric Model Overview](doc/images/geometric_model_overview.png)
+
 
 This project is part of the publication ["Making Photocatalyst Screening Photo-Efficient – Geometric Radiation Field Model Assisted Design of a Direct Irradiation Module for the Multi-Batch Screening Reactor"](https://doi.org/10.5281/zenodo.17867874), DOI: [10.5281/zenodo.17867874](https://doi.org/10.5281/zenodo.17867874). It contains the python code used for the simulations and optimizations described in the publication as well as the corresponding radiometry- and raytracing data. The full dataset including radiometry raw data and eletronic lab journal entries about the conducted simulations is available on Zenodo: [https://zenodo.org/records/18610997](https://zenodo.org/records/18610997).
 
@@ -53,3 +56,7 @@ Refer to the [documentation](https://photonzfeed.github.io/DirectIrradiationModu
 
 ## Documentation
 Documentation is available at [https://photonzfeed.github.io/DirectIrradiationModule](https://photonzfeed.github.io/DirectIrradiationModule) and includes guides on how to build the direct irradiation module, how to run the radiometry measurements, how to perform the raytracing simulations and how to use the optimization code including a detailed overview on the API.
+
+## AI Assistance
+
+Parts of the documentation and docstrings in this repository, as well as several minor code correctness fixes, were produced with the assistance of AI language model tools. See [AI_DISCLOSURE.md](AI_DISCLOSURE.md) for a full account of which tools were used, what they were applied to, and the scope of human review.

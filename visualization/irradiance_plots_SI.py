@@ -1,3 +1,16 @@
+"""
+Irradiance comparison plots for the direct irradiation module (SI units).
+
+This module provides :func:`create_irradiance_plots_SI`, which generates
+publication-quality figures comparing the geometric model, raytracing
+simulation, and radiometry measurements for each validated LED configuration.
+Figures are saved as SVG files in the ``figures/`` directory.
+
+Typical usage::
+
+    from visualization.irradiance_plots_SI import create_irradiance_plots_SI
+    create_irradiance_plots_SI()
+"""
 import os
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
@@ -35,7 +48,7 @@ def create_irradiance_plots_SI():
         - May create the 'figures' directory if it does not exist.
         - Displays figures using matplotlib's interactive window.
 
-    :notes:
+    .. note::
         - Assumes the presence of radiometry and raytracing data in the 'results/radiometry' and 'results/raytracing' directories, respectively.
         - Assumes LED configuration JSONs are present in 'results/sampled_configs/near_optimal_configs/<led_name>/<label>.json'.
         - Uses external utility functions for data processing and plotting.
@@ -45,12 +58,6 @@ def create_irradiance_plots_SI():
 
         >>> create_irradiance_plots_SI()
         # Generates and saves irradiance comparison plots for all defined LED configurations.
-
-    :Parameters:
-        None
-
-    :Returns:
-        None
 
     """
     import numpy as np

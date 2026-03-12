@@ -13,7 +13,7 @@ Example Usage
 
         from utils.grid import Grid
         from utils.led import LST1_01G01_UV01_00
-        from geometric_model import GeometricModel
+        from geometric_model import GeometricModel, save_results
 
         # Define grid and LED
         G = Grid(width=20, height=20, step=2.5)

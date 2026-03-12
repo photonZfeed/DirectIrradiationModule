@@ -1,3 +1,17 @@
+"""
+Ray-count independence plots for raytracing simulations.
+
+This module provides :func:`create_ray_independence_plots_SI`, which generates
+a 2 × 2 figure assessing how the standard deviation of irradiance and the
+computation time change with the number of rays used in Speos raytracing
+simulations (365 nm and 530 nm, with and without diffuse reflectors). The
+figure is saved as an SVG file in the ``figures/`` directory.
+
+Typical usage::
+
+    from visualization.ray_independence_plots import create_ray_independence_plots_SI
+    create_ray_independence_plots_SI()
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 from ICIW_Plots import cm2inch, make_square_subplots
@@ -9,29 +23,22 @@ def create_ray_independence_plots_SI():
 
     The function is intended to help assess the statistical independence and convergence of raytracing results with increasing ray count, and to visualize the computational cost associated with higher ray numbers.
 
-    :Parameters:
-        None
+    :raises FileNotFoundError: If the Excel data file is not found at the specified path.
+    :raises KeyError: If the expected sheet or data ranges are missing in the Excel file.
+    :raises ValueError: If the data cannot be converted to float as expected.
 
-    :Returns:
-        None
-
-    :Raises:
-        FileNotFoundError: If the Excel data file is not found at the specified path.
-        KeyError: If the expected sheet or data ranges are missing in the Excel file.
-        ValueError: If the data cannot be converted to float as expected.
-
-    :Side Effects:
+    :side effects:
         - Reads data from 'data/raytracing/ray_independence_test.xlsx'.
         - Saves a figure to 'figures/ray_independence_plots.svg'.
         - Displays the generated plots using matplotlib's interactive window.
 
-    :Notes:
+    .. note::
         - Assumes the Excel file contains a sheet named 'Planilha1' with data in specific cell ranges.
         - Requires the custom plotting style 'ICIWstyle' and 'visualization/publication_style.mplstyle' to be available.
-        - Uses custom utility functions `cm2inch` and `make_square_subplots` from the `ICIW_Plots` module.
+        - Uses custom utility functions ``cm2inch`` and ``make_square_subplots`` from the ``ICIW_Plots`` module.
         - The function does not accept any parameters and is intended to be run as a script or called from another script.
 
-    :Example:
+    :example:
 
         >>> create_ray_independence_plots_SI()
         # Generates and displays the ray independence plots, and saves them as an SVG file.

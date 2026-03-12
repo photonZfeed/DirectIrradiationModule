@@ -2,6 +2,7 @@
 Direct Irradiation Module Optimization - Usage Example
 
 This script demonstrates the main functionality of the project:
+
 1. Setting up a grid and LED configuration
 2./3. Sampling LED configurations systematically or via Monte Carlo
 4. Simulating the irradiance distribution of a single configuration
@@ -12,6 +13,11 @@ This script demonstrates the main functionality of the project:
 
 To get started, uncomment the sections you want to run and ensure the required
 data files and results directories exist.
+
+See Also
+--------
+For a narrative walkthrough of each step with explanatory prose, see the tutorial
+in the documentation: ``doc/source/tutorial.rst``.
 """
 
 from systematic_sampler import Sampler

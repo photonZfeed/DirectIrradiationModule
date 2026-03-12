@@ -24,7 +24,7 @@ def read_radiometry_file(filepath: str) -> pd.DataFrame:
 
     :side effects: None.
 
-    :notes:
+    .. note::
         - Assumes the first row and column of the CSV are headers and indices, respectively.
         - Handles both European and standard CSV formats.
         - All positions are assumed to be in centimeters unless otherwise specified.
@@ -68,7 +68,7 @@ def process_radiometry_file(filepath: str, correction_factor: float = 1.0, heigh
 
     :side effects: None.
 
-    :notes:
+    .. note::
         - The homogeneity is defined as 1 - (std/mean) of the irradiance values.
         - The region is centered based on the mean of the column positions.
         - Assumes spatial units are centimeters.
@@ -117,7 +117,7 @@ def process_all_cand_files(folder, correction_factor=1.0, height=33, width=34):
 
     :side effects: Reads all matching CSV files in the specified folder.
 
-    :notes:
+    .. note::
         - Only files ending with '.csv' and containing 'UV' or 'GRN' in the filename are processed.
         - The irradiance DataFrame is centered and corrected as in :func:`process_radiometry_file`.
     """
@@ -153,7 +153,7 @@ def calculate_correction_factor(reference_filepath: str, expected_value: float) 
 
     :side effects: None.
 
-    :notes:
+    .. note::
         - The units of the original data (e.g., umol m⁻² s⁻¹ or W m⁻²) do not affect the correction factor calculation.
         - Assumes uniform pixel size and that index/columns are in centimeters.
     """
@@ -166,88 +166,88 @@ def calculate_correction_factor(reference_filepath: str, expected_value: float) 
     return correction_factor
 
 def plot_irradiance_radiometry(ax: Axes, irr: pd.DataFrame, title: str = "", y_title: float = -0.5, v_max: float = -1., extent: tuple = (-2, -1, -2, -1), shrink_cbar: float = 1.0) -> Axes:
-        """
-        Visualizes the irradiance distribution as a color-mapped image with a colorbar and labeled axes.
+    """
+    Visualizes the irradiance distribution as a color-mapped image with a colorbar and labeled axes.
 
-        The function displays the irradiance DataFrame as an image on the provided matplotlib Axes, with optional title, color scaling, and extent. The colorbar is labeled with irradiance units. The plot is set to have equal aspect ratio and axis labels in centimeters.
+    The function displays the irradiance DataFrame as an image on the provided matplotlib Axes, with optional title, color scaling, and extent. The colorbar is labeled with irradiance units. The plot is set to have equal aspect ratio and axis labels in centimeters.
 
-        :param ax: Matplotlib Axes object on which to plot the irradiance distribution.
-        :type ax: matplotlib.axes.Axes
-        :param irr: DataFrame containing irradiance data to plot (index/columns: positions in cm).
-        :type irr: pandas.DataFrame
-        :param title: Title of the plot (default: '').
-        :type title: str, optional
-        :param y_title: Y position of the title (default: -0.5).
-        :type y_title: float, optional
-        :param v_max: Maximum value for the color scale. If -1, auto-scales to nearest multiple of 5 above max value (default: -1).
-        :type v_max: float, optional
-        :param extent: Plot extent as (xmin, xmax, ymin, ymax). If default, uses DataFrame min/max (default: (-2, -1, -2, -1)).
-        :type extent: tuple, optional
-        :param shrink_cbar: Factor to shrink the colorbar (default: 1.0).
-        :type shrink_cbar: float, optional
+    :param ax: Matplotlib Axes object on which to plot the irradiance distribution.
+    :type ax: matplotlib.axes.Axes
+    :param irr: DataFrame containing irradiance data to plot (index/columns: positions in cm).
+    :type irr: pandas.DataFrame
+    :param title: Title of the plot (default: '').
+    :type title: str, optional
+    :param y_title: Y position of the title (default: -0.5).
+    :type y_title: float, optional
+    :param v_max: Maximum value for the color scale. If -1, auto-scales to nearest multiple of 5 above max value (default: -1).
+    :type v_max: float, optional
+    :param extent: Plot extent as (xmin, xmax, ymin, ymax). If default, uses DataFrame min/max (default: (-2, -1, -2, -1)).
+    :type extent: tuple, optional
+    :param shrink_cbar: Factor to shrink the colorbar (default: 1.0).
+    :type shrink_cbar: float, optional
 
-        :returns: The matplotlib Axes object with the plot.
-        :rtype: matplotlib.axes.Axes
+    :returns: The matplotlib Axes object with the plot.
+    :rtype: matplotlib.axes.Axes
 
-        :raises ValueError: If the DataFrame is empty or extent is invalid.
+    :raises ValueError: If the DataFrame is empty or extent is invalid.
 
-        :side effects: Modifies the provided Axes object and creates a colorbar.
+    :side effects: Modifies the provided Axes object and creates a colorbar.
 
-        :notes:
-            - The color scale is set to start at 0 and end at v_max.
-            - The function auto-determines contour levels based on v_max.
-            - The colorbar is labeled with '$E$ / W m⁻²'.
-        """
+    .. note::
+        - The color scale is set to start at 0 and end at v_max.
+        - The function auto-determines contour levels based on v_max.
+        - The colorbar is labeled with '$E$ / W m⁻²'.
+    """
 
-        # Set color bar limits
-        if v_max != -1.:
-            vmax = v_max
-        else:
-            vmax = (int(irr.to_numpy().max() // 5) + 1) * 5 # round up to next multiple of 5
-        norm = mcolors.Normalize(vmin=0, vmax=vmax, clip=False)
+    # Set color bar limits
+    if v_max != -1.:
+        vmax = v_max
+    else:
+        vmax = (int(irr.to_numpy().max() // 5) + 1) * 5 # round up to next multiple of 5
+    norm = mcolors.Normalize(vmin=0, vmax=vmax, clip=False)
 
-        # define contour levels based on vmax
-        if vmax <= 30:
-            step = 5
-        if vmax <= 50:
-            step = 10
-        elif vmax <= 100:
-            step = 20
-        else:
-            step = 50 
-        levels = np.arange(0, vmax + step, step)
+    # define contour levels based on vmax
+    if vmax <= 30:
+        step = 5
+    elif vmax <= 50:
+        step = 10
+    elif vmax <= 100:
+        step = 20
+    else:
+        step = 50
+    levels = np.arange(0, vmax + step, step)
 
-        # Create colormesh plot
-        # Ensure extent values are floats
-        if extent == (-2, -1, -2, -1):  
-            x_min = float(irr.columns.min())
-            x_max = float(irr.columns.max())
-            y_min = float(irr.index.min())
-            y_max = float(irr.index.max())
-            extent = (x_min, x_max, y_min, y_max)
-        tc = ax.imshow(
-            irr,
-            extent=extent,
-            origin='lower',
-            cmap='viridis',
-            norm=norm,
-            aspect='equal'
-        )
+    # Create colormesh plot
+    # Ensure extent values are floats
+    if extent == (-2, -1, -2, -1):
+        x_min = float(irr.columns.min())
+        x_max = float(irr.columns.max())
+        y_min = float(irr.index.min())
+        y_max = float(irr.index.max())
+        extent = (x_min, x_max, y_min, y_max)
+    tc = ax.imshow(
+        irr,
+        extent=extent,
+        origin='lower',
+        cmap='viridis',
+        norm=norm,
+        aspect='equal'
+    )
 
-        # set subtitle
-        if title:
-            ax.set_title(title, y=y_title, fontsize=10)
+    # set subtitle
+    if title:
+        ax.set_title(title, y=y_title, fontsize=10)
 
-        # Create colorbar with reduced size to match plot
-        cbar = plt.colorbar(tc, ax=ax, ticks=levels, shrink=shrink_cbar)
-        cbar.set_label('$E$ / W m⁻²')
+    # Create colorbar with reduced size to match plot
+    cbar = plt.colorbar(tc, ax=ax, ticks=levels, shrink=shrink_cbar)
+    cbar.set_label('$E$ / W m⁻²')
 
-        ax.set_xlabel('$X$ / cm')
-        ax.set_ylabel('$Y$ / cm')
-        ax.set_aspect('equal', 'box')
+    ax.set_xlabel('$X$ / cm')
+    ax.set_ylabel('$Y$ / cm')
+    ax.set_aspect('equal', 'box')
 
-        # Set x and y limits
-        ax.set_xlim(extent[0], extent[1])
-        ax.set_ylim(extent[2], extent[3])
+    # Set x and y limits
+    ax.set_xlim(extent[0], extent[1])
+    ax.set_ylim(extent[2], extent[3])
 
-        return ax
+    return ax

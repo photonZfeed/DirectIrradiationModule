@@ -21,19 +21,27 @@ class MonteCarloSampler():
     The grid is assumed to be square and centered at (0, 0). The number of LEDs and their heights can be varied within user-specified ranges. Sampling can be performed uniformly or weighted by the number of possible configurations for each LED count.
 
     :param G: Grid object defining the possible LED positions. Must be a square grid with an odd number of points per side.
-        (type: Grid)
-    :param led_min: Minimum number of LEDs to place in a configuration (inclusive). Must be >= 1. (type: int, default: 1)
-    :param led_max: Maximum number of LEDs to place in a configuration (inclusive). Must be >= led_min. (type: int, default: 16)
-    :param height_min: Minimum height above the grid for any LED, in centimeters. (type: float, default: 5.0)
-    :param height_max: Maximum height above the grid for any LED, in centimeters. Must be >= height_min. (type: float, default: 15.0)
-    :param height_step: Step size for possible LED heights, in centimeters. (type: float, default: 1.0)
-    :param seed: Random seed for reproducible results. If None, results are non-reproducible. (type: Optional[int], default: None)
-    :param sampling_mode: Sampling strategy for LED counts. "uniform" yields roughly equal samples per LED count; "weighted" samples proportional to the number of possible configurations. (type: str, default: "uniform")
-    :param verbose: If True, prints initialization and sampling details to stdout. (type: bool, default: True)
+    :type G: Grid
+    :param led_min: Minimum number of LEDs to place in a configuration (inclusive). Must be >= 1.
+    :type led_min: int
+    :param led_max: Maximum number of LEDs to place in a configuration (inclusive). Must be >= led_min.
+    :type led_max: int
+    :param height_min: Minimum height above the grid for any LED, in centimeters.
+    :type height_min: float
+    :param height_max: Maximum height above the grid for any LED, in centimeters. Must be >= height_min.
+    :type height_max: float
+    :param height_step: Step size for possible LED heights, in centimeters.
+    :type height_step: float
+    :param seed: Random seed for reproducible results. If None, results are non-reproducible.
+    :type seed: int, optional
+    :param sampling_mode: Sampling strategy for LED counts. ``"uniform"`` yields roughly equal samples per LED count; ``"weighted"`` samples proportional to the number of possible configurations.
+    :type sampling_mode: str
+    :param verbose: If True, prints initialization and sampling details to stdout.
+    :type verbose: bool
 
     :raises ValueError: If the grid is not square with an odd number of points per side, or if parameter constraints are violated.
 
-    :note:
+    .. note::
         - The grid must be square and have an odd number of points per side to ensure a unique center point for symmetry.
         - The class precomputes all valid symmetric configurations for each LED count in the specified range.
         - All random sampling is performed using the provided seed for reproducibility, if specified.
@@ -49,15 +57,23 @@ class MonteCarloSampler():
         The sampler enforces point symmetry and quadrant balance, and supports reproducible random sampling. All valid symmetric configurations for each LED count are precomputed at initialization.
 
         :param G: Grid object defining the possible LED positions. Must be a square grid with an odd number of points per side.
-            (type: Grid)
-        :param led_min: Minimum number of LEDs to place in a configuration (inclusive). Must be >= 1. (type: int, default: 1)
-        :param led_max: Maximum number of LEDs to place in a configuration (inclusive). Must be >= led_min. (type: int, default: 16)
-        :param height_min: Minimum height above the grid for any LED, in centimeters. (type: float, default: 5.0)
-        :param height_max: Maximum height above the grid for any LED, in centimeters. Must be >= height_min. (type: float, default: 15.0)
-        :param height_step: Step size for possible LED heights, in centimeters. (type: float, default: 1.0)
-        :param seed: Random seed for reproducible results. If None, results are non-reproducible. (type: Optional[int], default: None)
-        :param sampling_mode: Sampling strategy for LED counts. "uniform" yields roughly equal samples per LED count; "weighted" samples proportional to the number of possible configurations. (type: str, default: "uniform")
-        :param verbose: If True, prints initialization and sampling details to stdout. (type: bool, default: True)
+        :type G: Grid
+        :param led_min: Minimum number of LEDs to place in a configuration (inclusive). Must be >= 1.
+        :type led_min: int
+        :param led_max: Maximum number of LEDs to place in a configuration (inclusive). Must be >= led_min.
+        :type led_max: int
+        :param height_min: Minimum height above the grid for any LED, in centimeters.
+        :type height_min: float
+        :param height_max: Maximum height above the grid for any LED, in centimeters. Must be >= height_min.
+        :type height_max: float
+        :param height_step: Step size for possible LED heights, in centimeters.
+        :type height_step: float
+        :param seed: Random seed for reproducible results. If None, results are non-reproducible.
+        :type seed: int, optional
+        :param sampling_mode: Sampling strategy for LED counts. ``"uniform"`` yields roughly equal samples per LED count; ``"weighted"`` samples proportional to the number of possible configurations.
+        :type sampling_mode: str
+        :param verbose: If True, prints initialization and sampling details to stdout.
+        :type verbose: bool
 
         :raises ValueError: If the grid is not square with an odd number of points per side, or if parameter constraints are violated.
 
@@ -65,7 +81,7 @@ class MonteCarloSampler():
             - Prints initialization details to stdout if `verbose` is True.
             - Sets the global NumPy random seed if `seed` is provided.
 
-        :note:
+        .. note::
             - The grid must be square and have an odd number of points per side to ensure a unique center point for symmetry.
             - The class precomputes all valid symmetric configurations for each LED count in the specified range.
             - All random sampling is performed using the provided seed for reproducibility, if specified.
@@ -135,7 +151,7 @@ class MonteCarloSampler():
         :side effects:
             - Outputs the configuration count per LED count and the total number of configurations to stdout.
 
-        :notes:
+        .. note::
             - This method is intended for diagnostic and informational purposes, typically called during initialization if verbose mode is enabled.
             - The counts reflect precomputed, symmetry-constrained configurations for the current grid and LED parameters.
         """
@@ -151,11 +167,11 @@ class MonteCarloSampler():
         """
         Generates a list of all possible LED heights based on the minimum, maximum, and step size parameters.
 
-        :returns:
-            List[float]: A list of height values (in centimeters) that LEDs can be placed at, generated from
+        :returns: A list of height values (in centimeters) that LEDs can be placed at, generated from
             ``height_min`` to ``height_max`` (inclusive) in increments of ``height_step``. Values are rounded to 6 decimal places.
+        :rtype: list[float]
 
-        :notes:
+        .. note::
             - Floating point precision is accounted for to ensure the maximum value is included if within tolerance.
             - The returned list is used for random sampling of LED heights in configuration generation.
         """
@@ -181,7 +197,7 @@ class MonteCarloSampler():
                 - ``all_pos_axis``: All axis points with positive coordinates (excluding center)
             - The center point (0, 0) is handled separately and not included in any quadrant or axis list.
 
-        :notes:
+        .. note::
             - This classification is essential for enforcing symmetry and balance constraints in LED configuration generation.
             - Should be called during initialization before any configuration sampling.
         """
@@ -220,7 +236,7 @@ class MonteCarloSampler():
         :returns:
             int: The total number of unique symmetric configurations that can be formed by selecting ``a`` Q1 pairs, ``b`` Q2 pairs, and ``c`` axis pairs.
 
-        :notes:
+        .. note::
             - The calculation is based on combinatorial selection of points from the classified quadrants and axes.
             - Used internally to determine the weight of each (a, b, c) combination for random sampling.
             - Assumes that the lists ``Q1_points``, ``Q2_points``, and ``all_pos_axis`` have been populated.
@@ -257,7 +273,7 @@ class MonteCarloSampler():
             - Populates ``self.configuration_counts_by_led`` with the number of configurations per LED count.
             - Sets ``self.total_configurations`` and ``self.led_count_weights`` for sampling.
 
-        :notes:
+        .. note::
             - This method is called during initialization and is essential for enabling efficient random sampling of valid configurations.
             - Assumes that the grid has already been classified into quadrants and axes.
         """
@@ -325,13 +341,12 @@ class MonteCarloSampler():
         """
         Determines the fractional contribution of a grid point to each of the four quadrants (Q1, Q2, Q3, Q4).
 
-        :param point: Tuple[int, int]
-            The (x, y) coordinates of the grid point.
-        :returns:
-            Tuple[float, float, float, float]:
-                The weights for (Q1, Q2, Q3, Q4), each in [0, 1], summing to 1 for the center, or 1 for a single quadrant/axis.
+        :param point: The (x, y) coordinates of the grid point.
+        :type point: tuple[int, int]
+        :returns: The weights for (Q1, Q2, Q3, Q4), each in [0, 1], summing to 1 for the center, or 1 for a single quadrant/axis.
+        :rtype: tuple[float, float, float, float]
 
-        :notes:
+        .. note::
             - Used for verifying quadrant balance in LED configurations.
             - Axis points contribute to two quadrants; the center contributes equally to all.
         """
@@ -362,13 +377,12 @@ class MonteCarloSampler():
         """
         Calculates the total fractional weight of LEDs in each quadrant for a given configuration.
 
-        :param configuration: List[Tuple[int, int]]
-            List of (x, y) grid points representing the LED configuration.
-        :returns:
-            Tuple[float, float, float, float]:
-                The total weights for (Q1, Q2, Q3, Q4), summing to the total number of LEDs.
+        :param configuration: List of (x, y) grid points representing the LED configuration.
+        :type configuration: list[tuple[int, int]]
+        :returns: The total weights for (Q1, Q2, Q3, Q4), summing to the total number of LEDs.
+        :rtype: tuple[float, float, float, float]
 
-        :notes:
+        .. note::
             - Used to verify that a configuration is balanced across all quadrants.
         """
         q1, q2, q3, q4 = 0.0, 0.0, 0.0, 0.0
@@ -384,15 +398,12 @@ class MonteCarloSampler():
         """
         Checks whether a given LED configuration satisfies all symmetry and balance constraints.
 
-        :param configuration: List[Tuple[int, int]]
-            List of (x, y) grid points representing the LED configuration.
-        :returns:
-            bool: True if the configuration is valid (correct LED count, point symmetry, and quadrant balance), False otherwise.
+        :param configuration: List of (x, y) grid points representing the LED configuration.
+        :type configuration: list[tuple[int, int]]
+        :returns: True if the configuration is valid (correct LED count, point symmetry, and quadrant balance), False otherwise.
+        :rtype: bool
 
-        :raises:
-            None
-
-        :notes:
+        .. note::
             - The configuration must have a valid LED count, be symmetric about the center, and be balanced across all quadrants.
         """
         led_count = len(configuration)
@@ -423,14 +434,14 @@ class MonteCarloSampler():
         """
         Sets the random seed for reproducible sampling.
 
-        :param seed: int
-            The random seed value to use for both Python's random module and NumPy.
+        :param seed: The random seed value to use for both Python's random module and NumPy.
+        :type seed: int
 
         :side effects:
             - Updates the internal random state and NumPy's global seed.
             - Prints the seed value to stdout.
 
-        :notes:
+        .. note::
             - Use this method to ensure reproducibility of generated configurations.
         """
         self.seed = seed
@@ -443,14 +454,12 @@ class MonteCarloSampler():
         """
         Selects a single random element from a sequence, optionally using weights, with the sampler's random state.
 
-        :param seq: Sequence
-            The sequence to choose from.
-        :param weights: Optional[List[float]]
-            Optional weights for each element in the sequence.
-        :returns:
-            Any: The randomly selected element from the sequence.
+        :param seq: The sequence to choose from.
+        :param weights: Optional weights for each element in the sequence.
+        :type weights: list[float], optional
+        :returns: The randomly selected element from the sequence.
 
-        :notes:
+        .. note::
             - Ensures reproducibility by using the sampler's internal random state.
         """
         if weights is None:
@@ -462,16 +471,15 @@ class MonteCarloSampler():
         """
         Selects multiple random elements from a population, optionally using weights, with the sampler's random state.
 
-        :param population: Sequence
-            The population to choose from.
-        :param weights: Optional[List[float]]
-            Optional weights for each element in the population.
-        :param k: int
-            Number of elements to select (default: 1).
-        :returns:
-            List[Any]: List of randomly selected elements.
+        :param population: The population to choose from.
+        :param weights: Optional weights for each element in the population.
+        :type weights: list[float], optional
+        :param k: Number of elements to select (default: 1).
+        :type k: int
+        :returns: List of randomly selected elements.
+        :rtype: list
 
-        :notes:
+        .. note::
             - Ensures reproducibility by using the sampler's internal random state.
         """
         if weights is None:
@@ -483,17 +491,16 @@ class MonteCarloSampler():
         """
         Draws a random sample of unique elements from a population using the sampler's random state.
 
-        :param population: Sequence
-            The population to sample from.
-        :param k: int
-            Number of unique samples to draw.
-        :returns:
-            List[Any]: List of sampled elements.
+        :param population: The population to sample from.
+        :param k: Number of unique samples to draw.
+        :type k: int
+        :returns: List of sampled elements.
+        :rtype: list
 
         :raises ValueError:
             If k is larger than the population size.
 
-        :notes:
+        .. note::
             - Ensures reproducibility by using the sampler's internal random state.
         """
         return self._random_state.sample(population, k)
@@ -504,17 +511,17 @@ class MonteCarloSampler():
         """
         Generates a single random valid LED configuration and associated height, enforcing symmetry and quadrant balance.
 
-        :param target_led_count: Optional[int]
-            If specified, generates a configuration with this exact number of LEDs. If None, the LED count is sampled according to the sampler's distribution.
-        :param target_height: Optional[float]
-            If specified, selects the LED height closest to this value. If None, height is sampled from possible values.
-        :returns:
-            Optional[Dict[str, Any]]: A dictionary containing configuration details (positions, LED count, height, symmetry tuple, and seed), or None if generation failed after maximum attempts.
+        :param target_led_count: If specified, generates a configuration with this exact number of LEDs. If None, the LED count is sampled according to the sampler's distribution.
+        :type target_led_count: int, optional
+        :param target_height: If specified, selects the LED height closest to this value. If None, height is sampled from possible values.
+        :type target_height: float, optional
+        :returns: A dictionary containing configuration details (positions, LED count, height, symmetry tuple, and seed), or None if generation failed after maximum attempts.
+        :rtype: dict or None
 
         :side effects:
             - May print debug information to stdout if configuration generation fails or is invalid.
 
-        :notes:
+        .. note::
             - Attempts up to 1000 times to generate a valid configuration.
             - Uses the sampler's random state for reproducibility.
             - The returned dictionary includes the configuration, LED count, height, symmetry tuple (a, b, c), and seed used.
@@ -625,15 +632,23 @@ class MonteCarloSampler():
 
         This method creates a specified number of random, symmetric LED configurations on a square grid, optionally using user-defined distributions for LED counts and heights. Sampling can be performed in parallel for efficiency. If `target_samples_per_led` is specified, the method generates approximately that many samples for each valid LED count.
 
-        :param num_samples: Number of samples to generate. (int)
-        :param led_distribution: Optional; probability distribution for LED counts, as a dictionary mapping LED count (int) to probability (float). If None, uses the sampler's default distribution. (Optional[Dict[int, float]])
-        :param height_distribution: Optional; probability distribution for LED heights, as a dictionary mapping height (float) to probability (float). If None, uses uniform sampling over allowed heights. (Optional[Dict[float, float]])
-        :param use_parallel: Whether to use parallel processing for sample generation. (bool, default: True)
-        :param max_workers: Maximum number of parallel worker processes. If None, uses the number of CPU cores. (Optional[int])
-        :param worker_seeds: Optional list of random seeds for each worker to ensure reproducibility in parallel mode. (Optional[List[int]])
-        :param target_samples_per_led: If specified, generates approximately this many samples for each valid LED count, overriding `num_samples`. (Optional[int])
+        :param num_samples: Number of samples to generate.
+        :type num_samples: int
+        :param led_distribution: Optional probability distribution for LED counts, as a dictionary mapping LED count to probability. If None, uses the sampler's default distribution.
+        :type led_distribution: dict[int, float], optional
+        :param height_distribution: Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling over allowed heights.
+        :type height_distribution: dict[float, float], optional
+        :param use_parallel: Whether to use parallel processing for sample generation.
+        :type use_parallel: bool
+        :param max_workers: Maximum number of parallel worker processes. If None, uses the number of CPU cores.
+        :type max_workers: int, optional
+        :param worker_seeds: Optional list of random seeds for each worker to ensure reproducibility in parallel mode.
+        :type worker_seeds: list[int], optional
+        :param target_samples_per_led: If specified, generates approximately this many samples for each valid LED count, overriding ``num_samples``.
+        :type target_samples_per_led: int, optional
 
-        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata. (List[Dict[str, Any]])
+        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata.
+        :rtype: list[dict]
 
         :raises ValueError: If parameter constraints are violated or grid is not properly initialized.
 
@@ -641,7 +656,7 @@ class MonteCarloSampler():
             - May print progress and distribution information to stdout if verbose mode is enabled.
             - May use parallel processing and spawn worker processes.
 
-        :notes:
+        .. note::
             - If `target_samples_per_led` is set, the total number of samples is determined by the number of valid LED counts times this value.
             - Parallel processing is recommended for large sample counts.
             - All random sampling is reproducible if a seed is provided.
@@ -677,17 +692,21 @@ class MonteCarloSampler():
 
         This method ensures that each allowed LED count is represented by roughly `samples_per_led` samples, optionally using a custom height distribution and parallel processing.
 
-        :param samples_per_led: Number of samples to generate for each valid LED count. (int)
-        :param height_distribution: Optional; probability distribution for LED heights, as a dictionary mapping height (float) to probability (float). If None, uses uniform sampling. (Optional[Dict[float, float]])
-        :param use_parallel: Whether to use parallel processing for sample generation. (bool, default: True)
+        :param samples_per_led: Number of samples to generate for each valid LED count.
+        :type samples_per_led: int
+        :param height_distribution: Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling.
+        :type height_distribution: dict[float, float], optional
+        :param use_parallel: Whether to use parallel processing for sample generation.
+        :type use_parallel: bool
 
-        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata. (List[Dict[str, Any]])
+        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata.
+        :rtype: list[dict]
 
         :side effects:
             - Prints progress and distribution information to stdout if verbose mode is enabled.
             - May use parallel processing and spawn worker processes.
 
-        :notes:
+        .. note::
             - The total number of samples generated is `samples_per_led` times the number of valid LED counts.
             - Each LED count is sampled independently.
         """
@@ -743,16 +762,20 @@ class MonteCarloSampler():
         """
         Generates random LED configurations sequentially (single-threaded), optionally using custom LED count and height distributions.
 
-        :param num_samples: Number of samples to generate. (int)
-        :param led_distribution: Optional; probability distribution for LED counts, as a dictionary mapping LED count (int) to probability (float). If None, uses the sampler's default distribution. (Optional[Dict[int, float]])
-        :param height_distribution: Optional; probability distribution for LED heights, as a dictionary mapping height (float) to probability (float). If None, uses uniform sampling. (Optional[Dict[float, float]])
+        :param num_samples: Number of samples to generate.
+        :type num_samples: int
+        :param led_distribution: Optional probability distribution for LED counts, as a dictionary mapping LED count to probability. If None, uses the sampler's default distribution.
+        :type led_distribution: dict[int, float], optional
+        :param height_distribution: Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling.
+        :type height_distribution: dict[float, float], optional
 
-        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata. (List[Dict[str, Any]])
+        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata.
+        :rtype: list[dict]
 
         :side effects:
             - Prints progress and distribution information to stdout if verbose mode is enabled.
 
-        :notes:
+        .. note::
             - This method is suitable for small to moderate sample counts or debugging.
             - All random sampling is reproducible if a seed is provided.
         """
@@ -797,19 +820,25 @@ class MonteCarloSampler():
         """
         Generates random LED configurations in parallel using multiple worker processes, optionally with custom LED count and height distributions.
 
-        :param num_samples: Number of samples to generate. (int)
-        :param led_distribution: Optional; probability distribution for LED counts, as a dictionary mapping LED count (int) to probability (float). If None, uses the sampler's default distribution. (Optional[Dict[int, float]])
-        :param height_distribution: Optional; probability distribution for LED heights, as a dictionary mapping height (float) to probability (float). If None, uses uniform sampling. (Optional[Dict[float, float]])
-        :param max_workers: Maximum number of parallel worker processes. If None, uses the number of CPU cores. (Optional[int])
-        :param worker_seeds: Optional list of random seeds for each worker to ensure reproducibility. (Optional[List[int]])
+        :param num_samples: Number of samples to generate.
+        :type num_samples: int
+        :param led_distribution: Optional probability distribution for LED counts, as a dictionary mapping LED count to probability. If None, uses the sampler's default distribution.
+        :type led_distribution: dict[int, float], optional
+        :param height_distribution: Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling.
+        :type height_distribution: dict[float, float], optional
+        :param max_workers: Maximum number of parallel worker processes. If None, uses the number of CPU cores.
+        :type max_workers: int, optional
+        :param worker_seeds: Optional list of random seeds for each worker to ensure reproducibility.
+        :type worker_seeds: list[int], optional
 
-        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata. (List[Dict[str, Any]])
+        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata.
+        :rtype: list[dict]
 
         :side effects:
             - Prints progress and distribution information to stdout.
             - Spawns worker processes for parallel execution.
 
-        :notes:
+        .. note::
             - Parallel processing is recommended for large sample counts.
             - Each worker can be seeded for reproducibility.
         """
@@ -878,17 +907,22 @@ class MonteCarloSampler():
 
         This function is intended to be called by a parallel worker and uses its own random state for reproducibility.
 
-        :param num_samples: Number of samples to generate in this worker. (int)
-        :param led_distribution: Optional; probability distribution for LED counts, as a dictionary mapping LED count (int) to probability (float). If None, uses the sampler's default distribution. (Optional[Dict[int, float]])
-        :param height_distribution: Optional; probability distribution for LED heights, as a dictionary mapping height (float) to probability (float). If None, uses uniform sampling. (Optional[Dict[float, float]])
-        :param worker_seed: Random seed for this worker's random state. (Optional[int])
+        :param num_samples: Number of samples to generate in this worker.
+        :type num_samples: int
+        :param led_distribution: Optional probability distribution for LED counts, as a dictionary mapping LED count to probability. If None, uses the sampler's default distribution.
+        :type led_distribution: dict[int, float], optional
+        :param height_distribution: Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling.
+        :type height_distribution: dict[float, float], optional
+        :param worker_seed: Random seed for this worker's random state.
+        :type worker_seed: int, optional
 
-        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata. (List[Dict[str, Any]])
+        :returns: List of configuration dictionaries, each containing LED positions, count, height, and other metadata.
+        :rtype: list[dict]
 
         :side effects:
             - Uses a worker-specific random state for reproducibility.
 
-        :notes:
+        .. note::
             - This method is not intended to be called directly by users; it is used internally for parallel sample generation.
         """
         # Create a new random state for this worker
@@ -951,9 +985,10 @@ class MonteCarloSampler():
         :param random_choice_fn: Function for random selection from a sequence, supporting optional weights. (Callable)
         :param random_sample_fn: Function for random sampling of unique elements from a sequence. (Callable)
 
-        :returns: Configuration dictionary with LED positions, count, height, and metadata, or None if generation fails. (Dict[str, Any] or None)
+        :returns: Configuration dictionary with LED positions, count, height, and metadata, or None if generation fails.
+        :rtype: dict or None
 
-        :notes:
+        .. note::
             - Used only in parallel sample generation; not intended for direct user calls.
             - Attempts up to 1000 times to generate a valid configuration.
         """
@@ -1034,15 +1069,17 @@ class MonteCarloSampler():
     
     def _get_actual_coordinates(self, samples: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        Converts grid-based LED coordinates in sample dictionaries to real-world coordinates using the grid step size.
+        Converts grid-index-based LED coordinates in sample dictionaries to real-world coordinates using the grid step size.
 
-        :param samples: List of sample dictionaries, each containing a 'configuration' key with grid coordinates. (List[Dict[str, Any]])
+        :param samples: List of sample dictionaries, each containing a ``'configuration'`` key whose value is a list of (x, y) integer grid-index tuples.
+        :type samples: list[dict]
 
-        :returns: List of sample dictionaries with 'configuration' values converted to real-world coordinates. (List[Dict[str, Any]])
+        :returns: The same list of sample dictionaries with each ``'configuration'`` value updated to real-world coordinate tuples (float, in centimeters).
+        :rtype: list[dict]
 
-        :notes:
+        .. note::
             - This method modifies the input dictionaries in-place.
-            - The conversion multiplies each coordinate by the grid step size.
+            - Each coordinate is multiplied by the grid step size to convert from grid indices to centimeters.
         """
         for sample in samples:
             sample['configuration'] = [(x * self.grid_step, y * self.grid_step) for (x, y) in sample['configuration']]
@@ -1053,14 +1090,17 @@ class MonteCarloSampler():
         """
         Prints the distribution of LED counts and heights among generated samples.
 
-        :param led_count_dist: Dictionary mapping LED count (int) to number of samples. (Dict[int, int])
-        :param height_dist: Dictionary mapping height (float) to number of samples. (Dict[float, int])
-        :param total_samples: Total number of samples generated. (int)
+        :param led_count_dist: Dictionary mapping LED count to number of samples.
+        :type led_count_dist: dict[int, int]
+        :param height_dist: Dictionary mapping height to number of samples.
+        :type height_dist: dict[float, int]
+        :param total_samples: Total number of samples generated.
+        :type total_samples: int
 
         :side effects:
             - Outputs distribution statistics to stdout.
 
-        :notes:
+        .. note::
             - Intended for diagnostic and informational purposes.
         """
         if not led_count_dist:
@@ -1089,21 +1129,27 @@ class MonteCarloSampler():
 
         This method attempts to generate ``num_samples`` unique configurations, each satisfying symmetry and quadrant balance constraints, with LED counts and heights optionally sampled from user-provided distributions. Uniqueness is enforced on the combination of LED positions and heights. Sampling can be performed in parallel for efficiency. If ``target_samples_per_led`` is specified, the method generates approximately that many unique samples for each valid LED count.
 
-        :param num_samples: Number of unique samples to generate. (int, default: 100)
-        :param max_attempts_factor: Multiplier for the maximum number of attempts allowed (max_attempts = num_samples * max_attempts_factor). (int, default: 10)
-        :param led_distribution: Optional; probability distribution for LED counts, as a dictionary mapping LED count (int) to probability (float). If None, uses the sampler's default distribution. (Optional[Dict[int, float]], default: None)
-        :param height_distribution: Optional; probability distribution for LED heights, as a dictionary mapping height (float) to probability (float). If None, uses uniform sampling over allowed heights. (Optional[Dict[float, float]], default: None)
-        :param use_parallel: Whether to use parallel processing for sample generation. (bool, default: True)
-        :param target_samples_per_led: If specified, generates approximately this many unique samples for each valid LED count, overriding ``num_samples``. (Optional[int], default: None)
+        :param num_samples: Number of unique samples to generate.
+        :type num_samples: int
+        :param max_attempts_factor: Multiplier for the maximum number of attempts allowed (max_attempts = num_samples * max_attempts_factor).
+        :type max_attempts_factor: int
+        :param led_distribution: Optional probability distribution for LED counts, as a dictionary mapping LED count to probability. If None, uses the sampler's default distribution.
+        :type led_distribution: dict[int, float], optional
+        :param height_distribution: Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling over allowed heights.
+        :type height_distribution: dict[float, float], optional
+        :param use_parallel: Whether to use parallel processing for sample generation.
+        :type use_parallel: bool
+        :param target_samples_per_led: If specified, generates approximately this many unique samples for each valid LED count, overriding ``num_samples``.
+        :type target_samples_per_led: int, optional
 
-        :returns:
-            List[Dict[str, Any]]: A list of unique configuration dictionaries, each containing LED positions, count, height, and metadata.
+        :returns: A list of unique configuration dictionaries, each containing LED positions, count, height, and metadata.
+        :rtype: list[dict]
 
         :side effects:
             - Prints progress and distribution information to stdout.
             - May use parallel processing and spawn worker processes.
 
-        :notes:
+        .. note::
             - Uniqueness is enforced on the combination of LED positions and heights.
             - If ``target_samples_per_led`` is set, the total number of samples is determined by the number of valid LED counts times this value.
             - The method will stop after ``num_samples * max_attempts_factor`` attempts if not enough unique samples are found.
@@ -1180,19 +1226,23 @@ class MonteCarloSampler():
 
         This method ensures that each allowed LED count is represented by roughly ``samples_per_led`` unique samples, optionally using a custom height distribution and parallel processing. Uniqueness is enforced on the combination of LED positions and heights.
 
-        :param samples_per_led: Number of unique samples to generate per valid LED count. (int)
-        :param height_distribution: Optional; probability distribution for LED heights, as a dictionary mapping height (float) to probability (float). If None, uses uniform sampling. (Optional[Dict[float, float]], default: None)
-        :param use_parallel: Whether to use parallel processing for sample generation. (bool, default: True)
-        :param max_attempts_factor: Multiplier for the maximum number of attempts allowed per LED count (max_attempts = samples_per_led * max_attempts_factor). (int, default: 10)
+        :param samples_per_led: Number of unique samples to generate per valid LED count.
+        :type samples_per_led: int
+        :param height_distribution: Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling.
+        :type height_distribution: dict[float, float], optional
+        :param use_parallel: Whether to use parallel processing for sample generation.
+        :type use_parallel: bool
+        :param max_attempts_factor: Multiplier for the maximum number of attempts allowed per LED count (max_attempts = samples_per_led * max_attempts_factor).
+        :type max_attempts_factor: int
 
-        :returns:
-            List[Dict[str, Any]]: A list of unique configuration dictionaries, each containing LED positions, count, height, and metadata.
+        :returns: A list of unique configuration dictionaries, each containing LED positions, count, height, and metadata.
+        :rtype: list[dict]
 
         :side effects:
             - Prints progress and distribution information to stdout.
             - May use parallel processing and spawn worker processes.
 
-        :notes:
+        .. note::
             - The total number of samples generated is ``samples_per_led`` times the number of valid LED counts.
             - Each LED count is sampled independently.
             - Uniqueness is enforced on the combination of LED positions and heights.
@@ -1242,18 +1292,20 @@ def save_configurations(configurations: List[Dict[str, Any]],
 
     The function extracts relevant data from the provided configurations and stores them in a compressed NPZ file for efficient storage and later retrieval. Metadata about the grid, LED range, height range, and random seed are also included for reproducibility and documentation.
 
-    :param configurations: List of configuration dictionaries, each containing at least 'configuration', 'led_count', and 'height'. (List[Dict[str, Any]])
-    :param sampler: The MonteCarloSampler instance used to generate the configurations. (MonteCarloSampler)
-    :param filename: Output filename for the compressed NPZ file. (str)
+    :param configurations: List of configuration dictionaries, each containing at least ``'configuration'``, ``'led_count'``, and ``'height'``.
+    :type configurations: list[dict]
+    :param sampler: The MonteCarloSampler instance used to generate the configurations.
+    :type sampler: MonteCarloSampler
+    :param filename: Output filename for the compressed NPZ file.
+    :type filename: str
 
-    :returns:
-        None
+    :returns: None
 
     :side effects:
         - Writes a compressed NPZ file to disk at the specified filename.
         - Prints a summary message to stdout upon successful save.
 
-    :notes:
+    .. note::
         - The NPZ file contains arrays for configurations, LED counts, heights, and metadata fields for reproducibility.
         - The function assumes all configurations are compatible with the provided sampler's grid and parameter ranges.
     """
@@ -1294,8 +1346,10 @@ def analyze_configurations(configurations: List[Dict[str, Any]],
 
     This function provides a summary of the generated configurations, including the distribution of LED counts and heights, the number of unique configurations (by position and by position+height), and a validity check on a sample of configurations using the generator's verification method.
 
-    :param configurations: List of configuration dictionaries, each containing at least 'configuration', 'led_count', and 'height'. (List[Dict[str, Any]])
-    :param generator: The MonteCarloSampler instance used to generate or verify the configurations. (MonteCarloSampler)
+    :param configurations: List of configuration dictionaries, each containing at least ``'configuration'``, ``'led_count'``, and ``'height'``.
+    :type configurations: list[dict]
+    :param generator: The MonteCarloSampler instance used to generate or verify the configurations.
+    :type generator: MonteCarloSampler
 
     :returns:
         None
@@ -1303,7 +1357,7 @@ def analyze_configurations(configurations: List[Dict[str, Any]],
     :side effects:
         - Prints analysis results and statistics to stdout.
 
-    :notes:
+    .. note::
         - Uniqueness is checked both for (positions + height) and for positions only.
         - Validity is checked for up to 10 randomly selected configurations using the generator's verification method.
         - The function assumes all configurations are compatible with the provided generator's grid and parameter ranges.

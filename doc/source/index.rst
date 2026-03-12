@@ -4,7 +4,16 @@ Multi-Batch Screening Reactor - Designing a Direct Irradiation Module Documentat
 Overview
 --------
 
-**Add nice figure later, e.g. graphical abstract**
+.. _fig-model-overview:
+.. figure:: images/geometric_model_overview.png
+   :align: center
+   :alt: Geometric model overview
+   :target: images/geometric_model_overview.png
+
+   Overview of the geometric model for the direct irradiation module design.
+   
+
+
 
 This project is part of the publication `Making Photocatalyst Screening Photo-Efficient – Geometric Radiation Field Model Assisted Design of a Direct Irradiation Module for the Multi-Batch Screening Reactor <https://doi.org/10.5281/zenodo.17867874>`_ (DOI: `10.5281/zenodo.17867874 <https://doi.org/10.5281/zenodo.17867874>`_).
 
@@ -14,7 +23,7 @@ This documentation provides comprehensive guides and API references for designin
 * Methodology for radiometry and raytracing simulations to validate the geometric model
 * Detailed API documentation of the sampling algorithms, the geometric model and the optimization routine used for module design as well as the evaluation of the radiometry and raytracing simulations.
 
-The underlying Python code, radiometry data, and raytracing simulations are available on `Github <https://github.com/your-repo>`_ and `Zenodo <https://zenodo.org/record/17867874>`_.
+The underlying Python code, radiometry data, and raytracing simulations are available on `GitHub <https://github.com/photonZfeed/DirectIrradiationModule>`_ and `Zenodo <https://zenodo.org/record/17867874>`_.
 
 .. toctree::
    :maxdepth: 1
@@ -23,4 +32,5 @@ The underlying Python code, radiometry data, and raytracing simulations are avai
    module_assembly
    radiometry
    raytracing
+   tutorial
    api/index

@@ -25,7 +25,7 @@ def process_radiometry_data(filepath: str, height: float = 0.33, width: float = 
         - Only supports LED types "LST1-01G01-UV01-00" and "LST1-01F06-GRN1-00" as identified in the filepath. For the green LED, a correction factor is applied to estimate optical power at 350 mA from 1 A data.
         - The region of interest is cropped to x in [11, 45] and y in [16, 49] as per the referenced publication.
         - The CSV file must not contain a header row; the first row is skipped.
-        - Plotting the irradiance distribution can be done using utils.process_radiometry_data.plot_irradiance_radiometry(irr)
+        - The returned ``irr`` DataFrame has columns ``['x', 'y', 'z']`` (where ``z`` is the irradiance). To visualize it, use :func:`utils.process_raytracing_data.plot_irradiance_raytracing` after renaming the ``z`` column to ``Irradiance``.
 
     :side effects:
         None. The function only reads from the specified file and returns processed data.

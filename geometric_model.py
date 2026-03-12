@@ -202,7 +202,8 @@ class GeometricModel:
 
         :param configurations: List of configurations to simulate (each a list of (x, y) tuples).
         :type configurations: list
-        :param z: Height(s) of the sources above the grid (cm). Can be a float or numpy.ndarray.
+        :param z: Height(s) of the sources above the grid (cm). A scalar float is broadcast to all
+            configurations; a 1-D array must have one entry per configuration.
         :type z: float or numpy.ndarray
         :param batch_size: Number of configurations per batch. Default is 500.
         :type batch_size: int, optional
@@ -219,7 +220,27 @@ class GeometricModel:
 
         .. note::
             Designed for efficient batch simulation of large configuration sets. Results are aggregated from all batches.
+            A plain Python ``float`` or a zero-dimensional array is accepted for ``z`` and is automatically
+            broadcast to the length of ``configurations``.
+
+        .. rubric:: Example
+
+        .. code-block:: python
+
+            from utils.grid import Grid
+            from utils.led import LST1_01G01_UV01_00
+            from geometric_model import GeometricModel, save_results
+
+            G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
+            model = GeometricModel(G, LST1_01G01_UV01_00, resolution_xy=0.5)
+
+            configs, z = model.read_configurations(
+                "results/examples/example_MonteCarlo_1-16_leds_5-15_cm_10000_samples.npz"
+            )
+            results = model.simulate_batch(configs, z, batch_size=500)
+            save_results(results, model, "results/examples/batch_results.npz")
         """
+        z = np.atleast_1d(np.asarray(z, dtype=np.float64))
         if z.size == 1:
             z = np.full(len(configurations), z)
         tasks = [
@@ -257,11 +278,8 @@ class GeometricModel:
         :param shrink_cbar: Factor to shrink the color bar. Default is 1.0.
         :type shrink_cbar: float, optional
 
-        :return: The Matplotlib Axes object with the plot.
-        :rtype: matplotlib.axes.Axes
-
         :side effects:
-            Modifies the provided Axes object and creates a colorbar.
+            Modifies the provided Axes object and creates a colorbar. Does not return a value.
 
         .. note::
             The color scale and contour levels are automatically determined based on the data unless specified.
@@ -277,14 +295,12 @@ class GeometricModel:
         # define contour levels based on vmax
         if vmax <= 30:
             step = 5
-        if vmax <= 50:
+        elif vmax <= 50:
             step = 10
         elif vmax <= 100:
             step = 20
-        # elif vmax <= 150:
-        #     step = 50  
         else:
-            step = 50 
+            step = 50
         levels = np.arange(0, vmax + step, step)
 
         if extent == (-2, -1, -2, -1):
