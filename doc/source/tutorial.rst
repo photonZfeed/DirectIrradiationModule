@@ -63,7 +63,7 @@ When the design space is too large for exhaustive enumeration — for instance w
 Simulating Irradiance for a Single Configuration
 -------------------------------------------------
 
-The :class:`~geometric_model.GeometricModel` takes the grid and LED objects and computes the irradiance distribution at each grid point using a geometric ray-optics model. For a quick sanity-check, a single named configuration can be loaded from a JSON file and simulated directly. The result is a 2-D array of irradiance values (W m\ :sup:`-2`) that can be visualised immediately.
+The :class:`~geometric_model.GeometricModel` takes the grid and LED objects and computes the irradiance distribution at each grid point. The result is a 2-D array of irradiance values (W m\ :sup:`-2`) that can be visualised immediately.
 
 .. code-block:: python
 
