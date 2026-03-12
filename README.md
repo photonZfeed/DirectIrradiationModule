@@ -2,7 +2,7 @@
 
 ## Overview
 
-![Geometric Model Overview](doc/images/geometric_model_overview.png)
+![Geometric Model Overview](doc/source/images/geometric_model_overview.png)
 
 
 This project is part of the publication ["Making Photocatalyst Screening Photo-Efficient – Geometric Radiation Field Model Assisted Design of a Direct Irradiation Module for the Multi-Batch Screening Reactor"](https://doi.org/10.5281/zenodo.17867874), DOI: [10.5281/zenodo.17867874](https://doi.org/10.5281/zenodo.17867874). It contains the python code used for the simulations and optimizations described in the publication as well as the corresponding radiometry- and raytracing data. The full dataset including radiometry raw data and eletronic lab journal entries about the conducted simulations is available on Zenodo: [https://zenodo.org/records/18610997](https://zenodo.org/records/18610997).
