@@ -1,7 +1,7 @@
 Getting Started: Full Optimization Workflow
 ============================================
 
-This tutorial walks through the complete workflow for designing and optimizing a direct irradiation module, from defining the physical geometry to selecting the best LED configuration for a target irradiance. Each step corresponds to a stage in the code, and together they form a self-contained pipeline that can be adapted to different module geometries or LED types. The code shown in each section is taken directly from ``usage_example.py``.
+This tutorial walks through the complete workflow for designing and optimizing a direct irradiation module, from defining the physical geometry to selecting the best LED configuration according to the defined objective function. The full code shown is summarized in ``usage_example.py``.
 
 
 Setting Up the Grid and LED
@@ -41,7 +41,7 @@ The :class:`~systematic_sampler.Sampler` generates all symmetrically valid arran
 Generating Configurations: Monte Carlo Sampler
 -----------------------------------------------
 
-When the design space is too large for exhaustive enumeration — for instance when both the LED count and the mounting height vary — the :class:`~monte_carlo_sampler.MonteCarloSampler` draws random unique configurations from the full space. The ``seed`` parameter ensures reproducibility. Setting ``use_parallel=True`` distributes the sampling across available CPU cores. The file path is constructed to encode the key sampling parameters so that it is self-documenting.
+When the design space is too large for exhaustive enumeration, the :class:`~monte_carlo_sampler.MonteCarloSampler` draws random unique configurations from the full space. The ``seed`` parameter ensures reproducibility. Setting ``use_parallel=True`` distributes the sampling across available CPU cores. The file path is constructed to encode the key sampling parameters so that it is self-documenting.
 
 .. code-block:: python
 
@@ -63,7 +63,7 @@ When the design space is too large for exhaustive enumeration — for instance w
 Simulating Irradiance for a Single Configuration
 -------------------------------------------------
 
-The :class:`~geometric_model.GeometricModel` takes the grid and LED objects and computes the irradiance distribution at each grid point. The result is a 2-D array of irradiance values (W m\ :sup:`-2`) that can be visualised immediately.
+The :class:`~geometric_model.GeometricModel` takes the grid and LED objects and computes the irradiance distribution at each grid point. The result is a 2-D array of irradiance values (W m\ :sup:`-2`) that can be visualized immediately.
 
 .. code-block:: python
 
@@ -101,7 +101,7 @@ Simulating thousands of configurations one at a time would be slow. :meth:`~geom
 Finding the Best Configuration
 --------------------------------
 
-The :class:`~optimizer.Optimizer` is initialised with an irradiance bound — the maximum permissible irradiance in W m\ :sup:`-2`. Any configuration whose peak irradiance exceeds this bound is excluded from consideration. :meth:`~optimizer.Optimizer.find_best_configuration` selects the configuration that maximises the product of the mean-irradiance-to-bound ratio and the homogeneity index, providing a single-figure-of-merit ranking without requiring manual weight tuning.
+The :class:`~optimizer.Optimizer` is initialized with an irradiance bound — the maximum permissible irradiance in W m\ :sup:`-2`. Any configuration whose peak irradiance exceeds this bound is excluded from consideration. :meth:`~optimizer.Optimizer.find_best_configuration` selects the configuration that maximizes the product of the mean-irradiance-to-bound ratio and the homogeneity index, providing a single-figure-of-merit ranking without requiring manual weight tuning.
 
 .. code-block:: python
 
@@ -120,7 +120,7 @@ The :class:`~optimizer.Optimizer` is initialised with an irradiance bound — th
 Multi-Objective Analysis: Pareto Front
 ----------------------------------------
 
-In practice, mean irradiance and homogeneity are competing objectives: increasing one often degrades the other. :meth:`~optimizer.Optimizer.create_pareto_front` sweeps a weighting factor ``t`` from 0 (homogeneity only) to 1 (mean irradiance only), collecting the Pareto-optimal configurations at each trade-off point. The resulting front is visualised with :meth:`~optimizer.Optimizer.plot_pareto_front`, and the full results are saved for later retrieval.
+In practice, mean irradiance and homogeneity are competing objectives: increasing one often degrades the other. :meth:`~optimizer.Optimizer.create_pareto_front` sweeps a weighting factor ``t`` from 0 (homogeneity only) to 1 (mean irradiance only), collecting the Pareto-optimal configurations at each trade-off point. The resulting front is visualized with :meth:`~optimizer.Optimizer.plot_pareto_front`, and the full results are saved for later retrieval.
 
 .. code-block:: python
 
@@ -146,7 +146,7 @@ In practice, mean irradiance and homogeneity are competing objectives: increasin
 Analysing Radiometry and Raytracing Data
 -----------------------------------------
 
-Once a physical prototype is built, measured radiometry data and independent raytracing simulations can be compared against the geometric model predictions. The ``calculate_correction_factor`` function derives a scalar correction from a reference measurement (e.g. with a reflector), which is then applied when processing the main radiometry file. Raytracing data is processed analogously via ``process_raytracing_file``. Both datasets are visualised with the corresponding plot functions.
+Once a physical prototype is built, measured radiometry data and independent raytracing simulations can be compared against the geometric model predictions. The ``calculate_correction_factor`` function derives a scalar correction from a reference measurement (e.g. with a reflector), which is then applied when processing the main radiometry file. Raytracing data is processed analogously via ``process_raytracing_file``. Both datasets are visualized with the corresponding plot functions.
 
 .. code-block:: python
 
