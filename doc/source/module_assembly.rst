@@ -171,7 +171,7 @@ module, including references to the corresponding CAD files in the
 
 
 Modular Reflector with Adjustable Height
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For systematic investigation of LED-to-detector distance effects, a modular,
 height-adjustable reflector system was developed.

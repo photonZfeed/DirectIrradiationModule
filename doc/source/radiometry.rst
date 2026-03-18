@@ -87,7 +87,7 @@ emission ranges of the respective LEDs prior to integration:
 Photon Flux Correction
 ----------------------
 
-Using datasheet values for current-dependent photon flux [2]_, [3]_, the photon fluxes obtained from 2D radiometry were corrected
+Using datasheet values for current-dependent photon flux [2]_ [3]_, the photon fluxes obtained from 2D radiometry were corrected
 based on reference measurements acquired at an effective distance of **7 cm**
 for direct irradiation **without reflectors**.
 
