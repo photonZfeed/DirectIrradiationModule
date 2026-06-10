@@ -147,7 +147,7 @@ class GeometricModel:
         irr_total = np.zeros_like(self.X, dtype=np.float64)
         for pos in config:
             X_shift = self.X - pos[0]
-            Y_shift = self.Y + pos[1]
+            Y_shift = self.Y - pos[1]
             irr_led = calculate_irradiance(X_shift, Y_shift, z, self.led.angle_data, self.led.intensity_data)
             irr_total += irr_led
         return irr_total * 1e4  # convert from W/cm² to W/m²

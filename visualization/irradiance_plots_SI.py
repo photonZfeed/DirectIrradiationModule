@@ -173,6 +173,9 @@ def create_irradiance_plots_SI():
         model = GeometricModel(G=G, led=config['led_obj'])
         irr = model.simulate(config=conf, z=height)
 
+        # mirror irr on y-axis for better comparison with raytracing and radiometry
+        irr = np.flip(irr, axis=0)
+
         shrink_cbar = 1 # shrink colorbar for all plots
         y_title = 0
 
