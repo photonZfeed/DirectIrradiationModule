@@ -1,0 +1,274 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started: Full Optimization Workflow &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API" href="api/index.html" />
+    <link rel="prev" title="Ray Tracing Simulations" href="raytracing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started: Full Optimization Workflow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setting-up-the-grid-and-led">Setting Up the Grid and LED</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-configurations-systematic-sampler">Generating Configurations: Systematic Sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-configurations-monte-carlo-sampler">Generating Configurations: Monte Carlo Sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simulating-irradiance-for-a-single-configuration">Simulating Irradiance for a Single Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#batch-simulating-a-configuration-set">Batch Simulating a Configuration Set</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#finding-the-best-configuration">Finding the Best Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multi-objective-analysis-pareto-front">Multi-Objective Analysis: Pareto Front</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#analysing-radiometry-and-raytracing-data">Analysing Radiometry and Raytracing Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting Started: Full Optimization Workflow</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/tutorial.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started-full-optimization-workflow">
+<h1>Getting Started: Full Optimization Workflow<a class="headerlink" href="#getting-started-full-optimization-workflow" title="Link to this heading"></a></h1>
+<p>This tutorial walks through the complete workflow for designing and optimizing a direct irradiation module, from defining the physical geometry to selecting the best LED configuration according to the defined objective function. The full code shown is summarized in <code class="docutils literal notranslate"><span class="pre">usage_example.py</span></code>.</p>
+<section id="setting-up-the-grid-and-led">
+<h2>Setting Up the Grid and LED<a class="headerlink" href="#setting-up-the-grid-and-led" title="Link to this heading"></a></h2>
+<p>The <a class="reference internal" href="api/utils/utils.html#utils.grid.Grid" title="utils.grid.Grid"><code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code></a> object defines the measurement plane over which irradiance is evaluated. Its dimensions (in centimetres) and the spacing between evaluation points are set here. The <a class="reference internal" href="api/utils/utils.html#utils.led.LED" title="utils.led.LED"><code class="xref py py-class docutils literal notranslate"><span class="pre">LED</span></code></a> object encodes the physical properties of a single LED, including its optical output power and its angle-resolved intensity distribution loaded from a CSV file.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LED</span>
+
+<span class="n">G</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+<span class="n">led</span> <span class="o">=</span> <span class="n">LED</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LST1-01G01-UV01-00&quot;</span><span class="p">,</span>
+    <span class="n">optical_power</span><span class="o">=</span><span class="mf">0.875</span><span class="p">,</span>  <span class="c1"># @ 500 mA in W</span>
+    <span class="n">intensity_data_file</span><span class="o">=</span><span class="s2">&quot;utils/angle_intensity_data/LST1-01G01-UV01-00.csv&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="generating-configurations-systematic-sampler">
+<h2>Generating Configurations: Systematic Sampler<a class="headerlink" href="#generating-configurations-systematic-sampler" title="Link to this heading"></a></h2>
+<p>The <a class="reference internal" href="api/systematic_sampler.html#systematic_sampler.Sampler" title="systematic_sampler.Sampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sampler</span></code></a> generates all symmetrically valid arrangements of a fixed number of LEDs on the grid at a single height. This exhaustive enumeration is practical when the LED count is small, because the symmetry constraints keep the search space manageable. The resulting configurations and their metadata are saved to a compressed <code class="docutils literal notranslate"><span class="pre">.npz</span></code> file for later use.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">systematic_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">systematic_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_configurations</span> <span class="k">as</span> <span class="n">save_sys_configurations</span>
+
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="n">G</span><span class="o">=</span><span class="n">G</span><span class="p">,</span> <span class="n">led_count</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">samples_sys</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">generate_all_configurations</span><span class="p">()</span>
+<span class="n">save_sys_configurations</span><span class="p">(</span><span class="n">samples_sys</span><span class="p">,</span> <span class="n">sampler</span><span class="p">,</span>
+    <span class="s2">&quot;results/examples/example_systematic_8_leds_13_cm.npz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="generating-configurations-monte-carlo-sampler">
+<h2>Generating Configurations: Monte Carlo Sampler<a class="headerlink" href="#generating-configurations-monte-carlo-sampler" title="Link to this heading"></a></h2>
+<p>When the design space is too large for exhaustive enumeration, the <a class="reference internal" href="api/monte_carlo_sampler.html#monte_carlo_sampler.MonteCarloSampler" title="monte_carlo_sampler.MonteCarloSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">MonteCarloSampler</span></code></a> draws random unique configurations from the full space. The <code class="docutils literal notranslate"><span class="pre">seed</span></code> parameter ensures reproducibility. Setting <code class="docutils literal notranslate"><span class="pre">use_parallel=True</span></code> distributes the sampling across available CPU cores. The file path is constructed to encode the key sampling parameters so that it is self-documenting.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">monte_carlo_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">monte_carlo_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_configurations</span> <span class="k">as</span> <span class="n">save_mc_configurations</span>
+
+<span class="n">mc_sampler</span> <span class="o">=</span> <span class="n">MonteCarloSampler</span><span class="p">(</span>
+    <span class="n">G</span><span class="o">=</span><span class="n">G</span><span class="p">,</span> <span class="n">led_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">led_max</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+    <span class="n">height_min</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">height_max</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">height_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">sampling_mode</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+<span class="n">num_samples</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">samples_mc</span> <span class="o">=</span> <span class="n">mc_sampler</span><span class="o">.</span><span class="n">generate_unique_samples</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">use_parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">save_mc_configurations</span><span class="p">(</span><span class="n">samples_mc</span><span class="p">,</span> <span class="n">mc_sampler</span><span class="p">,</span>
+    <span class="sa">f</span><span class="s2">&quot;results/examples/example_MonteCarlo_</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">led_min</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">led_max</span><span class="si">}</span><span class="s2">_leds_&quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">height_min</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">height_max</span><span class="si">}</span><span class="s2">_cm_</span><span class="si">{</span><span class="n">num_samples</span><span class="si">}</span><span class="s2">_samples.npz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="simulating-irradiance-for-a-single-configuration">
+<h2>Simulating Irradiance for a Single Configuration<a class="headerlink" href="#simulating-irradiance-for-a-single-configuration" title="Link to this heading"></a></h2>
+<p>The <a class="reference internal" href="api/geometric_model.html#geometric_model.GeometricModel" title="geometric_model.GeometricModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">GeometricModel</span></code></a> takes the grid and LED objects and computes the irradiance distribution at each grid point. The result is a 2-D array of irradiance values (W m<sup>-2</sup>) that can be visualized immediately.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">G</span><span class="o">=</span><span class="n">G</span><span class="p">,</span> <span class="n">led</span><span class="o">=</span><span class="n">led</span><span class="p">)</span>
+<span class="n">sample_config</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">read_configuration_from_json</span><span class="p">(</span>
+    <span class="s2">&quot;results/sampled_configs/near_optimal_configs/LST1-01G01-UV01-00/UV3.json&quot;</span><span class="p">)</span>
+<span class="n">irr</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">sample_config</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s2">&quot;Irradiance Distribution of UV3 (Geometric Model)&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">plot_irradiance</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">irr</span><span class="o">=</span><span class="n">irr</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="batch-simulating-a-configuration-set">
+<h2>Batch Simulating a Configuration Set<a class="headerlink" href="#batch-simulating-a-configuration-set" title="Link to this heading"></a></h2>
+<p>Simulating thousands of configurations one at a time would be slow. <a class="reference internal" href="api/geometric_model.html#geometric_model.GeometricModel.simulate_batch" title="geometric_model.GeometricModel.simulate_batch"><code class="xref py py-meth docutils literal notranslate"><span class="pre">simulate_batch()</span></code></a> processes configurations in parallel using a <code class="docutils literal notranslate"><span class="pre">ProcessPoolExecutor</span></code> and accepts a <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> argument to control memory usage. It reads the configurations saved in the previous Monte Carlo step and returns a structured result object that is then written to disk with <a class="reference internal" href="api/geometric_model.html#geometric_model.save_results" title="geometric_model.save_results"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_results()</span></code></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_results</span>
+
+<span class="n">configs</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">read_configurations</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;results/examples/example_MonteCarlo_</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">led_min</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">led_max</span><span class="si">}</span><span class="s2">_leds_&quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">height_min</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">height_max</span><span class="si">}</span><span class="s2">_cm_</span><span class="si">{</span><span class="n">num_samples</span><span class="si">}</span><span class="s2">_samples.npz&quot;</span><span class="p">)</span>
+<span class="n">sim_results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate_batch</span><span class="p">(</span><span class="n">configurations</span><span class="o">=</span><span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="n">save_results</span><span class="p">(</span><span class="n">sim_results</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s2">&quot;results/examples/example_MonteCarlo_simulation_results.npz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="finding-the-best-configuration">
+<h2>Finding the Best Configuration<a class="headerlink" href="#finding-the-best-configuration" title="Link to this heading"></a></h2>
+<p>The <a class="reference internal" href="api/optimizer.html#optimizer.Optimizer" title="optimizer.Optimizer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></a> is initialized with an irradiance bound — the maximum permissible irradiance in W m<sup>-2</sup>. Any configuration whose peak irradiance exceeds this bound is excluded from consideration. <a class="reference internal" href="api/optimizer.html#optimizer.Optimizer.find_best_configuration" title="optimizer.Optimizer.find_best_configuration"><code class="xref py py-meth docutils literal notranslate"><span class="pre">find_best_configuration()</span></code></a> selects the configuration that maximizes the product of the mean-irradiance-to-bound ratio and the homogeneity index, providing a single-figure-of-merit ranking without requiring manual weight tuning.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+
+<span class="n">irradiance_bound</span> <span class="o">=</span> <span class="mi">150</span>  <span class="c1"># W m⁻²</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">irradiance_bound</span><span class="o">=</span><span class="n">irradiance_bound</span><span class="p">)</span>
+<span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">maxs</span><span class="p">,</span> <span class="n">stds</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">read_simulations</span><span class="p">(</span>
+    <span class="s2">&quot;results/examples/example_MonteCarlo_simulation_results.npz&quot;</span><span class="p">)</span>
+<span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> \
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">find_best_configuration</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">maxs</span><span class="p">,</span> <span class="n">stds</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best configuration: </span><span class="si">{</span><span class="n">best_config</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best height: </span><span class="si">{</span><span class="n">best_z</span><span class="si">}</span><span class="s2"> cm&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-objective-analysis-pareto-front">
+<h2>Multi-Objective Analysis: Pareto Front<a class="headerlink" href="#multi-objective-analysis-pareto-front" title="Link to this heading"></a></h2>
+<p>In practice, mean irradiance and homogeneity are competing objectives: increasing one often degrades the other. <a class="reference internal" href="api/optimizer.html#optimizer.Optimizer.create_pareto_front" title="optimizer.Optimizer.create_pareto_front"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_pareto_front()</span></code></a> sweeps a weighting factor <code class="docutils literal notranslate"><span class="pre">t</span></code> from 0 (homogeneity only) to 1 (mean irradiance only), collecting the Pareto-optimal configurations at each trade-off point. The resulting front is visualized with <a class="reference internal" href="api/optimizer.html#optimizer.Optimizer.plot_pareto_front" title="optimizer.Optimizer.plot_pareto_front"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_pareto_front()</span></code></a>, and the full results are saved for later retrieval.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_optimization_results</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">t_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span> <span class="o">=</span> \
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">create_pareto_front</span><span class="p">(</span><span class="n">t_values</span><span class="o">=</span><span class="n">t_values</span><span class="p">,</span> <span class="n">configurations</span><span class="o">=</span><span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span>
+                                  <span class="n">means</span><span class="o">=</span><span class="n">means</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">maxs</span><span class="p">,</span> <span class="n">stds</span><span class="o">=</span><span class="n">stds</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">optimizer</span><span class="o">.</span><span class="n">plot_pareto_front</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="o">=</span><span class="n">pareto_ratios</span><span class="p">,</span>
+                            <span class="n">pareto_homogeneities</span><span class="o">=</span><span class="n">pareto_homogeneities</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">save_optimization_results</span><span class="p">(</span>
+    <span class="s2">&quot;results/examples/example_optimization_results.npz&quot;</span><span class="p">,</span>
+    <span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span><span class="p">,</span>
+    <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="analysing-radiometry-and-raytracing-data">
+<h2>Analysing Radiometry and Raytracing Data<a class="headerlink" href="#analysing-radiometry-and-raytracing-data" title="Link to this heading"></a></h2>
+<p>Once a physical prototype is built, measured radiometry data and independent raytracing simulations can be compared against the geometric model predictions. The <code class="docutils literal notranslate"><span class="pre">calculate_correction_factor</span></code> function derives a scalar correction from a reference measurement (e.g. with a reflector), which is then applied when processing the main radiometry file. Raytracing data is processed analogously via <code class="docutils literal notranslate"><span class="pre">process_raytracing_file</span></code>. Both datasets are visualized with the corresponding plot functions.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">utils.process_radiometry_data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">calculate_correction_factor</span><span class="p">,</span> <span class="n">process_radiometry_file</span><span class="p">,</span> <span class="n">plot_irradiance_radiometry</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.process_raytracing_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">process_raytracing_file</span><span class="p">,</span> <span class="n">plot_irradiance_raytracing</span>
+
+<span class="n">N_led</span> <span class="o">=</span> <span class="mi">16</span>  <span class="c1"># number of LEDs in the module</span>
+<span class="n">radiometry_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;./results/radiometry/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/UV3_no_reflector.csv&quot;</span>
+<span class="n">reference_file</span>  <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;./results/radiometry/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/UV3_reflector.csv&quot;</span>
+<span class="n">expected_value</span>  <span class="o">=</span> <span class="n">N_led</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span>  <span class="c1"># W m⁻²</span>
+
+<span class="n">correction_factor</span> <span class="o">=</span> <span class="n">calculate_correction_factor</span><span class="p">(</span><span class="n">reference_file</span><span class="p">,</span> <span class="n">expected_value</span><span class="p">)</span>
+<span class="n">irr</span><span class="p">,</span> <span class="n">mean_irradiance</span><span class="p">,</span> <span class="n">homogeneity</span> <span class="o">=</span> <span class="n">process_radiometry_file</span><span class="p">(</span><span class="n">radiometry_file</span><span class="p">,</span> <span class="n">correction_factor</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Radiometry Data Analysis for </span><span class="si">{</span><span class="n">radiometry_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plot_irradiance_radiometry</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">irr</span><span class="o">=</span><span class="n">irr</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;UV3_no_reflector.txt&quot;</span>
+<span class="n">raytracing_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;./results/raytracing/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/&quot;</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">process_raytracing_file</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">raytracing_path</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Raytracing Data Analysis for </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">plot_irradiance_raytracing</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="raytracing.html" class="btn btn-neutral float-left" title="Ray Tracing Simulations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/index.html" class="btn btn-neutral float-right" title="API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,173 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>utils.process_radiometry_indirect &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">utils.process_radiometry_indirect</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for utils.process_radiometry_indirect</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<div class="viewcode-block" id="process_radiometry_data">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_radiometry_indirect.process_radiometry_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_radiometry_data</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.33</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.34</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processes radiometry data for indirect irradiation experiments, following the methodology described in Kowalczyk et al. (2023), DOI: 10.1039/D3RE00398A. This function reads radiometry data from a CSV file, determines the mean irradiance based on published received optical power for specific LED types, and calculates the homogeneity of the irradiance distribution. The function is tailored for datasets with a specific format and LED types as described in the referenced publication.</span>
+
+<span class="sd">    The CSV file is expected to contain columns for x, y, and z coordinates (with z representing measured irradiance values), separated by semicolons and without a header row. The function automatically crops the data to a region of interest based on published values and applies a correction factor for certain LED types.</span>
+
+<span class="sd">    :param filepath: Path to the CSV file containing radiometry data. The file must use semicolon (&#39;;&#39;) as a delimiter and contain columns for x, y, and z (irradiance) values. The LED type must be identifiable from the filepath string (see Notes).</span>
+<span class="sd">    :type filepath: str</span>
+<span class="sd">    :param height: Height of the detection plane in meters. Default is 0.33 m.</span>
+<span class="sd">    :type height: float, optional</span>
+<span class="sd">    :param width: Width of the detection plane in meters. Default is 0.34 m.</span>
+<span class="sd">    :type width: float, optional</span>
+
+<span class="sd">    :returns: A tuple containing:</span>
+<span class="sd">        - irr (pandas.DataFrame): Cropped irradiance data with columns [&#39;x&#39;, &#39;y&#39;, &#39;z&#39;].</span>
+<span class="sd">        - mean_irradiance (float): Mean irradiance in W/m², calculated from published optical power and detection plane area.</span>
+<span class="sd">        - homogeneity (float): Homogeneity of the irradiance distribution, defined as 1 - (standard deviation / mean) of the irradiance values.</span>
+<span class="sd">    :rtype: tuple[pandas.DataFrame, float, float]</span>
+
+<span class="sd">    :raises ValueError: If the LED type cannot be determined from the filepath.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Only supports LED types &quot;LST1-01G01-UV01-00&quot; and &quot;LST1-01F06-GRN1-00&quot; as identified in the filepath. For the green LED, a correction factor is applied to estimate optical power at 350 mA from 1 A data.</span>
+<span class="sd">        - The region of interest is cropped to x in [11, 45] and y in [16, 49] as per the referenced publication.</span>
+<span class="sd">        - The CSV file must not contain a header row; the first row is skipped.</span>
+<span class="sd">        - The returned ``irr`` DataFrame has columns ``[&#39;x&#39;, &#39;y&#39;, &#39;z&#39;]`` (where ``z`` is the irradiance). To visualize it, use :func:`utils.process_raytracing_data.plot_irradiance_raytracing` after renaming the ``z`` column to ``Irradiance``.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        None. The function only reads from the specified file and returns processed data.</span>
+
+<span class="sd">    :references:</span>
+<span class="sd">        Kowalczyk et al., Reaction Chemistry &amp; Engineering, 2023, DOI: 10.1039/D3RE00398A</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="c1"># Read the CSV file into a DataFrame</span>
+    <span class="n">irr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">],</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># get led type from filepath</span>
+    <span class="k">if</span> <span class="s2">&quot;LST1-01G01-UV01-00&quot;</span> <span class="ow">in</span> <span class="n">filepath</span><span class="p">:</span>
+        <span class="n">P_opt</span> <span class="o">=</span> <span class="mf">1.88</span> <span class="c1"># W # optical power measured on the detection plane according to doi.org/10.1039/D3RE00398A</span>
+    <span class="k">elif</span> <span class="s2">&quot;LST1-01F06-GRN1-00&quot;</span> <span class="ow">in</span> <span class="n">filepath</span><span class="p">:</span>
+        <span class="n">P_opt</span> <span class="o">=</span> <span class="mf">1.032</span> <span class="c1"># W # optical power measured on the detection plane according to doi.org/10.1039/D3RE00398A</span>
+        <span class="n">corr_factor</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="c1"># correction factor for green LED according to estimate optical power at 350 mA from the 1 A data in doi.org/10.1039/D3RE00398A. Taken from led datasheet </span>
+        <span class="n">P_opt</span> <span class="o">*=</span> <span class="n">corr_factor</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">P_opt</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown LED type in filepath&quot;</span><span class="p">)</span>
+
+
+    <span class="c1"># crop values according to values from doi.org/10.1039/D3RE00398A</span>
+    <span class="n">x_min</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="n">x_max</span> <span class="o">=</span> <span class="mi">45</span>
+    <span class="n">y_min</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">y_max</span> <span class="o">=</span> <span class="mi">49</span>
+
+    <span class="n">irr</span> <span class="o">=</span> <span class="n">irr</span><span class="p">[(</span><span class="n">irr</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">x_min</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">irr</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">x_max</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">irr</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">y_min</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">irr</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">y_max</span><span class="p">)]</span>
+
+    <span class="c1"># Calculate mean irradiance I_mean</span>
+    <span class="n">mean_irradiance</span> <span class="o">=</span> <span class="n">P_opt</span> <span class="o">/</span> <span class="p">(</span><span class="n">height</span> <span class="o">*</span> <span class="n">width</span><span class="p">)</span>  <span class="c1"># W/m^2</span>
+    <span class="n">homogeneity</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">irr</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">irr</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">irr</span><span class="p">,</span> <span class="n">mean_irradiance</span><span class="p">,</span> <span class="n">homogeneity</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

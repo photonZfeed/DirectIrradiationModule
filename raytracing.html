@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ray Tracing Simulations &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started: Full Optimization Workflow" href="tutorial.html" />
+    <link rel="prev" title="Radiometric Measurements" href="radiometry.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Ray Tracing Simulations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simulation-workflow">Simulation Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#geometry-definition">Geometry Definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#material-definition">Material Definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-source-definition">Surface Source Definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sensor-definition">Sensor Definition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simulation-settings">Simulation Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#results-visualization">Results Visualization</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Ray Tracing Simulations</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/raytracing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="ray-tracing-simulations">
+<h1>Ray Tracing Simulations<a class="headerlink" href="#ray-tracing-simulations" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Ray tracing simulations were performed to assess the influence of optical
+reflectors and detailed light–matter interactions that are not captured by the
+geometric radiation field model. All simulations were conducted using the
+commercial non-sequential ray tracing software <strong>Ansys Speos 2025 R2</strong>.</p>
+</section>
+<section id="simulation-workflow">
+<h2>Simulation Workflow<a class="headerlink" href="#simulation-workflow" title="Link to this heading"></a></h2>
+<p>All ray tracing simulations followed an identical, fully reproducible workflow.</p>
+<p>The three-dimensional geometry of the irradiation module—including LED emitting
+surfaces and reflector components where applicable — was created directly within
+the Speos CAD environment (see <a class="reference internal" href="#fig-speos-geometry"><span class="std std-numref">Figure 6</span></a>).</p>
+<p>A global Cartesian coordinate system was used as a reference frame for defining
+the geometry, positioning all optical components, and specifying source and
+sensor orientations. The surrounding domain was assumed to be homogeneous and
+filled with air, modeled as a non-absorbing and non-scattering medium with a
+refractive index of 1.0.</p>
+</section>
+<section id="geometry-definition">
+<h2>Geometry Definition<a class="headerlink" href="#geometry-definition" title="Link to this heading"></a></h2>
+<p>The emitting surfaces of the LEDs were defined as planar surfaces lying in the
+<em>xz</em>-plane. The primary optical axis of the system was aligned with the positive
+<em>y</em>-direction. The sensor plane was positioned parallel to the <em>xz</em>-plane at
+<em>y = 0</em> and served as the reference plane for irradiance evaluation.</p>
+<p>All relative positions and orientations of LEDs, reflectors, and the detection
+plane were explicitly defined within this coordinate system for each simulated
+configuration.</p>
+<figure class="align-center" id="id3">
+<span id="fig-speos-geometry"></span><a class="reference external image-reference" href="_images/speos_geometry.png"><img alt="Geometry definition in Ansys Speos" src="_images/speos_geometry.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 6 </span><span class="caption-text">Geometry definition of the irradiation module in Ansys Speos.</span><a class="headerlink" href="#id3" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="material-definition">
+<h2>Material Definition<a class="headerlink" href="#material-definition" title="Link to this heading"></a></h2>
+<p>The surrounding environment was modeled as air with a refractive index of 1.0.
+Reflector surfaces were defined as purely reflective materials with mixed
+Lambertian–specular behavior that varies with the incident angle.</p>
+<p>The angle-dependent reflection characteristics were implemented following the
+optical properties reported by Janecek and Moses <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> (see <a class="reference internal" href="#fig-speos-material"><span class="std std-numref">Figure 7</span></a> and <a class="reference internal" href="#fig-speos-teflon"><span class="std std-numref">Figure 8</span></a>).</p>
+<figure class="align-center" id="id4">
+<span id="fig-speos-material"></span><a class="reference external image-reference" href="_images/speos_material_definition.png"><img alt="Material definition in Ansys Speos" src="_images/speos_material_definition.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 7 </span><span class="caption-text">Material definition of optical components in Ansys Speos.</span><a class="headerlink" href="#id4" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id5">
+<span id="fig-speos-teflon"></span><a class="reference external image-reference" href="_images/speos_teflon_scattering.png"><img alt="Teflon scattering properties" src="_images/speos_teflon_scattering.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 8 </span><span class="caption-text">Angle-dependent Lambertian and specular scattering properties applied to the
+PTFE reflector material.</span><a class="headerlink" href="#id5" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="surface-source-definition">
+<h2>Surface Source Definition<a class="headerlink" href="#surface-source-definition" title="Link to this heading"></a></h2>
+<p>Surface sources were created to represent both UV and green LEDs. For each LED
+type, the following parameters were specified:</p>
+<dl class="simple">
+<dt>Emitting surface area</dt><dd><ul class="simple">
+<li><p>Green LED: diameter = 2.15 mm</p></li>
+<li><p>UV LED: diameter = 2.6 mm</p></li>
+</ul>
+</dd>
+<dt>Optical power emitted per LED</dt><dd><ul class="simple">
+<li><p>Green LED: 0.28 W</p></li>
+<li><p>UV LED: 0.875 W</p></li>
+</ul>
+</dd>
+<dt>Emission spectrum</dt><dd><ul class="simple">
+<li><p>Green LED: 530 nm peak wavelength with 30 nm full width</p></li>
+<li><p>UV LED: 365 nm peak wavelength with 5 nm full width</p></li>
+<li><p>Angular light intensity distribution provided by the manufacturer</p></li>
+</ul>
+</dd>
+</dl>
+<p>Separate surface source definitions were used for the UV and green LEDs (see <a class="reference internal" href="#fig-speos-uv"><span class="std std-numref">Figure 9</span></a> and <a class="reference internal" href="#fig-speos-green"><span class="std std-numref">Figure 10</span></a>).</p>
+<figure class="align-center" id="id6">
+<span id="fig-speos-uv"></span><a class="reference external image-reference" href="_images/speos_uv_source.png"><img alt="UV LED surface source definition" src="_images/speos_uv_source.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 9 </span><span class="caption-text">Definition of the UV LED surface source in Ansys Speos.</span><a class="headerlink" href="#id6" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id7">
+<span id="fig-speos-green"></span><a class="reference external image-reference" href="_images/speos_green_source.png"><img alt="Green LED surface source definition" src="_images/speos_green_source.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 10 </span><span class="caption-text">Definition of the green LED surface source in Ansys Speos.</span><a class="headerlink" href="#id7" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="sensor-definition">
+<h2>Sensor Definition<a class="headerlink" href="#sensor-definition" title="Link to this heading"></a></h2>
+<p>Irradiance was quantified using a planar radiance sensor with dimensions
+<strong>33 cm × 34 cm</strong>, positioned at several LED-to-sensor distances depending on the
+investigated configuration (see <a class="reference internal" href="#fig-speos-sensor"><span class="std std-numref">Figure 11</span></a>).</p>
+<p>The sensor surface was discretized using a triangular mesh with a mesh step of
+1 mm, resulting in a total of <strong>225,576 nodes</strong>, at which local irradiance values
+were computed. Irradiance integration was performed orthogonally to the sensor
+plane, accounting for the cosine dependence of irradiance on the angle of
+incidence.</p>
+<figure class="align-center" id="id8">
+<span id="fig-speos-sensor"></span><a class="reference external image-reference" href="_images/speos_sensor_settings.png"><img alt="Sensor settings in Ansys Speos" src="_images/speos_sensor_settings.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 11 </span><span class="caption-text">Radiance sensor definition and discretization settings in Ansys Speos.</span><a class="headerlink" href="#id8" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="simulation-settings">
+<h2>Simulation Settings<a class="headerlink" href="#simulation-settings" title="Link to this heading"></a></h2>
+<p>Ray propagation from the LED sources to the sensor was simulated using a
+<strong>Direct Simulation</strong> approach (see <a class="reference internal" href="#fig-speos-direct"><span class="std std-numref">Figure 12</span></a>). Double precision was enabled for the ray tracer
+to improve numerical accuracy.</p>
+<p>The maximum number of interactions per ray was set to 100, allowing individual
+rays to undergo multiple reflections and scattering events before termination.
+The stopping criterion for all simulations was defined as a total of
+<strong>1.6 × 10⁷ rays</strong>, based on a ray number sensitivity analysis described in the
+Supporting Information.</p>
+<figure class="align-center" id="id9">
+<span id="fig-speos-direct"></span><a class="reference external image-reference" href="_images/speos_direct_simulation.png"><img alt="Direct simulation settings" src="_images/speos_direct_simulation.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 12 </span><span class="caption-text">Direct simulation settings used for ray tracing in Ansys Speos.</span><a class="headerlink" href="#id9" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="results-visualization">
+<h2>Results Visualization<a class="headerlink" href="#results-visualization" title="Link to this heading"></a></h2>
+<p>The resulting irradiance distributions were visualized directly within the
+Speos post-processing environment using the sensor output (see <a class="reference internal" href="#fig-speos-results"><span class="std std-numref">Figure 13</span></a>). Spatial irradiance
+maps served as the basis for calculating mean irradiance and homogeneity metrics
+and for comparison with geometric modelling and experimental radiometry.</p>
+<figure class="align-center" id="id10">
+<span id="fig-speos-results"></span><a class="reference external image-reference" href="_images/speos_sensor_results.png"><img alt="Sensor results visualization" src="_images/speos_sensor_results.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 13 </span><span class="caption-text">Visualization of irradiance distributions on the sensor plane in Ansys Speos.</span><a class="headerlink" href="#id10" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<ol class="upperalpha simple" start="13">
+<li><p>Janecek, W. W. Moses, IEEE Trans. Nucl. Sci. 2008, 55, 2443–2449.</p></li>
+</ol>
+</aside>
+</aside>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="radiometry.html" class="btn btn-neutral float-left" title="Radiometric Measurements" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial.html" class="btn btn-neutral float-right" title="Getting Started: Full Optimization Workflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

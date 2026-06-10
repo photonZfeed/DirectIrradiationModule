@@ -1,0 +1,712 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>optimizer &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">optimizer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for optimizer</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="n">LST1_01F06_GRN1_00</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">systematic_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">monte_carlo_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ICIW_Plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_square_subplots</span><span class="p">,</span> <span class="n">cm2inch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;ICIWstyle&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;visualization/publication_style.mplstyle&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Optimizer">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Optimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Provides methods for evaluating and optimizing LED array configurations based on irradiance metrics.</span>
+
+<span class="sd">    This class is designed to facilitate the analysis and optimization of LED configurations for irradiation module optimization.</span>
+<span class="sd">    It supports reading simulation results, calculating performance metrics, optimizing configurations according to a weighted objective,</span>
+<span class="sd">    generating Pareto fronts, and visualizing results. The optimization is based on two main criteria: the mean irradiance relative to a specified bound,</span>
+<span class="sd">    and the homogeneity of the irradiance distribution.</span>
+
+<span class="sd">    :param irradiance_bound: Maximum allowed irradiance in W m⁻². Used as a threshold for evaluating configurations.</span>
+<span class="sd">    :type irradiance_bound: float</span>
+
+<span class="sd">    :ivar irradiance_bound: The irradiance threshold used for all metric calculations and optimization.</span>
+<span class="sd">    :vartype irradiance_bound: float</span>
+
+<span class="sd">    :raises ValueError: If ``irradiance_bound`` is not positive.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - The class does not perform any simulation itself; it operates on precomputed simulation results.</span>
+<span class="sd">        - Configurations exceeding the irradiance bound are excluded from optimization during metric calculations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">irradiance_bound</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the optimizer with the irradiance bound.</span>
+
+<span class="sd">        :param irradiance_bound: Maximum allowed irradiance in W m⁻². Must be positive.</span>
+<span class="sd">        :type irradiance_bound: float</span>
+
+<span class="sd">        :raises ValueError: If ``irradiance_bound`` is not positive.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">irradiance_bound</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;irradiance_bound must be positive.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">irradiance_bound</span> <span class="o">=</span> <span class="n">irradiance_bound</span>
+
+<div class="viewcode-block" id="Optimizer.read_simulations">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer.read_simulations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_simulations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load precomputed simulation results from a compressed NumPy (.npz) file.</span>
+
+<span class="sd">        This method retrieves arrays containing LED configurations, corresponding heights, mean irradiance values, maximum irradiance values, and standard deviations of irradiance for each configuration. The file must have been generated by a compatible simulation pipeline and must contain the following arrays: ``&#39;configs&#39;``, ``&#39;z&#39;``, ``&#39;means&#39;``, ``&#39;max&#39;``, and ``&#39;stds&#39;``.</span>
+
+<span class="sd">        :param filename: Path to the .npz file containing simulation results. The file must be readable and contain the expected arrays.</span>
+<span class="sd">        :type filename: str</span>
+
+<span class="sd">        :returns: A tuple containing five arrays:</span>
+
+<span class="sd">            - *configs* (numpy.ndarray) — LED configurations (shape: (N, …), dtype: object or float).</span>
+<span class="sd">            - *z* (numpy.ndarray) — Heights for each configuration (shape: (N,), dtype: float, units: cm).</span>
+<span class="sd">            - *means* (numpy.ndarray) — Mean irradiance values (shape: (N,), dtype: float, units: W m⁻²).</span>
+<span class="sd">            - *max* (numpy.ndarray) — Maximum irradiance values (shape: (N,), dtype: float, units: W m⁻²).</span>
+<span class="sd">            - *stds* (numpy.ndarray) — Standard deviation of irradiance values (shape: (N,), dtype: float, units: W m⁻²).</span>
+<span class="sd">        :rtype: tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray]</span>
+
+<span class="sd">        :raises FileNotFoundError: If the specified file does not exist.</span>
+<span class="sd">        :raises KeyError: If any of the required arrays are missing from the file.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The simulation results must have been saved in a compatible format, typically using the ``save_results`` function from :mod:`geometric_model`.</span>
+<span class="sd">            - All arrays must have the same length along the first dimension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">configs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;configs&#39;</span><span class="p">]</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;means&#39;</span><span class="p">]</span>
+        <span class="nb">max</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]</span>
+        <span class="n">stds</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;stds&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">stds</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.calc_metrics">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer.calc_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">means</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stds</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute homogeneity and mean-to-bound ratio metrics for a set of irradiance configurations.</span>
+
+<span class="sd">        For each configuration, this method calculates:</span>
+
+<span class="sd">        - Homogeneity, defined as :math:`H = 1 - \frac{\mathrm{std}}{\mathrm{mean}}`,</span>
+<span class="sd">          which quantifies the uniformity of the irradiance distribution (values closer to 1 indicate higher homogeneity).</span>
+<span class="sd">        - Ratio of mean irradiance to the irradiance bound, :math:`\frac{E_{\mathrm{mean}}}{E_{\mathrm{bound}}}`.</span>
+
+<span class="sd">        If the maximum irradiance for a configuration exceeds the irradiance bound (as set in the Optimizer instance),</span>
+<span class="sd">        both metrics are set to 0 for that configuration for penalization.</span>
+
+<span class="sd">        :param means: Array of mean irradiance values for each configuration (shape: (N,), dtype: float, units: W m⁻²).</span>
+<span class="sd">        :type means: numpy.ndarray</span>
+<span class="sd">        :param max: Array of maximum irradiance values for each configuration (shape: (N,), dtype: float, units: W m⁻²).</span>
+<span class="sd">        :type max: numpy.ndarray</span>
+<span class="sd">        :param stds: Array of standard deviation of irradiance values for each configuration (shape: (N,), dtype: float, units: W m⁻²).</span>
+<span class="sd">        :type stds: numpy.ndarray</span>
+
+<span class="sd">        :returns: A tuple containing two arrays:</span>
+
+<span class="sd">            - *ratio_to_bound* (numpy.ndarray) — Mean irradiance ratios to the bound for each configuration (shape: (N,), dtype: float).</span>
+<span class="sd">            - *homogeneity* (numpy.ndarray) — Homogeneity indices for each configuration (shape: (N,), dtype: float).</span>
+<span class="sd">        :rtype: tuple[numpy.ndarray, numpy.ndarray]</span>
+
+<span class="sd">        :raises ValueError: If input arrays do not have the same shape.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The irradiance bound is taken from the Optimizer instance (``self.irradiance_bound``).</span>
+<span class="sd">            - No NaN or inf checking is performed on the input arrays.</span>
+
+<span class="sd">        .. rubric:: Example</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            import numpy as np</span>
+<span class="sd">            from optimizer import Optimizer</span>
+
+<span class="sd">            opt = Optimizer(irradiance_bound=150.0)</span>
+<span class="sd">            means = np.array([100.0, 130.0, 160.0])</span>
+<span class="sd">            max_vals = np.array([140.0, 155.0, 200.0])</span>
+<span class="sd">            stds = np.array([10.0, 15.0, 20.0])</span>
+
+<span class="sd">            ratio_to_bound, homogeneity = opt.calc_metrics(means, max_vals, stds)</span>
+<span class="sd">            # Configurations where max &gt; 150 W m⁻² receive a score of 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">means</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="nb">max</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">stds</span><span class="o">.</span><span class="n">shape</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input arrays &#39;means&#39;, &#39;max&#39;, and &#39;stds&#39; must have the same shape.&quot;</span><span class="p">)</span>
+
+        <span class="n">homogeneity</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">stds</span> <span class="o">/</span> <span class="n">means</span><span class="p">)</span>
+        <span class="n">ratio_to_bound</span> <span class="o">=</span> <span class="n">means</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">irradiance_bound</span>
+
+        <span class="c1"># Penalize configurations exceeding the irradiance bound</span>
+        <span class="n">homogeneity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="nb">max</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">irradiance_bound</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">homogeneity</span><span class="p">)</span>
+        <span class="n">ratio_to_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="nb">max</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">irradiance_bound</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ratio_to_bound</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ratio_to_bound</span><span class="p">,</span> <span class="n">homogeneity</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.objective_function">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer.objective_function">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">objective_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">ratio_to_bound</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">homogeneity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute a weighted objective score for each configuration based on mean irradiance and homogeneity.</span>
+
+<span class="sd">        The objective function is defined as:</span>
+
+<span class="sd">            .. math::</span>
+<span class="sd">                f(t) = t \cdot \frac{E_{\mathrm{mean}}}{E_{\mathrm{bound}}} + (1 - t) \cdot H</span>
+
+<span class="sd">        where:</span>
+<span class="sd">            - :math:`t` is a weighting factor between 0 and 1.</span>
+<span class="sd">            - :math:`E_{\mathrm{mean}}` is the mean irradiance for a configuration.</span>
+<span class="sd">            - :math:`E_{\mathrm{bound}}` is the irradiance bound.</span>
+<span class="sd">            - :math:`H` is the homogeneity for a configuration.</span>
+
+<span class="sd">        :param t: Weighting factor between 0 and 1 (dimensionless). Determines the trade-off between mean irradiance and homogeneity.</span>
+<span class="sd">        :type t: float</span>
+<span class="sd">        :param ratio_to_bound: Array of mean irradiance ratios to the bound for each configuration (shape: (N,), dtype: float).</span>
+<span class="sd">        :type ratio_to_bound: numpy.ndarray</span>
+<span class="sd">        :param homogeneity: Array of homogeneity values for each configuration (shape: (N,), dtype: float).</span>
+<span class="sd">        :type homogeneity: numpy.ndarray</span>
+
+<span class="sd">        :returns: Objective function values for each configuration (shape: (N,), dtype: float).</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+
+<span class="sd">        .. rubric:: Example</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            import numpy as np</span>
+<span class="sd">            from optimizer import Optimizer</span>
+
+<span class="sd">            opt = Optimizer(irradiance_bound=150.0)</span>
+<span class="sd">            means = np.array([100.0, 130.0])</span>
+<span class="sd">            max_vals = np.array([140.0, 145.0])</span>
+<span class="sd">            stds = np.array([10.0, 5.0])</span>
+
+<span class="sd">            ratio_to_bound, homogeneity = opt.calc_metrics(means, max_vals, stds)</span>
+
+<span class="sd">            # Equal weight between irradiance and homogeneity</span>
+<span class="sd">            scores = opt.objective_function(t=0.5, ratio_to_bound=ratio_to_bound, homogeneity=homogeneity)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">t</span> <span class="o">*</span> <span class="n">ratio_to_bound</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">homogeneity</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.optimize">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer.optimize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configurations</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">means</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stds</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Identify the optimal LED configuration for a specified weighting factor `t` by maximizing the objective function.</span>
+
+<span class="sd">        This method evaluates all provided configurations using the weighted objective function (see :meth:`objective_function`) and returns the configuration with the highest score.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        configurations : numpy.ndarray</span>
+<span class="sd">            Array of LED configurations (shape: (N, ...), dtype: object or int/float).</span>
+<span class="sd">        z : numpy.ndarray</span>
+<span class="sd">            Array of heights for each configuration (shape: (N,), dtype: float, units: cm).</span>
+<span class="sd">        means : numpy.ndarray</span>
+<span class="sd">            Array of mean irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        max : numpy.ndarray</span>
+<span class="sd">            Array of maximum irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        stds : numpy.ndarray</span>
+<span class="sd">            Array of standard deviation of irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        t : float</span>
+<span class="sd">            Weighting factor between 0 and 1 (dimensionless).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            A tuple containing:</span>
+<span class="sd">                - best_configuration (numpy.ndarray): Best LED configuration (shape: as in `configurations`).</span>
+<span class="sd">                - best_z (float): Height of the best configuration (units: cm).</span>
+<span class="sd">                - best_ratio (float): Mean irradiance ratio to the bound for the best configuration (dimensionless).</span>
+<span class="sd">                - best_homogeneity (float): Homogeneity index for the best configuration (dimensionless).</span>
+<span class="sd">                - best_score (float): Objective function value for the best configuration (dimensionless).</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If input arrays do not have compatible shapes.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The irradiance bound is taken from the Optimizer instance.</span>
+<span class="sd">        - Penalizes configurations exceeding the irradiance bound.</span>
+<span class="sd">        - Assumes all input arrays are aligned along the first dimension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ratio_to_bound</span><span class="p">,</span> <span class="n">homogeneity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_metrics</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">stds</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective_function</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">ratio_to_bound</span><span class="p">,</span> <span class="n">homogeneity</span><span class="p">)</span>
+        <span class="n">best_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">configurations</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">ratio_to_bound</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">homogeneity</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="n">best_index</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Optimizer.create_pareto_front">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer.create_pareto_front">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_pareto_front</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configurations</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">means</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stds</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">t_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a Pareto front by optimizing the objective function over a range of weighting factors `t`.</span>
+
+<span class="sd">        For each value of `t` in `t_values`, the method finds the configuration that maximizes the objective function and collects unique solutions to form the Pareto front. Duplicate configurations (with the same configuration and height) are excluded.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        configurations : numpy.ndarray</span>
+<span class="sd">            Array of LED configurations (shape: (N, ...), dtype: object or int/float).</span>
+<span class="sd">        z : numpy.ndarray</span>
+<span class="sd">            Array of heights for each configuration (shape: (N,), dtype: float, units: cm).</span>
+<span class="sd">        means : numpy.ndarray</span>
+<span class="sd">            Array of mean irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        max : numpy.ndarray</span>
+<span class="sd">            Array of maximum irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        stds : numpy.ndarray</span>
+<span class="sd">            Array of standard deviation of irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        t_values : numpy.ndarray</span>
+<span class="sd">            Array of weighting factors to optimize for (shape: (M,), dtype: float, values in [0, 1]).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            A tuple containing:</span>
+<span class="sd">                - pareto_configs (list): List of Pareto optimal configurations (dtype: object or int/float).</span>
+<span class="sd">                - pareto_z (list): List of heights for Pareto optimal configurations (dtype: float).</span>
+<span class="sd">                - pareto_ratios (list): List of mean irradiance ratios for Pareto optimal configurations (dtype: float).</span>
+<span class="sd">                - pareto_homogeneities (list): List of homogeneity indices for Pareto optimal configurations (dtype: float).</span>
+<span class="sd">                - pareto_scores (list): List of scores for Pareto optimal configurations (dtype: float).</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If input arrays do not have compatible shapes.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The Pareto front is constructed by sweeping ``t`` from 0 to 1.</span>
+<span class="sd">        - The returned lists are ordered by the order of `t_values`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pareto_configs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pareto_z</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pareto_ratios</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pareto_homogeneities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pareto_scores</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">t_values</span><span class="p">:</span>
+            <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimize</span><span class="p">(</span><span class="n">configurations</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">stds</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="c1"># check if the configuration is already in the pareto front</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">best_config</span> <span class="ow">in</span> <span class="n">pareto_configs</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">best_z</span> <span class="ow">in</span> <span class="n">pareto_z</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">pareto_configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_config</span><span class="p">)</span>
+            <span class="n">pareto_z</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_z</span><span class="p">)</span>
+            <span class="n">pareto_ratios</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_ratio</span><span class="p">)</span>
+            <span class="n">pareto_homogeneities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_homogeneity</span><span class="p">)</span>
+            <span class="n">pareto_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">best_score</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span></div>
+
+    
+<div class="viewcode-block" id="Optimizer.find_best_configuration">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer.find_best_configuration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">find_best_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configurations</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">means</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">stds</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Select the configuration that maximizes the product of mean irradiance ratio and homogeneity index.</span>
+
+<span class="sd">        This method evaluates all configurations using the metric:</span>
+
+<span class="sd">            .. math::</span>
+<span class="sd">                    \text{score} = \frac{E_{\mathrm{mean}}}{E_{\mathrm{bound}}} \times H</span>
+
+<span class="sd">        and returns the configuration with the highest score.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        configurations : numpy.ndarray</span>
+<span class="sd">            Array of LED configurations (shape: (N, ...), dtype: object or int/float).</span>
+<span class="sd">        z : numpy.ndarray</span>
+<span class="sd">            Array of heights for each configuration (shape: (N,), dtype: float, units: cm).</span>
+<span class="sd">        means : numpy.ndarray</span>
+<span class="sd">            Array of mean irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        max : numpy.ndarray</span>
+<span class="sd">            Array of maximum irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+<span class="sd">        stds : numpy.ndarray</span>
+<span class="sd">            Array of standard deviation of irradiance values for each configuration (shape: (N,), dtype: float, units: W/m²).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            A tuple containing:</span>
+<span class="sd">                - best_configuration (numpy.ndarray): Best LED configuration (shape: as in `configurations`).</span>
+<span class="sd">                - best_z (float): Height of the best configuration (units: cm).</span>
+<span class="sd">                - best_ratio (float): Mean irradiance ratio to the bound for the best configuration (dimensionless).</span>
+<span class="sd">                - best_homogeneity (float): Homogeneity index for the best configuration (dimensionless).</span>
+<span class="sd">                - best_score (float): Product score for the best configuration (dimensionless).</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If input arrays do not have compatible shapes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ratio_to_bound</span><span class="p">,</span> <span class="n">homogeneity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_metrics</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="nb">max</span><span class="p">,</span> <span class="n">stds</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">ratio_to_bound</span> <span class="o">*</span> <span class="n">homogeneity</span>
+        <span class="n">best_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Best Configuration: &quot;</span><span class="p">,</span>  <span class="n">configurations</span><span class="p">[</span><span class="n">best_index</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max Irradiance: &quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">[</span><span class="n">best_index</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">configurations</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">ratio_to_bound</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">homogeneity</span><span class="p">[</span><span class="n">best_index</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="n">best_index</span><span class="p">]</span></div>
+
+    
+<div class="viewcode-block" id="Optimizer.plot_pareto_front">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.Optimizer.plot_pareto_front">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_pareto_front</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span>
+        <span class="n">pareto_ratios</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">pareto_homogeneities</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">other_points</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Visualizes the Pareto front for LED array optimization results, plotting mean irradiance ratio versus homogeneity.</span>
+
+<span class="sd">        This method generates a scatter/line plot of Pareto optimal solutions, where each point represents a configuration&#39;s trade-off between mean irradiance (relative to a specified bound) and homogeneity of the irradiance distribution. Optionally, additional points (such as reference or benchmark solutions) can be overlaid for comparison.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ax : matplotlib.axes.Axes</span>
+<span class="sd">            The matplotlib Axes object on which to draw the plot. Must be a valid Axes instance.</span>
+<span class="sd">        pareto_ratios : numpy.ndarray</span>
+<span class="sd">            1D array of mean irradiance ratios to the bound for Pareto optimal configurations. Each value should be a float in [0, 1] (dimensionless).</span>
+<span class="sd">        pareto_homogeneities : numpy.ndarray</span>
+<span class="sd">            1D array of homogeneity indices for Pareto optimal configurations. Each value should be a float in [0, 1] (dimensionless).</span>
+<span class="sd">        other_points : dict, optional</span>
+<span class="sd">            Dictionary of additional points to plot, where each key is a label (str) and each value is a tuple of the form (marker, ratio, homogeneity):</span>
+
+<span class="sd">                - marker (str): Matplotlib marker style (e.g., &#39;x&#39;, &#39;^&#39;, etc.).</span>
+<span class="sd">                - ratio (float): Mean irradiance ratio to the bound (dimensionless).</span>
+<span class="sd">                - homogeneity (float): Homogeneity index (dimensionless).</span>
+
+<span class="sd">            Defaults to empty dict ({}), meaning no extra points are plotted.</span>
+<span class="sd">        title : str, optional</span>
+<span class="sd">            Title for the plot. Defaults to an empty string (&quot;&quot;).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        matplotlib.axes.Axes</span>
+<span class="sd">            The Axes object with the Pareto front and any additional points plotted.</span>
+<span class="sd">            </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The x-axis represents the mean irradiance ratio to the bound (unitless).</span>
+<span class="sd">        - The y-axis represents the homogeneity index (unitless).</span>
+<span class="sd">        - If ``other_points`` is not empty, each entry is plotted with its specified marker and label.</span>
+<span class="sd">        - The function does not call ``plt.show()``; the user needs to call it after plotting to display the figure.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="s1">&#39;o:&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Pareto Front&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">other_points</span> <span class="ow">is</span> <span class="ow">not</span> <span class="p">{}:</span>
+            <span class="c1"># Use the color cycle, skipping the first color (used by Pareto front)</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;axes.prop_cycle&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">by_key</span><span class="p">()[</span><span class="s1">&#39;color&#39;</span><span class="p">]</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="p">(</span><span class="n">marker</span><span class="p">,</span> <span class="n">ratio</span><span class="p">,</span> <span class="n">homogeneity</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">other_points</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ratio</span><span class="p">,</span> <span class="n">homogeneity</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">m</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">marker</span><span class="o">=</span><span class="n">marker</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$E_\mathrm</span><span class="si">{mean}</span><span class="s1">\,/\,E_\mathrm</span><span class="si">{bound}</span><span class="s1">$ / 1&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Homogeneity / 1&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">y</span><span class="o">=-</span><span class="mf">0.28</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ax</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="save_optimization_results">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.save_optimization_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_optimization_results</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span><span class="p">,</span> <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Serializes and saves the results of an LED array optimization process to a compressed NumPy ``.npz`` file.</span>
+
+<span class="sd">    This function stores all relevant data from a multi-objective optimization, including the Pareto front and the best configuration found, into a single file for later retrieval and analysis. The saved file can be loaded using ``numpy.load`` or the corresponding ``read_optimization_results`` function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : str</span>
+<span class="sd">        Path (including filename) where the ``.npz`` file will be saved. Should end with ``.npz``.</span>
+<span class="sd">    pareto_configs : list</span>
+<span class="sd">        List of Pareto optimal LED configurations. Each entry should be a configuration array or object (dtype: object).</span>
+<span class="sd">    pareto_z : list</span>
+<span class="sd">        List of heights (float, units: cm) corresponding to each Pareto optimal configuration.</span>
+<span class="sd">    pareto_ratios : list</span>
+<span class="sd">        List of mean irradiance ratios to the bound for Pareto optimal configurations (float, dimensionless).</span>
+<span class="sd">    pareto_homogeneities : list</span>
+<span class="sd">        List of homogeneity indices for Pareto optimal configurations (float, dimensionless).</span>
+<span class="sd">    pareto_scores : list</span>
+<span class="sd">        List of objective function scores for Pareto optimal configurations (float, dimensionless).</span>
+<span class="sd">    best_config : numpy.ndarray or object</span>
+<span class="sd">        The best LED configuration found during optimization (array or object, dtype: object).</span>
+<span class="sd">    best_z : float</span>
+<span class="sd">        Height of the best configuration (units: cm).</span>
+<span class="sd">    best_ratio : float</span>
+<span class="sd">        Mean irradiance ratio to the bound for the best configuration (dimensionless).</span>
+<span class="sd">    best_homogeneity : float</span>
+<span class="sd">        Homogeneity index for the best configuration (dimensionless).</span>
+<span class="sd">    best_score : float</span>
+<span class="sd">        Objective function score for the best configuration (dimensionless).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">        This function does not return a value. Results are written to disk.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    OSError</span>
+<span class="sd">        If the file cannot be written (e.g., due to permission issues or invalid path).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - All input lists/arrays must be serializable by NumPy. The function uses ``dtype=object`` for configurations to support arbitrary objects.</span>
+<span class="sd">    - The file can be loaded using ``numpy.load(filename, allow_pickle=True)``.</span>
+<span class="sd">    - No validation is performed on the physical correctness or consistency of the input data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">pareto_configs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pareto_configs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
+        <span class="n">pareto_z</span><span class="o">=</span><span class="n">pareto_z</span><span class="p">,</span>
+        <span class="n">pareto_ratios</span><span class="o">=</span><span class="n">pareto_ratios</span><span class="p">,</span>
+        <span class="n">pareto_homogeneities</span><span class="o">=</span><span class="n">pareto_homogeneities</span><span class="p">,</span>
+        <span class="n">pareto_scores</span><span class="o">=</span><span class="n">pareto_scores</span><span class="p">,</span>
+        <span class="n">best_config</span><span class="o">=</span><span class="n">best_config</span><span class="p">,</span>
+        <span class="n">best_z</span><span class="o">=</span><span class="n">best_z</span><span class="p">,</span>
+        <span class="n">best_ratio</span><span class="o">=</span><span class="n">best_ratio</span><span class="p">,</span>
+        <span class="n">best_homogeneity</span><span class="o">=</span><span class="n">best_homogeneity</span><span class="p">,</span>
+        <span class="n">best_score</span><span class="o">=</span><span class="n">best_score</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="read_optimization_results">
+<a class="viewcode-back" href="../api/optimizer.html#optimizer.read_optimization_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_optimization_results</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load and return the results of an LED array optimization process from a compressed NumPy ``.npz`` file.</span>
+
+<span class="sd">    This function retrieves all relevant data from a previously saved multi-objective optimization, including the Pareto front and the best configuration found. The file must have been created by a compatible saving function (such as ``save_optimization_results``) and must contain the expected arrays and objects.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename : str</span>
+<span class="sd">        Path to the ``.npz`` file containing the optimization results. The file must be readable and contain the expected arrays.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        A tuple containing the following elements, in order:</span>
+
+<span class="sd">        - pareto_configs (numpy.ndarray): Array of Pareto optimal LED configurations (dtype: object).</span>
+<span class="sd">        - pareto_z (numpy.ndarray): Array of heights for Pareto optimal configurations (float, units: cm).</span>
+<span class="sd">        - pareto_ratios (numpy.ndarray): Array of mean irradiance ratios to the bound for Pareto optimal configurations (float, dimensionless).</span>
+<span class="sd">        - pareto_homogeneities (numpy.ndarray): Array of homogeneity indices for Pareto optimal configurations (float, dimensionless).</span>
+<span class="sd">        - pareto_scores (numpy.ndarray): Array of objective function scores for Pareto optimal configurations (float, dimensionless).</span>
+<span class="sd">        - best_config (numpy.ndarray or object): Best LED configuration found during optimization (dtype: object).</span>
+<span class="sd">        - best_z (float): Height of the best configuration (units: cm).</span>
+<span class="sd">        - best_ratio (float): Mean irradiance ratio to the bound for the best configuration (dimensionless).</span>
+<span class="sd">        - best_homogeneity (float): Homogeneity index for the best configuration (dimensionless).</span>
+<span class="sd">        - best_score (float): Objective function score for the best configuration (dimensionless).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    FileNotFoundError</span>
+<span class="sd">        If the specified file does not exist.</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If any of the required arrays are missing from the file.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - The input file must be generated by a compatible saving function and must contain all required arrays.</span>
+<span class="sd">    - All arrays are loaded with ``allow_pickle=True`` to support arbitrary objects in configurations.</span>
+<span class="sd">    - No validation is performed on the physical correctness or consistency of the data.</span>
+<span class="sd">    - The returned arrays are suitable for further analysis, visualization, or reporting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pareto_configs</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;pareto_configs&#39;</span><span class="p">]</span>
+    <span class="n">pareto_z</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;pareto_z&#39;</span><span class="p">]</span>
+    <span class="n">pareto_ratios</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;pareto_ratios&#39;</span><span class="p">]</span>
+    <span class="n">pareto_homogeneities</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;pareto_homogeneities&#39;</span><span class="p">]</span>
+    <span class="n">pareto_scores</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;pareto_scores&#39;</span><span class="p">]</span>
+    <span class="n">best_config</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;best_config&#39;</span><span class="p">]</span>
+    <span class="n">best_z</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;best_z&#39;</span><span class="p">]</span>
+    <span class="n">best_ratio</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;best_ratio&#39;</span><span class="p">]</span>
+    <span class="n">best_homogeneity</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;best_homogeneity&#39;</span><span class="p">]</span>
+    <span class="n">best_score</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;best_score&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span><span class="p">,</span>
+            <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Full example usage</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Initialize the optimizer with an irradiance bound of 150.0 W/m²</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">irradiance_bound</span><span class="o">=</span><span class="mf">150.0</span><span class="p">)</span>
+    
+    <span class="c1"># Load simulation results from file</span>
+    <span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">max_vals</span><span class="p">,</span> <span class="n">stds</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">read_simulations</span><span class="p">(</span><span class="s1">&#39;results</span><span class="se">\\</span><span class="s1">examples</span><span class="se">\\</span><span class="s1">example_MonteCarlo_simulation_results.npz&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Calculate metrics for all configurations</span>
+    <span class="n">ratio_to_bound</span><span class="p">,</span> <span class="n">homogeneity</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">calc_metrics</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">max_vals</span><span class="p">,</span> <span class="n">stds</span><span class="p">)</span>
+    
+    <span class="c1"># Find the best configuration using product metric</span>
+    <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">find_best_configuration</span><span class="p">(</span>
+        <span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">max_vals</span><span class="p">,</span> <span class="n">stds</span><span class="p">)</span>
+    
+    <span class="c1"># Generate Pareto front by sweeping weighting factor t from 0 to 1</span>
+    <span class="n">t_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">21</span><span class="p">)</span>
+    <span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">create_pareto_front</span><span class="p">(</span>
+        <span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">max_vals</span><span class="p">,</span> <span class="n">stds</span><span class="p">,</span> <span class="n">t_values</span><span class="p">)</span>
+    
+    <span class="c1"># Visualize the Pareto front</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">plot_pareto_front</span><span class="p">(</span>
+        <span class="n">ax</span><span class="p">,</span>
+        <span class="n">pareto_ratios</span><span class="p">,</span>
+        <span class="n">pareto_homogeneities</span><span class="p">,</span>
+        <span class="n">other_points</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;Best Configuration&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    
+    <span class="c1"># Save optimization results to file</span>
+    <span class="n">save_optimization_results</span><span class="p">(</span>
+        <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;results</span><span class="se">\\</span><span class="s2">examples</span><span class="se">\\</span><span class="s2">example_optimization_results.npz&quot;</span><span class="p">,</span>
+        <span class="n">pareto_configs</span><span class="o">=</span><span class="n">pareto_configs</span><span class="p">,</span>
+        <span class="n">pareto_z</span><span class="o">=</span><span class="n">pareto_z</span><span class="p">,</span>
+        <span class="n">pareto_ratios</span><span class="o">=</span><span class="n">pareto_ratios</span><span class="p">,</span>
+        <span class="n">pareto_homogeneities</span><span class="o">=</span><span class="n">pareto_homogeneities</span><span class="p">,</span>
+        <span class="n">pareto_scores</span><span class="o">=</span><span class="n">pareto_scores</span><span class="p">,</span>
+        <span class="n">best_config</span><span class="o">=</span><span class="n">best_config</span><span class="p">,</span>
+        <span class="n">best_z</span><span class="o">=</span><span class="n">best_z</span><span class="p">,</span>
+        <span class="n">best_ratio</span><span class="o">=</span><span class="n">best_ratio</span><span class="p">,</span>
+        <span class="n">best_homogeneity</span><span class="o">=</span><span class="n">best_homogeneity</span><span class="p">,</span>
+        <span class="n">best_score</span><span class="o">=</span><span class="n">best_score</span>
+    <span class="p">)</span>
+    
+    <span class="c1"># Load optimization results from file</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">read_optimization_results</span><span class="p">(</span><span class="s2">&quot;results</span><span class="se">\\</span><span class="s2">examples</span><span class="se">\\</span><span class="s2">example_optimization_results.npz&quot;</span><span class="p">)</span>
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

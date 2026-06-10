@@ -1,0 +1,503 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Systematic Sampler &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Monte-Carlo Sampler" href="monte_carlo_sampler.html" />
+    <link rel="prev" title="API" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Systematic Sampler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#systematic_sampler.Sampler"><code class="docutils literal notranslate"><span class="pre">Sampler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.calculate_quadrant_weights"><code class="docutils literal notranslate"><span class="pre">Sampler.calculate_quadrant_weights()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.generate_all_configurations"><code class="docutils literal notranslate"><span class="pre">Sampler.generate_all_configurations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.get_quadrant_weight"><code class="docutils literal notranslate"><span class="pre">Sampler.get_quadrant_weight()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.plot_configuration"><code class="docutils literal notranslate"><span class="pre">Sampler.plot_configuration()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.plot_configuration_small"><code class="docutils literal notranslate"><span class="pre">Sampler.plot_configuration_small()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.read_configuration_from_json"><code class="docutils literal notranslate"><span class="pre">Sampler.read_configuration_from_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.save_configuration_to_json"><code class="docutils literal notranslate"><span class="pre">Sampler.save_configuration_to_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#systematic_sampler.Sampler.verify_configuration"><code class="docutils literal notranslate"><span class="pre">Sampler.verify_configuration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#systematic_sampler.save_configurations"><code class="docutils literal notranslate"><span class="pre">save_configurations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-usage">Example Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="monte_carlo_sampler.html">Monte-Carlo Sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="geometric_model.html">Geometric Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optimizer.html">Optimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/index.html">Utility Modules</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API</a></li>
+      <li class="breadcrumb-item active">Systematic Sampler</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/systematic_sampler.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-systematic_sampler">
+<span id="systematic-sampler"></span><h1>Systematic Sampler<a class="headerlink" href="#module-systematic_sampler" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">systematic_sampler.</span></span><span class="sig-name descname"><span class="pre">Sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="utils/utils.html#utils.grid.Grid" title="utils.grid.Grid"><span class="pre">Grid</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">led_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">13</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generates symmetric LED configurations on a square N x N grid, placing a specified number of LEDs (M) such that each configuration satisfies both point symmetry (about the grid center) and quadrant balance constraints.</p>
+<p>This class is designed for systematic sampling of LED positions for irradiation modules, ensuring that the resulting configurations are physically balanced and symmetric. It supports parallelized generation of all valid configurations, visualization, and export to standard formats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>G</strong> (<a class="reference internal" href="utils/utils.html#utils.grid.Grid" title="utils.grid.Grid"><em>Grid</em></a>) – Grid object defining the grid parameters (dimensions, step size, margins, etc.).</p></li>
+<li><p><strong>led_count</strong> (<em>int</em>) – Total number of LEDs to place on the grid.</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of LEDs above the grid in centimeters.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – If True, prints progress and diagnostic information during configuration generation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Variables<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>G</strong> (<a class="reference internal" href="utils/utils.html#utils.grid.Grid" title="utils.grid.Grid"><em>Grid</em></a>) – The grid object used for configuration.</p></li>
+<li><p><strong>grid_size</strong> (<em>int</em>) – Number of grid points along one axis (assumes square grid).</p></li>
+<li><p><strong>grid_step</strong> (<em>float</em>) – Step size between grid points (from Grid object).</p></li>
+<li><p><strong>led_count</strong> (<em>int</em>) – Number of LEDs to place.</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of LEDs above the grid (cm).</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Controls verbosity of output.</p></li>
+<li><p><strong>half_size</strong> (<em>int</em>) – Half the grid size (used for coordinate calculations).</p></li>
+<li><p><strong>coords</strong> (<em>list</em><em>[</em><em>int</em><em>]</em>) – List of coordinate values for grid points.</p></li>
+<li><p><strong>center_used</strong> (<em>bool</em>) – Whether the grid center is used (True if led_count is odd).</p></li>
+<li><p><strong>pair_count</strong> (<em>int</em>) – Number of symmetric LED pairs (<code class="docutils literal notranslate"><span class="pre">led_count</span> <span class="pre">//</span> <span class="pre">2</span></code>, or <code class="docutils literal notranslate"><span class="pre">(led_count-1)</span> <span class="pre">//</span> <span class="pre">2</span></code> if odd).</p></li>
+<li><p><strong>Q1_points</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points in the first quadrant (x &gt; 0, y &gt; 0).</p></li>
+<li><p><strong>Q2_points</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points in the second quadrant (x &lt; 0, y &gt; 0).</p></li>
+<li><p><strong>Q3_points</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points in the third quadrant (x &lt; 0, y &lt; 0).</p></li>
+<li><p><strong>Q4_points</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points in the fourth quadrant (x &gt; 0, y &lt; 0).</p></li>
+<li><p><strong>pos_x_axis</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points on the positive x-axis.</p></li>
+<li><p><strong>neg_x_axis</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points on the negative x-axis.</p></li>
+<li><p><strong>pos_y_axis</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points on the positive y-axis.</p></li>
+<li><p><strong>neg_y_axis</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Grid points on the negative y-axis.</p></li>
+<li><p><strong>all_pos_axis</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – All axis points with positive coordinates (union of pos_x_axis and pos_y_axis).</p></li>
+<li><p><strong>center</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>] or </em><em>None</em>) – Coordinates of the grid center, or None if not applicable.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the grid size is not odd (required for a clear center point).</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The grid must be square and have an odd number of points along each axis to ensure a unique center.</p></li>
+<li><p>Configurations are generated such that each LED has a symmetric counterpart with respect to the grid center, except possibly one at the center if led_count is odd.</p></li>
+<li><p>Quadrant balance ensures that the sum of LED contributions to each quadrant is equal.</p></li>
+<li><p>The class supports parallel processing for efficient configuration generation on large grids.</p></li>
+</ul>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.calculate_quadrant_weights">
+<span class="sig-name descname"><span class="pre">calculate_quadrant_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.calculate_quadrant_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.calculate_quadrant_weights" title="Link to this definition"></a></dt>
+<dd><p>Computes the total fractional contribution of a given LED configuration to each of the four quadrants (Q1, Q2, Q3, Q4) of the grid.</p>
+<p>Each LED position contributes to one or more quadrants depending on its location (quadrant, axis, or center). The sum of all contributions equals the total number of LEDs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple containing the total weights for quadrants Q1, Q2, Q3, and Q4, respectively. Each value is a float representing the sum of contributions from all LEDs to that quadrant.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float, float]</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The sum of the returned weights should equal the total number of LEDs in the configuration.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.generate_all_configurations">
+<span class="sig-name descname"><span class="pre">generate_all_configurations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.generate_all_configurations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.generate_all_configurations" title="Link to this definition"></a></dt>
+<dd><p>Systematically generates all unique, valid LED configurations on the grid that satisfy point symmetry and quadrant balance constraints.</p>
+<p>The method explores all possible symmetric arrangements of the specified number of LEDs, using parallel processing to accelerate computation. Each configuration is checked for symmetry and balance, and duplicates are removed. The resulting configurations are scaled by the grid step size and returned as an array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>max_workers</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Maximum number of worker processes to use for parallel computation. If None, uses all available CPU cores.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of unique valid configurations. Each entry is a numpy array of shape (N, 2), where N is the number of LEDs, and coordinates are in centimeters (scaled by grid step).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the grid size is not odd (enforced during initialization).</p>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><p>May print progress information if verbosity is enabled. Uses multiprocessing and may increase system resource usage.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The returned configurations are sorted, unique, and scaled to real-world units. The method may take significant time for large grids or high LED counts.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.get_quadrant_weight">
+<span class="sig-name descname"><span class="pre">get_quadrant_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.get_quadrant_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.get_quadrant_weight" title="Link to this definition"></a></dt>
+<dd><p>Determines the fractional contribution of a grid point to each of the four quadrants (Q1, Q2, Q3, Q4).</p>
+<p>The contribution is based on the point’s position relative to the grid center:
+- Points in a quadrant contribute fully (1.0) to that quadrant.
+- Points on axes contribute fractionally to adjacent quadrants.
+- The center point (0, 0) contributes equally (0.25) to all quadrants.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>point</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – The (x, y) coordinates of the grid point (in grid index units, not cm).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The weights for quadrants Q1, Q2, Q3, Q4, respectively. Each value is in [0, 1].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float, float]</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The sum of the returned weights is always 1.0 for the center, and 1.0 for all other points (except points not on the grid, which return all zeros).</p></li>
+<li><p>Quadrant definitions: Q1: x &gt; 0, y &gt; 0; Q2: x &lt; 0, y &gt; 0; Q3: x &lt; 0, y &lt; 0; Q4: x &gt; 0, y &lt; 0.</p></li>
+<li><p>Axis points split their contribution between adjacent quadrants.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.plot_configuration">
+<span class="sig-name descname"><span class="pre">plot_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">matplotlib.axes.Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">matplotlib.axes.Axes</span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.plot_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.plot_configuration" title="Link to this definition"></a></dt>
+<dd><p>Visualizes a given LED configuration on a 2D grid using Matplotlib, displaying the LED positions and grid layout.</p>
+<p>This method plots the provided configuration of LED positions on the specified Matplotlib Axes object. The grid is scaled and labeled according to the underlying Grid object. Optionally, the plot can include a title indicating the number of LEDs and their height above the grid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – The Axes object on which to plot the configuration.</p></li>
+<li><p><strong>configuration</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – The LED positions to plot, as a list of (x, y) tuples representing integer grid coordinates (not scaled by grid step).</p></li>
+<li><p><strong>z</strong> (<em>float</em><em>, </em><em>optional</em>) – Height of LEDs above the grid in centimeters, used for the plot title. If set to -1 (default), uses the Sampler’s height attribute.</p></li>
+<li><p><strong>point_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the plotted LED points.</p></li>
+<li><p><strong>set_title</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to set a title on the plot indicating configuration details.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Matplotlib Axes object with the plotted configuration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.axes.Axes</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Modifies the provided Axes object by adding scatter points, grid lines, and labels.</p></li>
+<li><p>Sets Matplotlib styles for consistent appearance.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The configuration coordinates are interpreted as grid indices and are not automatically scaled to centimeters; scaling should be handled prior to plotting if needed.</p></li>
+<li><p>The grid limits and ticks are determined by the associated Grid object.</p></li>
+<li><p>The method does not display the plot; it only modifies the Axes object.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.plot_configuration_small">
+<span class="sig-name descname"><span class="pre">plot_configuration_small</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">matplotlib.axes.Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">-1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">matplotlib.axes.Axes</span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.plot_configuration_small"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.plot_configuration_small" title="Link to this definition"></a></dt>
+<dd><p>Creates a compact visualization of an LED configuration on a Matplotlib Axes, suitable for use in subplots or summary figures.</p>
+<p>This method plots the provided LED positions on the given Axes object, using smaller point sizes and minimal axis labeling for a cleaner, more compact appearance. The grid is drawn according to the associated Grid object, but axis labels and tick labels are hidden to save space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – The Axes object on which to plot the configuration.</p></li>
+<li><p><strong>configuration</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – The LED positions to plot, as a list of (x, y) tuples representing integer grid coordinates (not scaled by grid step).</p></li>
+<li><p><strong>z</strong> (<em>float</em><em>, </em><em>optional</em>) – Height of LEDs above the grid in centimeters, used for the plot title (not shown in this small plot). Default is -1.</p></li>
+<li><p><strong>point_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Size of the plotted LED points (smaller than in the main plot).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The Matplotlib Axes object with the plotted configuration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.axes.Axes</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Modifies the provided Axes object by adding scatter points, grid lines, and hiding axis labels and tick labels.</p></li>
+<li><p>Sets Matplotlib styles for consistent appearance.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>This method is intended for use in multi-panel figures or summary plots where space is limited.</p></li>
+<li><p>The configuration coordinates are interpreted as grid indices and are not automatically scaled to centimeters.</p></li>
+<li><p>The plot does not display axis labels or tick labels, and the grid is shown behind the points.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.read_configuration_from_json">
+<span class="sig-name descname"><span class="pre">read_configuration_from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.read_configuration_from_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.read_configuration_from_json" title="Link to this definition"></a></dt>
+<dd><p>Loads a single LED configuration and its associated height from a JSON file.</p>
+<p>The JSON file is expected to contain the following keys:
+- “(x, y) Positions in [cm]”: List of LED positions as (x, y) coordinate pairs (in centimeters).
+- “Height in [cm]”: Integer or float specifying the height of the LEDs above the grid (in centimeters).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<em>str</em>) – Path to the input JSON file containing the configuration.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>configuration (list[tuple[int, int]]): List of (x, y) tuples representing LED positions in centimeters.</p></li>
+<li><p>height (int): Height of LEDs above the grid in centimeters.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If the specified file does not exist.</p></li>
+<li><p><strong>KeyError</strong> – If required keys are missing from the JSON file.</p></li>
+<li><p><strong>json.JSONDecodeError</strong> – If the file is not valid JSON.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Opens and reads from disk.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The coordinates are returned as tuples, and the height is returned as an integer or float depending on the file content.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.save_configuration_to_json">
+<span class="sig-name descname"><span class="pre">save_configuration_to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_fig_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.save_configuration_to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.save_configuration_to_json" title="Link to this definition"></a></dt>
+<dd><p>Serializes a single LED configuration to a JSON file, optionally saving a visualization of the configuration as an image file.</p>
+<p>The method writes the configuration, including the number of LEDs, their (x, y) positions (as provided), and the LED height, to a JSON file at the specified path. If a file type is specified via <code class="docutils literal notranslate"><span class="pre">save_fig_type</span></code>, a plot of the configuration is also saved in the same location with the corresponding extension.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>configuration</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – The LED positions to save, as a list of (x, y) tuples representing grid coordinates (not scaled by grid step).</p></li>
+<li><p><strong>height</strong> (<em>int</em>) – Height of LEDs above the grid in centimeters.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the output JSON file.</p></li>
+<li><p><strong>save_fig_type</strong> (<em>str</em><em>, </em><em>optional</em>) – File type for saving a plot of the configuration (e.g., ‘png’, ‘svg’). If empty (default), no plot is saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Writes a JSON file to disk containing the configuration data.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">save_fig_type</span></code> is provided, creates and saves a plot image file in the same directory.</p></li>
+<li><p>May create or overwrite files at the specified paths.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The configuration is saved as provided; coordinates are not scaled to centimeters unless done prior to calling this method.</p></li>
+<li><p>The plot image, if saved, uses the <code class="docutils literal notranslate"><span class="pre">plot_configuration</span></code> method for visualization.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="systematic_sampler.Sampler.verify_configuration">
+<span class="sig-name descname"><span class="pre">verify_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/systematic_sampler.html#Sampler.verify_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.Sampler.verify_configuration" title="Link to this definition"></a></dt>
+<dd><p>Checks whether a given LED configuration satisfies both point symmetry (about the grid center) and quadrant balance constraints.</p>
+<p>The configuration is valid if:
+- For every LED at (x, y), there is also an LED at (-x, -y) (point symmetry).
+- The sum of fractional contributions to each quadrant is equal (quadrant balance).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the configuration is symmetric and balanced; False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The function assumes the configuration is on a square, odd-sized grid centered at (0, 0).</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="systematic_sampler.save_configurations">
+<span class="sig-prename descclassname"><span class="pre">systematic_sampler.</span></span><span class="sig-name descname"><span class="pre">save_configurations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#systematic_sampler.Sampler" title="systematic_sampler.Sampler"><span class="pre">Sampler</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/systematic_sampler.html#save_configurations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#systematic_sampler.save_configurations" title="Link to this definition"></a></dt>
+<dd><p>Saves a collection of LED configurations and associated metadata to a compressed NumPy NPZ file.</p>
+<dl class="simple">
+<dt>The output file contains the following arrays and metadata:</dt><dd><ul class="simple">
+<li><p>‘configurations’: Array of configurations (each configuration is an array of LED positions, typically shape (N, 2)).</p></li>
+<li><p>‘total_count’: Total number of configurations saved (int).</p></li>
+<li><p>‘grid_size’: Number of grid points along one axis (int).</p></li>
+<li><p>‘led_count’: Number of LEDs per configuration (int).</p></li>
+<li><p>‘height’: Height of LEDs above the grid in centimeters (int or float).</p></li>
+<li><p>‘generator’: String identifier for the generator used.</p></li>
+<li><p>‘description’: Human-readable description of the dataset.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>configurations</strong> (<em>np.ndarray</em>) – Array of configurations to save. Each entry should be an array-like of shape (led_count, 2), with coordinates in centimeters.</p></li>
+<li><p><strong>generator</strong> (<a class="reference internal" href="#systematic_sampler.Sampler" title="systematic_sampler.Sampler"><em>Sampler</em></a>) – Sampler object used to generate the configurations. Used for metadata extraction.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Path to the output NPZ file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>IOError</strong> – If the file cannot be written.</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Writes a compressed NPZ file to disk at the specified location.</p></li>
+<li><p>Prints a confirmation message to stdout upon successful save.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The configurations are saved as provided; ensure they are scaled to the desired units (e.g., centimeters) before calling this function.</p>
+</div>
+</dd></dl>
+
+<section id="example-usage">
+<h2>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h2>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LED</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">systematic_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampler</span><span class="p">,</span> <span class="n">save_configurations</span>
+
+<span class="c1"># initialize the grid and LED</span>
+<span class="n">G</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+<span class="n">led</span> <span class="o">=</span> <span class="n">LED</span><span class="p">(</span>
+   <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LST1-01G01-UV01-00&quot;</span><span class="p">,</span>
+   <span class="n">optical_power</span><span class="o">=</span><span class="mf">0.875</span><span class="p">,</span>  <span class="c1"># @ 500 mA in W</span>
+   <span class="n">intensity_data_file</span><span class="o">=</span><span class="s2">&quot;utils/angle_intensity_data/LST1-01G01-UV01-00.csv&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Create a systematic sampler for 8 LEDs at height 13 cm</span>
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="n">G</span><span class="o">=</span><span class="n">G</span><span class="p">,</span> <span class="n">led_count</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="c1"># Generate all configurations and save them to a file</span>
+<span class="n">samples_sys</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">generate_all_configurations</span><span class="p">()</span>
+<span class="n">save_configurations</span><span class="p">(</span><span class="n">samples_sys</span><span class="p">,</span> <span class="n">sampler</span><span class="p">,</span> <span class="s2">&quot;results/examples/example_systematic_8_leds_13_cm.npz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="monte_carlo_sampler.html" class="btn btn-neutral float-right" title="Monte-Carlo Sampler" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

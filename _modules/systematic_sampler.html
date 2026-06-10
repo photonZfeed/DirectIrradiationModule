@@ -1,0 +1,1122 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>systematic_sampler &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">systematic_sampler</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for systematic_sampler</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">combinations</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">concurrent.futures</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+
+<div class="viewcode-block" id="Sampler">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Sampler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates symmetric LED configurations on a square N x N grid, placing a specified number of LEDs (M) such that each configuration satisfies both point symmetry (about the grid center) and quadrant balance constraints.</span>
+
+<span class="sd">    This class is designed for systematic sampling of LED positions for irradiation modules, ensuring that the resulting configurations are physically balanced and symmetric. It supports parallelized generation of all valid configurations, visualization, and export to standard formats.</span>
+
+<span class="sd">    :param G: Grid object defining the grid parameters (dimensions, step size, margins, etc.).</span>
+<span class="sd">    :type G: Grid</span>
+<span class="sd">    :param led_count: Total number of LEDs to place on the grid.</span>
+<span class="sd">    :type led_count: int</span>
+<span class="sd">    :param height: Height of LEDs above the grid in centimeters.</span>
+<span class="sd">    :type height: int</span>
+<span class="sd">    :param verbose: If True, prints progress and diagnostic information during configuration generation.</span>
+<span class="sd">    :type verbose: bool</span>
+
+<span class="sd">    :ivar G: The grid object used for configuration.</span>
+<span class="sd">    :vartype G: Grid</span>
+<span class="sd">    :ivar grid_size: Number of grid points along one axis (assumes square grid).</span>
+<span class="sd">    :vartype grid_size: int</span>
+<span class="sd">    :ivar grid_step: Step size between grid points (from Grid object).</span>
+<span class="sd">    :vartype grid_step: float</span>
+<span class="sd">    :ivar led_count: Number of LEDs to place.</span>
+<span class="sd">    :vartype led_count: int</span>
+<span class="sd">    :ivar height: Height of LEDs above the grid (cm).</span>
+<span class="sd">    :vartype height: int</span>
+<span class="sd">    :ivar verbose: Controls verbosity of output.</span>
+<span class="sd">    :vartype verbose: bool</span>
+<span class="sd">    :ivar half_size: Half the grid size (used for coordinate calculations).</span>
+<span class="sd">    :vartype half_size: int</span>
+<span class="sd">    :ivar coords: List of coordinate values for grid points.</span>
+<span class="sd">    :vartype coords: list[int]</span>
+<span class="sd">    :ivar center_used: Whether the grid center is used (True if led_count is odd).</span>
+<span class="sd">    :vartype center_used: bool</span>
+<span class="sd">    :ivar pair_count: Number of symmetric LED pairs (``led_count // 2``, or ``(led_count-1) // 2`` if odd).</span>
+<span class="sd">    :vartype pair_count: int</span>
+<span class="sd">    :ivar Q1_points: Grid points in the first quadrant (x &gt; 0, y &gt; 0).</span>
+<span class="sd">    :vartype Q1_points: list[tuple[int, int]]</span>
+<span class="sd">    :ivar Q2_points: Grid points in the second quadrant (x &lt; 0, y &gt; 0).</span>
+<span class="sd">    :vartype Q2_points: list[tuple[int, int]]</span>
+<span class="sd">    :ivar Q3_points: Grid points in the third quadrant (x &lt; 0, y &lt; 0).</span>
+<span class="sd">    :vartype Q3_points: list[tuple[int, int]]</span>
+<span class="sd">    :ivar Q4_points: Grid points in the fourth quadrant (x &gt; 0, y &lt; 0).</span>
+<span class="sd">    :vartype Q4_points: list[tuple[int, int]]</span>
+<span class="sd">    :ivar pos_x_axis: Grid points on the positive x-axis.</span>
+<span class="sd">    :vartype pos_x_axis: list[tuple[int, int]]</span>
+<span class="sd">    :ivar neg_x_axis: Grid points on the negative x-axis.</span>
+<span class="sd">    :vartype neg_x_axis: list[tuple[int, int]]</span>
+<span class="sd">    :ivar pos_y_axis: Grid points on the positive y-axis.</span>
+<span class="sd">    :vartype pos_y_axis: list[tuple[int, int]]</span>
+<span class="sd">    :ivar neg_y_axis: Grid points on the negative y-axis.</span>
+<span class="sd">    :vartype neg_y_axis: list[tuple[int, int]]</span>
+<span class="sd">    :ivar all_pos_axis: All axis points with positive coordinates (union of pos_x_axis and pos_y_axis).</span>
+<span class="sd">    :vartype all_pos_axis: list[tuple[int, int]]</span>
+<span class="sd">    :ivar center: Coordinates of the grid center, or None if not applicable.</span>
+<span class="sd">    :vartype center: tuple[int, int] or None</span>
+
+<span class="sd">    :raises ValueError: If the grid size is not odd (required for a clear center point).</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - The grid must be square and have an odd number of points along each axis to ensure a unique center.</span>
+<span class="sd">        - Configurations are generated such that each LED has a symmetric counterpart with respect to the grid center, except possibly one at the center if led_count is odd.</span>
+<span class="sd">        - Quadrant balance ensures that the sum of LED contributions to each quadrant is equal.</span>
+<span class="sd">        - The class supports parallel processing for efficient configuration generation on large grids.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">led_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">13</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the symmetric LED configuration generator.</span>
+
+<span class="sd">        :param G: Grid object defining the grid parameters (dimensions, step size, margins, etc.).</span>
+<span class="sd">        :type G: Grid</span>
+<span class="sd">        :param led_count: Total number of LEDs to place on the grid. Default is 8.</span>
+<span class="sd">        :type led_count: int</span>
+<span class="sd">        :param height: Height of LEDs above the grid in centimeters. Default is 13.</span>
+<span class="sd">        :type height: int</span>
+<span class="sd">        :param verbose: If True, prints progress and diagnostic information during configuration generation. Default is True.</span>
+<span class="sd">        :type verbose: bool</span>
+
+<span class="sd">        :raises ValueError: If the grid size is not odd (required for a clear center point).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">grid_points</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Grid size must be odd for clear center point&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">=</span> <span class="n">G</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">grid_points</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>  <span class="c1"># Assuming square grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_step</span> <span class="o">=</span> <span class="n">G</span><span class="o">.</span><span class="n">step</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">led_count</span> <span class="o">=</span> <span class="n">led_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">half_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">half_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">half_size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        
+        <span class="c1"># Determine if center is used</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center_used</span> <span class="o">=</span> <span class="p">(</span><span class="n">led_count</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pair_count</span> <span class="o">=</span> <span class="n">led_count</span> <span class="o">//</span> <span class="mi">2</span>  <span class="c1"># Number of symmetric pairs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_used</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pair_count</span> <span class="o">=</span> <span class="p">(</span><span class="n">led_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        
+        <span class="c1"># Precompute all point classifications</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q1_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q2_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q3_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q4_points</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_x_axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_y_axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_pos_axis</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">neg_x_axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">neg_y_axis</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">_classify_points</span><span class="p">()</span>
+        
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classify_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Categorizes all grid points into quadrants (Q1–Q4) and axes (positive/negative x and y),</span>
+<span class="sd">        based on their integer coordinates relative to the grid center.</span>
+
+<span class="sd">        This method populates the following instance attributes:</span>
+<span class="sd">        - ``Q1_points``: List of points in the first quadrant (x &gt; 0, y &gt; 0)</span>
+<span class="sd">        - ``Q2_points``: List of points in the second quadrant (x &lt; 0, y &gt; 0)</span>
+<span class="sd">        - ``Q3_points``: List of points in the third quadrant (x &lt; 0, y &lt; 0)</span>
+<span class="sd">        - ``Q4_points``: List of points in the fourth quadrant (x &gt; 0, y &lt; 0)</span>
+<span class="sd">        - ``pos_x_axis``: Points on the positive x-axis (x &gt; 0, y == 0)</span>
+<span class="sd">        - ``neg_x_axis``: Points on the negative x-axis (x &lt; 0, y == 0)</span>
+<span class="sd">        - ``pos_y_axis``: Points on the positive y-axis (x == 0, y &gt; 0)</span>
+<span class="sd">        - ``neg_y_axis``: Points on the negative y-axis (x == 0, y &lt; 0)</span>
+<span class="sd">        - ``all_pos_axis``: Concatenation of ``pos_x_axis`` and ``pos_y_axis``</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            Modifies the instance attributes listed above in-place.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The grid is assumed to be square and centered at (0, 0).</span>
+<span class="sd">            - The center point (0, 0) is excluded from all quadrant and axis lists.</span>
+<span class="sd">            - This method should be called during initialization and whenever the grid changes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>  <span class="c1"># center handled separately</span>
+                <span class="k">elif</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Q1_points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Q2_points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Q3_points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Q4_points</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">y</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pos_x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">neg_x_axis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">pos_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">neg_y_axis</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_pos_axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_x_axis</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_y_axis</span>
+        
+<div class="viewcode-block" id="Sampler.get_quadrant_weight">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.get_quadrant_weight">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_quadrant_weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines the fractional contribution of a grid point to each of the four quadrants (Q1, Q2, Q3, Q4).</span>
+
+<span class="sd">        The contribution is based on the point&#39;s position relative to the grid center:</span>
+<span class="sd">        - Points in a quadrant contribute fully (1.0) to that quadrant.</span>
+<span class="sd">        - Points on axes contribute fractionally to adjacent quadrants.</span>
+<span class="sd">        - The center point (0, 0) contributes equally (0.25) to all quadrants.</span>
+
+<span class="sd">        :param point: The (x, y) coordinates of the grid point (in grid index units, not cm).</span>
+<span class="sd">        :type point: tuple[int, int]</span>
+<span class="sd">        :returns: The weights for quadrants Q1, Q2, Q3, Q4, respectively. Each value is in [0, 1].</span>
+<span class="sd">        :rtype: tuple[float, float, float, float]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The sum of the returned weights is always 1.0 for the center, and 1.0 for all other points (except points not on the grid, which return all zeros).</span>
+<span class="sd">            - Quadrant definitions: Q1: x &gt; 0, y &gt; 0; Q2: x &lt; 0, y &gt; 0; Q3: x &lt; 0, y &lt; 0; Q4: x &gt; 0, y &lt; 0.</span>
+<span class="sd">            - Axis points split their contribution between adjacent quadrants.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">point</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">y</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">x</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># x-axis</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">y</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># y-axis</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="Sampler.calculate_quadrant_weights">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.calculate_quadrant_weights">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_quadrant_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the total fractional contribution of a given LED configuration to each of the four quadrants (Q1, Q2, Q3, Q4) of the grid.</span>
+
+<span class="sd">        Each LED position contributes to one or more quadrants depending on its location (quadrant, axis, or center). The sum of all contributions equals the total number of LEDs.</span>
+
+<span class="sd">        :param configuration: List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).</span>
+<span class="sd">        :type configuration: list[tuple[int, int]]</span>
+
+<span class="sd">        :returns: Tuple containing the total weights for quadrants Q1, Q2, Q3, and Q4, respectively. Each value is a float representing the sum of contributions from all LEDs to that quadrant.</span>
+<span class="sd">        :rtype: tuple[float, float, float, float]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The sum of the returned weights should equal the total number of LEDs in the configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">,</span> <span class="n">q4</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">:</span>
+            <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="n">w3</span><span class="p">,</span> <span class="n">w4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_quadrant_weight</span><span class="p">(</span><span class="n">point</span><span class="p">)</span>
+            <span class="n">q1</span> <span class="o">+=</span> <span class="n">w1</span>
+            <span class="n">q2</span> <span class="o">+=</span> <span class="n">w2</span>
+            <span class="n">q3</span> <span class="o">+=</span> <span class="n">w3</span>
+            <span class="n">q4</span> <span class="o">+=</span> <span class="n">w4</span>
+        <span class="k">return</span> <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">,</span> <span class="n">q4</span></div>
+
+    
+<div class="viewcode-block" id="Sampler.verify_configuration">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.verify_configuration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks whether a given LED configuration satisfies both point symmetry (about the grid center) and quadrant balance constraints.</span>
+
+<span class="sd">        The configuration is valid if:</span>
+<span class="sd">        - For every LED at (x, y), there is also an LED at (-x, -y) (point symmetry).</span>
+<span class="sd">        - The sum of fractional contributions to each quadrant is equal (quadrant balance).</span>
+
+<span class="sd">        :param configuration: List of LED positions, where each tuple represents integer grid coordinates (not scaled by grid step).</span>
+<span class="sd">        :type configuration: list[tuple[int, int]]</span>
+
+<span class="sd">        :returns: True if the configuration is symmetric and balanced; False otherwise.</span>
+<span class="sd">        :rtype: bool</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The function assumes the configuration is on a square, odd-sized grid centered at (0, 0).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check point symmetry</span>
+        <span class="n">config_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">configuration</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">:</span>
+            <span class="n">symmetric_point</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">point</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">symmetric_point</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config_set</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># Check quadrant balance</span>
+        <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">,</span> <span class="n">q3</span><span class="p">,</span> <span class="n">q4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_quadrant_weights</span><span class="p">(</span><span class="n">configuration</span><span class="p">)</span>
+        <span class="n">target_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">led_count</span> <span class="o">/</span> <span class="mi">4</span>  <span class="c1"># Each quadrant should have equal weight</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">q1</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">and</span> 
+                <span class="nb">abs</span><span class="p">(</span><span class="n">q2</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">and</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">q3</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">and</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">q4</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Sampler.generate_all_configurations">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.generate_all_configurations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_all_configurations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Systematically generates all unique, valid LED configurations on the grid that satisfy point symmetry and quadrant balance constraints.</span>
+
+<span class="sd">        The method explores all possible symmetric arrangements of the specified number of LEDs, using parallel processing to accelerate computation. Each configuration is checked for symmetry and balance, and duplicates are removed. The resulting configurations are scaled by the grid step size and returned as an array.</span>
+
+<span class="sd">        :param max_workers: Maximum number of worker processes to use for parallel computation. If None, uses all available CPU cores.</span>
+<span class="sd">        :type max_workers: int or None, optional</span>
+
+<span class="sd">        :returns: Array of unique valid configurations. Each entry is a numpy array of shape (N, 2), where N is the number of LEDs, and coordinates are in centimeters (scaled by grid step).</span>
+<span class="sd">        :rtype: np.ndarray</span>
+
+<span class="sd">        :raises ValueError: If the grid size is not odd (enforced during initialization).</span>
+<span class="sd">        :side effects: May print progress information if verbosity is enabled. Uses multiprocessing and may increase system resource usage.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The returned configurations are sorted, unique, and scaled to real-world units. The method may take significant time for large grids or high LED counts.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generating configurations for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">led_count</span><span class="si">}</span><span class="s2"> LEDs on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_size</span><span class="si">}</span><span class="s2"> grid&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Center LED: </span><span class="si">{</span><span class="s1">&#39;Yes&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">center_used</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;No&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Symmetric pairs: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pair_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Target quadrant weight: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">led_count</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">4</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="n">all_configurations</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Find all valid (a, b, c) combinations</span>
+        <span class="n">valid_combinations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_valid_abc_combinations</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">valid_combinations</span><span class="p">)</span><span class="si">}</span><span class="s2"> valid (a, b, c) combinations&quot;</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">valid_combinations</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Processing case (a=</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">, b=</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">, c=</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">max_workers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># use all available cores if not specified</span>
+                <span class="n">max_workers</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+                
+            <span class="n">case_configs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_case_parallel</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">)</span>
+            
+            <span class="n">all_configurations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">case_configs</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Case (</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">case_configs</span><span class="p">)</span><span class="si">}</span><span class="s2"> configurations&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Remove duplicates</span>
+        <span class="n">unique_configs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_remove_duplicates</span><span class="p">(</span><span class="n">all_configurations</span><span class="p">)</span>
+
+        <span class="n">unique_config_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_configs</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_configs</span><span class="p">):</span>
+            <span class="n">unique_config_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="n">unique_config_array</span> <span class="o">=</span> <span class="n">unique_config_array</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_step</span>  <span class="c1"># Scale by grid step size</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== FINAL RESULTS ===&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total unique configurations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_configs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">unique_config_array</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_valid_abc_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Systematically determines all valid combinations of symmetric LED pair types (a, b, c) that satisfy the quadrant balance constraint for the current grid and LED count.</span>
+
+<span class="sd">        This method explores all possible ways to distribute the available symmetric LED pairs into three categories:</span>
+<span class="sd">        - Type A: Pairs placed in the first and third quadrants (Q1/Q3)</span>
+<span class="sd">        - Type B: Pairs placed in the second and fourth quadrants (Q2/Q4)</span>
+<span class="sd">        - Type C: Pairs placed symmetrically on the axes</span>
+<span class="sd">        The sum of these pairs must match the total number of symmetric pairs required for the current configuration, and the resulting arrangement must ensure that the total fractional contribution to each quadrant is equal (quadrant balance).</span>
+
+<span class="sd">        :returns: List of valid (a, b, c) tuples, where:</span>
+<span class="sd">            - a (int): Number of Type A pairs (Q1/Q3)</span>
+<span class="sd">            - b (int): Number of Type B pairs (Q2/Q4)</span>
+<span class="sd">            - c (int): Number of axis pairs</span>
+<span class="sd">        :rtype: list[tuple[int, int, int]]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The method uses the current object&#39;s ``led_count``, ``pair_count``, and ``center_used`` attributes.</span>
+<span class="sd">            - The grid is assumed to be square and centered at (0, 0).</span>
+<span class="sd">            - The center LED (if present) is accounted for by adjusting the target quadrant weight.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">valid_combinations</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">target_weight</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">led_count</span> <span class="o">/</span> <span class="mi">4</span>
+        
+        <span class="c1"># Adjust target weight for center contribution</span>
+        <span class="n">center_adjustment</span> <span class="o">=</span> <span class="mf">0.25</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_used</span> <span class="k">else</span> <span class="mf">0.0</span>
+        
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pair_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pair_count</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">a</span><span class="p">):</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pair_count</span> <span class="o">-</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                
+                <span class="c1"># Check quadrant balance equations</span>
+                <span class="n">q1_weight</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">center_adjustment</span>
+                <span class="n">q2_weight</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">center_adjustment</span>
+                <span class="n">q3_weight</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">center_adjustment</span>
+                <span class="n">q4_weight</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">c</span> <span class="o">+</span> <span class="n">center_adjustment</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">q1_weight</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">and</span> 
+                    <span class="nb">abs</span><span class="p">(</span><span class="n">q2_weight</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">and</span>
+                    <span class="nb">abs</span><span class="p">(</span><span class="n">q3_weight</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span> <span class="ow">and</span>
+                    <span class="nb">abs</span><span class="p">(</span><span class="n">q4_weight</span> <span class="o">-</span> <span class="n">target_weight</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">):</span>
+                    <span class="n">valid_combinations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">valid_combinations</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_case_parallel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Efficiently generates all valid LED configurations for a specific (a, b, c) case using parallel processing.</span>
+
+<span class="sd">        This method delegates to the appropriate internal routine depending on the values of ``a``, ``b``, and ``c``:</span>
+<span class="sd">        - If only axis pairs are present (a == 0 and b == 0), processes axis-only configurations.</span>
+<span class="sd">        - If no axis pairs are present (c == 0), processes configurations with only Q1/Q3 and Q2/Q4 pairs.</span>
+<span class="sd">        - Otherwise, processes mixed cases with all three pair types.</span>
+<span class="sd">        Parallelization is used to accelerate the generation of large numbers of configurations.</span>
+
+<span class="sd">        :param a: Number of Type A symmetric pairs (Q1/Q3)</span>
+<span class="sd">        :type a: int</span>
+<span class="sd">        :param b: Number of Type B symmetric pairs (Q2/Q4)</span>
+<span class="sd">        :type b: int</span>
+<span class="sd">        :param c: Number of symmetric pairs on axes</span>
+<span class="sd">        :type c: int</span>
+<span class="sd">        :param max_workers: Maximum number of worker processes for parallel computation. If None, uses all available CPU cores.</span>
+<span class="sd">        :type max_workers: int or None, optional</span>
+
+<span class="sd">        :returns: List of valid configurations for the given (a, b, c) case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Uses multiprocessing (may increase system resource usage).</span>
+<span class="sd">            - May print progress information if verbosity is enabled.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The method assumes the grid and LED count are compatible with the requested (a, b, c) values.</span>
+<span class="sd">            - The returned configurations are not guaranteed to be unique across different (a, b, c) cases; deduplication is performed at a higher level.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_workers</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">b</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axis_only_case</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_no_axis_case</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_mixed_case</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_axis_only_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Efficiently generates all valid LED configurations for the special case where only axis pairs (i.e., symmetric pairs on the axes) are present, using parallel processing for scalability.</span>
+
+<span class="sd">        This method systematically explores all possible combinations of axis pairs (from the set of positive x- and y-axis points), optionally including the grid center if required by the configuration. Each combination is expanded to a full symmetric configuration by adding both the selected axis points and their symmetric counterparts. The process is parallelized to improve performance on large grids or high axis pair counts.</span>
+
+<span class="sd">        :param c: Number of axis pairs to select. Each pair consists of a point on the positive x- or y-axis and its symmetric counterpart.</span>
+<span class="sd">        :type c: int</span>
+<span class="sd">        :param max_workers: Maximum number of worker processes to use for parallel computation. If None, uses all available CPU cores.</span>
+<span class="sd">        :type max_workers: int or None</span>
+
+<span class="sd">        :returns: List of valid configurations for the axis-only case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Uses multiprocessing (may increase system resource usage).</span>
+<span class="sd">            - May print progress information if verbosity is enabled.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The method assumes the grid and LED count are compatible with the requested number of axis pairs.</span>
+<span class="sd">            - The returned configurations are not guaranteed to be unique across different cases; deduplication is performed at a higher level.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_pos_axis</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+            
+        <span class="n">axis_combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_pos_axis</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">axis_combinations</span><span class="p">)</span><span class="si">}</span><span class="s2"> axis combinations&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">axis_combinations</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">axis_combinations</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span><span class="n">max_workers</span> <span class="o">*</span> <span class="mi">4</span><span class="p">))</span> <span class="k">if</span> <span class="n">max_workers</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">axis_combinations</span><span class="p">)</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">axis_combinations</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">axis_combinations</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">)]</span>
+        
+        <span class="n">all_configs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process_axis_chunk</span><span class="p">,</span> <span class="n">chunk</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">]</span>
+            
+            <span class="n">completed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+                <span class="n">chunk_configs</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="n">all_configs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">chunk_configs</span><span class="p">)</span>
+                <span class="n">completed</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Axis case progress: </span><span class="si">{</span><span class="n">completed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">}</span><span class="s2"> chunks&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">all_configs</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_axis_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis_chunk</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Processes a subset (chunk) of axis pair combinations to generate all valid symmetric LED configurations for the axis-only case.</span>
+
+<span class="sd">        Each axis pair combination in the chunk is expanded to a full configuration by adding both the selected axis points and their symmetric counterparts. If the configuration requires a center LED, it is included. Only configurations with the correct total number of LEDs are returned.</span>
+
+<span class="sd">        :param axis_chunk: List of axis point combinations, where each combination is a tuple of axis points (positive x- or y-axis).</span>
+<span class="sd">        :type axis_chunk: list[tuple[int, int]]</span>
+
+<span class="sd">        :returns: List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - This method is intended for internal use with parallel processing.</span>
+<span class="sd">            - The returned configurations are not guaranteed to be unique across all chunks; deduplication is performed at a higher level.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">chunk_configs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">axis_points</span> <span class="ow">in</span> <span class="n">axis_chunk</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            
+            <span class="c1"># Add center if needed</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_used</span><span class="p">:</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">)</span>
+            
+            <span class="c1"># Add axis pairs</span>
+            <span class="k">for</span> <span class="n">axis_point</span> <span class="ow">in</span> <span class="n">axis_points</span><span class="p">:</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">axis_point</span><span class="p">)</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="o">-</span><span class="n">axis_point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">axis_point</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">led_count</span><span class="p">:</span>
+                <span class="n">chunk_configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">chunk_configs</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_no_axis_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Systematically generates all valid LED configurations for the case where only Type A (Q1/Q3) and Type B (Q2/Q4) symmetric pairs are present, with no axis pairs included. Utilizes parallel processing to efficiently explore all possible combinations.</span>
+
+<span class="sd">        This method considers all possible selections of points from the first quadrant (Q1) and second quadrant (Q2) to form symmetric pairs, ensuring that each configuration is point symmetric about the grid center and contains the correct total number of LEDs. If the configuration requires a center LED (odd LED count), it is included in each configuration. The process is parallelized by dividing the Q1 combinations into chunks, each processed independently.</span>
+
+<span class="sd">        :param a: Number of Type A symmetric pairs (placed in Q1 and their symmetric counterparts in Q3).</span>
+<span class="sd">        :type a: int</span>
+<span class="sd">        :param b: Number of Type B symmetric pairs (placed in Q2 and their symmetric counterparts in Q4).</span>
+<span class="sd">        :type b: int</span>
+<span class="sd">        :param max_workers: Maximum number of worker processes for parallel computation. If None, uses all available CPU cores.</span>
+<span class="sd">        :type max_workers: int or None, optional</span>
+
+<span class="sd">        :returns: List of valid configurations for the given case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Uses multiprocessing (may increase system resource usage).</span>
+<span class="sd">            - May print progress information if verbosity is enabled.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The method assumes the grid and LED count are compatible with the requested values of ``a`` and ``b``.</span>
+<span class="sd">            - The returned configurations are not guaranteed to be unique across all cases; deduplication is performed at a higher level.</span>
+<span class="sd">            - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q1_points</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q2_points</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        
+        <span class="n">q1_combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q1_points</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span> <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[()]</span>
+        <span class="n">q2_combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q2_points</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span> <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[()]</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">)</span><span class="si">}</span><span class="s2"> Q1 combinations × </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">q2_combinations</span><span class="p">)</span><span class="si">}</span><span class="s2"> Q2 combinations&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">q1_combinations</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">q2_combinations</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span><span class="n">max_workers</span> <span class="o">*</span> <span class="mi">4</span><span class="p">))</span> <span class="k">if</span> <span class="n">max_workers</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">)</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">q1_combinations</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">)]</span>
+        
+        <span class="n">all_configs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process_no_axis_chunk</span><span class="p">,</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">q2_combinations</span><span class="p">)</span> <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">chunks</span><span class="p">]</span>
+            
+            <span class="n">completed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+                <span class="n">chunk_configs</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="n">all_configs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">chunk_configs</span><span class="p">)</span>
+                <span class="n">completed</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No-axis case progress: </span><span class="si">{</span><span class="n">completed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span><span class="si">}</span><span class="s2"> chunks&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">all_configs</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_no_axis_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q1_chunk</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">],</span> <span class="n">q2_combinations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Processes a subset (chunk) of Q1 point combinations, pairing each with all possible Q2 combinations, to generate all valid symmetric LED configurations for the no-axis-pair case.</span>
+
+<span class="sd">        For each combination of Q1 and Q2 points, constructs a configuration by adding both the selected points and their symmetric counterparts. If the configuration requires a center LED (odd LED count), it is included. Only configurations with the correct total number of LEDs are returned. This method is intended for use with parallel processing, where each chunk is processed independently.</span>
+
+<span class="sd">        :param q1_chunk: List of Q1 point combinations to process in this chunk. Each entry is a tuple of (x, y) coordinates (integer grid indices).</span>
+<span class="sd">        :type q1_chunk: list[tuple[int, int]]</span>
+<span class="sd">        :param q2_combinations: List of all Q2 point combinations to pair with each Q1 selection. Each entry is a tuple of (x, y) coordinates (integer grid indices).</span>
+<span class="sd">        :type q2_combinations: list[tuple[int, int]]</span>
+
+<span class="sd">        :returns: List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - This method is intended for internal use with parallel processing in the no-axis-pair case.</span>
+<span class="sd">            - The returned configurations are not guaranteed to be unique across all chunks; deduplication is performed at a higher level.</span>
+<span class="sd">            - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">chunk_configs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">q1_selection</span> <span class="ow">in</span> <span class="n">q1_chunk</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">q2_selection</span> <span class="ow">in</span> <span class="n">q2_combinations</span><span class="p">:</span>
+                <span class="n">config</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                
+                <span class="c1"># Add center if needed</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_used</span><span class="p">:</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">)</span>
+                
+                <span class="c1"># Add Type A pairs (Q1 -&gt; Q3)</span>
+                <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">q1_selection</span><span class="p">:</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                
+                <span class="c1"># Add Type B pairs (Q2 -&gt; Q4)</span>
+                <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">q2_selection</span><span class="p">:</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">led_count</span><span class="p">:</span>
+                    <span class="n">chunk_configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">chunk_configs</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_mixed_case</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Efficiently generates all valid LED configurations for a specific case where the configuration consists of a mix of Type A (Q1/Q3), Type B (Q2/Q4), and axis-symmetric LED pairs, using parallel processing for scalability.</span>
+
+<span class="sd">        This method systematically explores all possible combinations of symmetric LED pairs distributed as follows:</span>
+<span class="sd">        - Type A: Pairs placed in the first and third quadrants (Q1/Q3)</span>
+<span class="sd">        - Type B: Pairs placed in the second and fourth quadrants (Q2/Q4)</span>
+<span class="sd">        - Axis pairs: Pairs placed symmetrically on the positive axes (x or y)</span>
+<span class="sd">        The total number of pairs is determined by the input parameters ``a``, ``b``, and ``c``. Each configuration is constructed by selecting the specified number of pairs from each category, ensuring point symmetry about the grid center and the correct total number of LEDs. If the configuration requires a center LED (odd LED count), it is included in each configuration. The process is parallelized by dividing the Q1 combinations into chunks, each processed independently.</span>
+
+<span class="sd">        :param a: Number of Type A symmetric pairs (placed in Q1 and their symmetric counterparts in Q3).</span>
+<span class="sd">        :type a: int</span>
+<span class="sd">        :param b: Number of Type B symmetric pairs (placed in Q2 and their symmetric counterparts in Q4).</span>
+<span class="sd">        :type b: int</span>
+<span class="sd">        :param c: Number of symmetric pairs on the axes (each pair consists of a point on the positive x- or y-axis and its symmetric counterpart).</span>
+<span class="sd">        :type c: int</span>
+<span class="sd">        :param max_workers: Maximum number of worker processes for parallel computation. If None, uses all available CPU cores.</span>
+<span class="sd">        :type max_workers: int or None, optional</span>
+
+<span class="sd">        :returns: List of valid configurations for the given (a, b, c) case. Each configuration is a list of (x, y) tuples (integer grid coordinates, not scaled).</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Uses multiprocessing (may increase system resource usage).</span>
+<span class="sd">            - May print progress information if verbosity is enabled.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The method assumes the grid and LED count are compatible with the requested values of ``a``, ``b``, and ``c``.</span>
+<span class="sd">            - The returned configurations are not guaranteed to be unique across all cases; deduplication is performed at a higher level.</span>
+<span class="sd">            - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">a</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q1_points</span><span class="p">)</span> <span class="ow">or</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q2_points</span><span class="p">)</span> <span class="ow">or</span> 
+            <span class="n">c</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_pos_axis</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        
+        <span class="n">q1_combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q1_points</span><span class="p">,</span> <span class="n">a</span><span class="p">))</span> <span class="k">if</span> <span class="n">a</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[()]</span>
+        <span class="n">q2_combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q2_points</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span> <span class="k">if</span> <span class="n">b</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[()]</span>
+        <span class="n">axis_combinations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">combinations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_pos_axis</span><span class="p">,</span> <span class="n">c</span><span class="p">))</span> <span class="k">if</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="p">[()]</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">)</span><span class="si">}</span><span class="s2"> Q1 × </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">q2_combinations</span><span class="p">)</span><span class="si">}</span><span class="s2"> Q2 × </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">axis_combinations</span><span class="p">)</span><span class="si">}</span><span class="s2"> axis&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">q1_combinations</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">q2_combinations</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">axis_combinations</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        
+        <span class="c1"># Split by Q1 combinations</span>
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span><span class="n">max_workers</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span> <span class="k">if</span> <span class="n">max_workers</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">)</span>
+        <span class="n">q1_chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">q1_combinations</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">q1_combinations</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">)]</span>
+        
+        <span class="n">all_configs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process_mixed_chunk</span><span class="p">,</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">q2_combinations</span><span class="p">,</span> <span class="n">axis_combinations</span><span class="p">)</span> 
+                      <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">q1_chunks</span><span class="p">]</span>
+            
+            <span class="n">completed</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+                <span class="n">chunk_configs</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="n">all_configs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">chunk_configs</span><span class="p">)</span>
+                <span class="n">completed</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">q1_chunks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mixed case progress: </span><span class="si">{</span><span class="n">completed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">q1_chunks</span><span class="p">)</span><span class="si">}</span><span class="s2"> chunks&quot;</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">all_configs</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_mixed_chunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q1_chunk</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">],</span> <span class="n">q2_combinations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">],</span> 
+                           <span class="n">axis_combinations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tuple</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates all valid symmetric LED configurations for a subset (chunk) of possible combinations in the mixed case, where the configuration consists of a mix of Type A (Q1/Q3), Type B (Q2/Q4), and axis-symmetric LED pairs.</span>
+
+<span class="sd">        This method is intended for internal use with parallel processing. For each combination of points from the provided Q1, Q2, and axis chunks, it constructs a configuration by adding both the selected points and their symmetric counterparts with respect to the grid center. If the configuration requires a center LED (odd LED count), it is included. Only configurations with the correct total number of LEDs are returned. The resulting configurations are sorted and returned as a list.</span>
+
+<span class="sd">        :param q1_chunk: List of Q1 point combinations to process in this chunk. Each entry is a tuple of (x, y) coordinates (integer grid indices) representing points in the first quadrant.</span>
+<span class="sd">        :type q1_chunk: list[tuple[int, int]]</span>
+<span class="sd">        :param q2_combinations: List of all Q2 point combinations to pair with each Q1 selection. Each entry is a tuple of (x, y) coordinates (integer grid indices) representing points in the second quadrant.</span>
+<span class="sd">        :type q2_combinations: list[tuple[int, int]]</span>
+<span class="sd">        :param axis_combinations: List of all axis point combinations to pair with each Q1 and Q2 selection. Each entry is a tuple of (x, y) coordinates (integer grid indices) representing points on the positive axes.</span>
+<span class="sd">        :type axis_combinations: list[tuple[int, int]]</span>
+
+<span class="sd">        :returns: List of valid configurations for the given chunk. Each configuration is a sorted list of (x, y) tuples (integer grid coordinates, not scaled).</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - This method is intended for internal use with parallel processing in the mixed-pair case.</span>
+<span class="sd">            - The returned configurations are not guaranteed to be unique across all chunks; deduplication is performed at a higher level.</span>
+<span class="sd">            - Each configuration is point symmetric about the grid center and contains the correct number of LEDs.</span>
+<span class="sd">            - The method assumes the grid and LED count are compatible with the requested values of ``a``, ``b``, and ``c``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">chunk_configs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">q1_selection</span> <span class="ow">in</span> <span class="n">q1_chunk</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">q2_selection</span> <span class="ow">in</span> <span class="n">q2_combinations</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">axis_selection</span> <span class="ow">in</span> <span class="n">axis_combinations</span><span class="p">:</span>
+                    <span class="n">config</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                    
+                    <span class="c1"># Add center if needed</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_used</span><span class="p">:</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">)</span>
+                    
+                    <span class="c1"># Type A pairs</span>
+                    <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">q1_selection</span><span class="p">:</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    
+                    <span class="c1"># Type B pairs</span>
+                    <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">q2_selection</span><span class="p">:</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    
+                    <span class="c1"># Axis pairs</span>
+                    <span class="k">for</span> <span class="n">axis_point</span> <span class="ow">in</span> <span class="n">axis_selection</span><span class="p">:</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">axis_point</span><span class="p">)</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="o">-</span><span class="n">axis_point</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">axis_point</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                    
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">led_count</span><span class="p">:</span>
+                        <span class="n">chunk_configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">chunk_configs</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_remove_duplicates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configurations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Removes duplicate LED configurations from a list, ensuring each configuration is unique.</span>
+
+<span class="sd">        This method compares each configuration (a list of (x, y) tuples representing LED positions) and eliminates duplicates by converting each configuration to a tuple of tuples and storing it in a set for fast lookup. Only the first occurrence of each unique configuration is retained in the output list. The order of configurations in the returned list corresponds to their first appearance in the input.</span>
+
+<span class="sd">        :param configurations: List of configurations to process. Each configuration is a list of (x, y) tuples, where each tuple represents the integer grid coordinates of an LED position (not scaled by grid step).</span>
+<span class="sd">        :type configurations: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        :returns: List of unique configurations, with duplicates removed. Each configuration is a list of (x, y) tuples as in the input.</span>
+<span class="sd">        :rtype: list[list[tuple[int, int]]]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - Configurations are considered duplicates if their sorted list of (x, y) tuples matches exactly.</span>
+<span class="sd">            - The method does not sort the input list; it preserves the order of first occurrence.</span>
+<span class="sd">            - This method is typically used after generating all possible configurations to ensure uniqueness before further processing or saving.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">unique_configs</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">:</span>
+            <span class="n">config_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">point</span><span class="p">)</span> <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">config</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">config_tuple</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">config_tuple</span><span class="p">)</span>
+                <span class="n">unique_configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">unique_configs</span>
+    
+<div class="viewcode-block" id="Sampler.plot_configuration">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.plot_configuration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_configuration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">z</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">point_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">set_title</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Visualizes a given LED configuration on a 2D grid using Matplotlib, displaying the LED positions and grid layout.</span>
+
+<span class="sd">        This method plots the provided configuration of LED positions on the specified Matplotlib Axes object. The grid is scaled and labeled according to the underlying Grid object. Optionally, the plot can include a title indicating the number of LEDs and their height above the grid.</span>
+
+<span class="sd">        :param ax: The Axes object on which to plot the configuration.</span>
+<span class="sd">        :type ax: matplotlib.axes.Axes</span>
+<span class="sd">        :param configuration: The LED positions to plot, as a list of (x, y) tuples representing integer grid coordinates (not scaled by grid step).</span>
+<span class="sd">        :type configuration: list[tuple[int, int]]</span>
+<span class="sd">        :param z: Height of LEDs above the grid in centimeters, used for the plot title. If set to -1 (default), uses the Sampler&#39;s height attribute.</span>
+<span class="sd">        :type z: float, optional</span>
+<span class="sd">        :param point_size: Size of the plotted LED points.</span>
+<span class="sd">        :type point_size: int, optional</span>
+<span class="sd">        :param set_title: Whether to set a title on the plot indicating configuration details.</span>
+<span class="sd">        :type set_title: bool, optional</span>
+
+<span class="sd">        :return: The Matplotlib Axes object with the plotted configuration.</span>
+<span class="sd">        :rtype: matplotlib.axes.Axes</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Modifies the provided Axes object by adding scatter points, grid lines, and labels.</span>
+<span class="sd">            - Sets Matplotlib styles for consistent appearance.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The configuration coordinates are interpreted as grid indices and are not automatically scaled to centimeters; scaling should be handled prior to plotting if needed.</span>
+<span class="sd">            - The grid limits and ticks are determined by the associated Grid object.</span>
+<span class="sd">            - The method does not display the plot; it only modifies the Axes object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># set style</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;ICIWstyle&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;visualization/publication_style.mplstyle&quot;</span><span class="p">)</span>
+
+        <span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">configuration</span><span class="p">)</span>
+        <span class="c1"># convert to float for plotting</span>
+        <span class="n">x_coords</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x_coords</span><span class="p">]</span>
+        <span class="n">y_coords</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">y_coords</span><span class="p">]</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">point_size</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">side_margin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">side_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">),</span> <span class="n">minor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">top_bottom_margin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">top_bottom_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">),</span> <span class="n">minor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">set_title</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Configuration with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">configuration</span><span class="p">)</span><span class="si">}</span><span class="s2"> LEDs at height </span><span class="si">{</span><span class="n">z</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">z</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="o">-</span><span class="mf">1.</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2"> cm&quot;</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;$X$ / cm&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;$Y$ / cm&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="Sampler.plot_configuration_small">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.plot_configuration_small">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_configuration_small</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">z</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">point_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a compact visualization of an LED configuration on a Matplotlib Axes, suitable for use in subplots or summary figures.</span>
+
+<span class="sd">        This method plots the provided LED positions on the given Axes object, using smaller point sizes and minimal axis labeling for a cleaner, more compact appearance. The grid is drawn according to the associated Grid object, but axis labels and tick labels are hidden to save space.</span>
+
+<span class="sd">        :param ax: The Axes object on which to plot the configuration.</span>
+<span class="sd">        :type ax: matplotlib.axes.Axes</span>
+<span class="sd">        :param configuration: The LED positions to plot, as a list of (x, y) tuples representing integer grid coordinates (not scaled by grid step).</span>
+<span class="sd">        :type configuration: list[tuple[int, int]]</span>
+<span class="sd">        :param z: Height of LEDs above the grid in centimeters, used for the plot title (not shown in this small plot). Default is -1.</span>
+<span class="sd">        :type z: float, optional</span>
+<span class="sd">        :param point_size: Size of the plotted LED points (smaller than in the main plot).</span>
+<span class="sd">        :type point_size: int, optional</span>
+
+<span class="sd">        :return: The Matplotlib Axes object with the plotted configuration.</span>
+<span class="sd">        :rtype: matplotlib.axes.Axes</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Modifies the provided Axes object by adding scatter points, grid lines, and hiding axis labels and tick labels.</span>
+<span class="sd">            - Sets Matplotlib styles for consistent appearance.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - This method is intended for use in multi-panel figures or summary plots where space is limited.</span>
+<span class="sd">            - The configuration coordinates are interpreted as grid indices and are not automatically scaled to centimeters.</span>
+<span class="sd">            - The plot does not display axis labels or tick labels, and the grid is shown behind the points.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;ICIWstyle&quot;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;visualization/publication_style.mplstyle&quot;</span><span class="p">)</span>
+
+        <span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">configuration</span><span class="p">)</span>
+        <span class="c1"># convert to float for plotting</span>
+        <span class="n">x_coords</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">x_coords</span><span class="p">]</span>
+        <span class="n">y_coords</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">y_coords</span><span class="p">]</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x_coords</span><span class="p">,</span> <span class="n">y_coords</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="n">point_size</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">side_margin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">side_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">),</span> <span class="n">minor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">top_bottom_margin</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">top_bottom_margin</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">G</span><span class="o">.</span><span class="n">step</span><span class="p">),</span> <span class="n">minor</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+
+        <span class="c1"># also show ticks on top and right</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">which</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># dont show ticks and labels</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([],</span> <span class="n">minor</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([],</span> <span class="n">minor</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="c1"># hide grid behind the points</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_axisbelow</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">ax</span></div>
+
+    
+<div class="viewcode-block" id="Sampler.save_configuration_to_json">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.save_configuration_to_json">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_configuration_to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configuration</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">save_fig_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Serializes a single LED configuration to a JSON file, optionally saving a visualization of the configuration as an image file.</span>
+
+<span class="sd">        The method writes the configuration, including the number of LEDs, their (x, y) positions (as provided), and the LED height, to a JSON file at the specified path. If a file type is specified via ``save_fig_type``, a plot of the configuration is also saved in the same location with the corresponding extension.</span>
+
+<span class="sd">        :param configuration: The LED positions to save, as a list of (x, y) tuples representing grid coordinates (not scaled by grid step).</span>
+<span class="sd">        :type configuration: list[tuple[int, int]]</span>
+<span class="sd">        :param height: Height of LEDs above the grid in centimeters.</span>
+<span class="sd">        :type height: int</span>
+<span class="sd">        :param filename: Path to the output JSON file.</span>
+<span class="sd">        :type filename: str</span>
+<span class="sd">        :param save_fig_type: File type for saving a plot of the configuration (e.g., &#39;png&#39;, &#39;svg&#39;). If empty (default), no plot is saved.</span>
+<span class="sd">        :type save_fig_type: str, optional</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Writes a JSON file to disk containing the configuration data.</span>
+<span class="sd">            - If ``save_fig_type`` is provided, creates and saves a plot image file in the same directory.</span>
+<span class="sd">            - May create or overwrite files at the specified paths.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            - The configuration is saved as provided; coordinates are not scaled to centimeters unless done prior to calling this method.</span>
+<span class="sd">            - The plot image, if saved, uses the ``plot_configuration`` method for visualization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">({</span>
+                <span class="s2">&quot;Number of LEDs&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">configuration</span><span class="p">),</span>
+                <span class="s2">&quot;(x, y) Positions in [cm]&quot;</span><span class="p">:</span> <span class="n">configuration</span><span class="p">,</span>
+                <span class="s2">&quot;Height in [cm]&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">height</span><span class="p">),</span>
+            <span class="p">},</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">save_fig_type</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_configuration</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">configuration</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">set_title</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.json&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;.</span><span class="si">{</span><span class="n">save_fig_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span></div>
+
+            
+<div class="viewcode-block" id="Sampler.read_configuration_from_json">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.Sampler.read_configuration_from_json">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_configuration_from_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads a single LED configuration and its associated height from a JSON file.</span>
+
+<span class="sd">        The JSON file is expected to contain the following keys:</span>
+<span class="sd">        - &quot;(x, y) Positions in [cm]&quot;: List of LED positions as (x, y) coordinate pairs (in centimeters).</span>
+<span class="sd">        - &quot;Height in [cm]&quot;: Integer or float specifying the height of the LEDs above the grid (in centimeters).</span>
+
+<span class="sd">        :param filename: Path to the input JSON file containing the configuration.</span>
+<span class="sd">        :type filename: str</span>
+
+<span class="sd">        :returns: - configuration (list[tuple[int, int]]): List of (x, y) tuples representing LED positions in centimeters.</span>
+<span class="sd">            - height (int): Height of LEDs above the grid in centimeters.</span>
+
+<span class="sd">        :raises FileNotFoundError: If the specified file does not exist.</span>
+<span class="sd">        :raises KeyError: If required keys are missing from the JSON file.</span>
+<span class="sd">        :raises json.JSONDecodeError: If the file is not valid JSON.</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            - Opens and reads from disk.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The coordinates are returned as tuples, and the height is returned as an integer or float depending on the file content.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">configuration</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;(x, y) Positions in [cm]&quot;</span><span class="p">]]</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;Height in [cm]&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">configuration</span><span class="p">,</span> <span class="n">height</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="save_configurations">
+<a class="viewcode-back" href="../api/systematic_sampler.html#systematic_sampler.save_configurations">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_configurations</span><span class="p">(</span><span class="n">configurations</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                        <span class="n">generator</span><span class="p">:</span> <span class="n">Sampler</span><span class="p">,</span> 
+                        <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> 
+                        <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Saves a collection of LED configurations and associated metadata to a compressed NumPy NPZ file.</span>
+
+<span class="sd">    The output file contains the following arrays and metadata:</span>
+<span class="sd">        - &#39;configurations&#39;: Array of configurations (each configuration is an array of LED positions, typically shape (N, 2)).</span>
+<span class="sd">        - &#39;total_count&#39;: Total number of configurations saved (int).</span>
+<span class="sd">        - &#39;grid_size&#39;: Number of grid points along one axis (int).</span>
+<span class="sd">        - &#39;led_count&#39;: Number of LEDs per configuration (int).</span>
+<span class="sd">        - &#39;height&#39;: Height of LEDs above the grid in centimeters (int or float).</span>
+<span class="sd">        - &#39;generator&#39;: String identifier for the generator used.</span>
+<span class="sd">        - &#39;description&#39;: Human-readable description of the dataset.</span>
+
+<span class="sd">    :param configurations: Array of configurations to save. Each entry should be an array-like of shape (led_count, 2), with coordinates in centimeters.</span>
+<span class="sd">    :type configurations: np.ndarray</span>
+<span class="sd">    :param generator: Sampler object used to generate the configurations. Used for metadata extraction.</span>
+<span class="sd">    :type generator: Sampler</span>
+<span class="sd">    :param filename: Path to the output NPZ file.</span>
+<span class="sd">    :type filename: str</span>
+
+<span class="sd">    :returns: None</span>
+
+<span class="sd">    :raises IOError: If the file cannot be written.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        - Writes a compressed NPZ file to disk at the specified location.</span>
+<span class="sd">        - Prints a confirmation message to stdout upon successful save.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The configurations are saved as provided; ensure they are scaled to the desired units (e.g., centimeters) before calling this function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">configurations</span><span class="o">=</span><span class="n">configurations</span><span class="p">,</span>
+        <span class="n">total_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">configurations</span><span class="p">),</span>
+        <span class="n">grid_size</span><span class="o">=</span><span class="n">generator</span><span class="o">.</span><span class="n">grid_size</span><span class="p">,</span>
+        <span class="n">led_count</span><span class="o">=</span><span class="n">generator</span><span class="o">.</span><span class="n">led_count</span><span class="p">,</span>
+        <span class="n">height</span><span class="o">=</span><span class="n">generator</span><span class="o">.</span><span class="n">height</span><span class="p">,</span>
+        <span class="n">generator</span><span class="o">=</span><span class="s2">&quot;SymmetricLEDGenerator&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">configurations</span><span class="p">)</span><span class="si">}</span><span class="s2"> configurations of </span><span class="si">{</span><span class="n">generator</span><span class="o">.</span><span class="n">led_count</span><span class="si">}</span><span class="s2"> LEDs on </span><span class="si">{</span><span class="n">generator</span><span class="o">.</span><span class="n">grid_size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">generator</span><span class="o">.</span><span class="n">grid_size</span><span class="si">}</span><span class="s2"> grid (stepsize </span><span class="si">{</span><span class="n">generator</span><span class="o">.</span><span class="n">grid_step</span><span class="si">}</span><span class="s2">) with height </span><span class="si">{</span><span class="n">generator</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">. Generated by SymmetricLEDGenerator.&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">configurations</span><span class="p">)</span><span class="si">}</span><span class="s2"> configurations to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="n">G</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+    <span class="n">Sampler1</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="n">G</span><span class="o">=</span><span class="n">G</span><span class="p">,</span> <span class="n">led_count</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+    
+    <span class="c1"># generate all configurations</span>
+    <span class="n">configurations</span> <span class="o">=</span> <span class="n">Sampler1</span><span class="o">.</span><span class="n">generate_all_configurations</span><span class="p">()</span>
+    <span class="n">save_configurations</span><span class="p">(</span><span class="n">configurations</span><span class="p">,</span> <span class="n">Sampler1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;results/sampled_configs/systematic_</span><span class="si">{</span><span class="n">Sampler1</span><span class="o">.</span><span class="n">led_count</span><span class="si">}</span><span class="s2">_leds_</span><span class="si">{</span><span class="n">Sampler1</span><span class="o">.</span><span class="n">height</span><span class="si">}</span><span class="s2">_cm_</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">configurations</span><span class="p">)</span><span class="si">}</span><span class="s2">_samples.npz&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># plot and save best manual configuration as example</span>
+    <span class="c1"># conf = [</span>
+    <span class="c1">#     (-7.5,0), (7.5,0), (-10, -10), (10, 10), (-10, 10), (10, -10), (0,12.5), (0,-12.5)</span>
+    <span class="c1"># ]</span>
+    <span class="c1"># fig, ax = plt.subplots(figsize=(2,2))</span>
+    <span class="c1"># ax = Sampler1.plot_configuration(ax, conf, z=13, point_size=20)</span>
+    <span class="c1"># plt.show()</span>
+
+    <span class="c1"># Sampler1.save_configuration_to_json(</span>
+    <span class="c1">#     conf,</span>
+    <span class="c1">#     height=13,</span>
+    <span class="c1">#     filename=&quot;results/sampled_configs/best_manual.json&quot;,</span>
+    <span class="c1">#     save_fig_type=&quot;svg&quot;</span>
+    <span class="c1"># )</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

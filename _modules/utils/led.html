@@ -1,0 +1,219 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>utils.led &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">utils.led</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for utils.led</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="LED">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.led.LED">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LED</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a light-emitting diode (LED) with methods to calculate its absolute radiant intensity distribution</span>
+<span class="sd">    from relative angular intensity data.</span>
+
+<span class="sd">    This class loads relative intensity data from a file, assumes rotational symmetry around the optical axis,</span>
+<span class="sd">    and computes the absolute radiant intensity distribution based on the total optical power.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name or identifier of the LED.</span>
+<span class="sd">    total_power : float</span>
+<span class="sd">        Total optical power of the LED in watts (W).</span>
+<span class="sd">    intensity_data_file : str</span>
+<span class="sd">        Path to the CSV file containing angular intensity data.</span>
+<span class="sd">    angle_data : np.ndarray</span>
+<span class="sd">        Array of angles (in degrees) loaded from the intensity data file.</span>
+<span class="sd">    intensity_data : np.ndarray</span>
+<span class="sd">        Array of absolute radiant intensity values (in W sr⁻¹) after calculation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">optical_power</span><span class="p">,</span> <span class="n">intensity_data_file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize an LED instance with its name, total optical power, and path to intensity data file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            Name or identifier for the LED.</span>
+<span class="sd">        optical_power : float</span>
+<span class="sd">            Total optical power of the LED in watts (W).</span>
+<span class="sd">        intensity_data_file : str</span>
+<span class="sd">            Path to the CSV file containing angular intensity data. The file must have at least two columns:</span>
+<span class="sd">            angle (degrees) and relative intensity (arbitrary units), with a header row.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The angle and intensity data are initialized as empty arrays and populated when `calc_radiant_intensity` is called.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_power</span> <span class="o">=</span> <span class="n">optical_power</span>  <span class="c1"># in watts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intensity_data_file</span> <span class="o">=</span> <span class="n">intensity_data_file</span>  <span class="c1"># path to the intensity data file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">angle_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>  <span class="c1"># placeholder for angle data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intensity_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>  <span class="c1"># placeholder for intensity data</span>
+
+<div class="viewcode-block" id="LED.calc_radiant_intensity">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.led.LED.calc_radiant_intensity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calc_radiant_intensity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate the absolute radiant intensity distribution from relative angular intensity data.</span>
+
+<span class="sd">        Loads the relative intensity data from the specified CSV file, assumes rotational symmetry around the optical axis,</span>
+<span class="sd">        and computes the absolute radiant intensity (in W/sr) for each angle using the total optical power.</span>
+
+<span class="sd">        The CSV file must have at least two columns: angle (degrees) and relative intensity (arbitrary units),</span>
+<span class="sd">        with a header row that is skipped during loading.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            Array of absolute radiant intensity values (in W/sr) corresponding to each angle in `self.angle_data`.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        IOError</span>
+<span class="sd">            If the intensity data file cannot be read.</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the intensity data file does not have the expected format or contains invalid data.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - Assumes rotational symmetry around the optical axis.</span>
+<span class="sd">        - Uses the trapezoidal rule for numerical integration.</span>
+<span class="sd">        - The calculation normalizes the relative intensity data such that the total emitted power matches `self.total_power`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">intensity_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intensity_data_file</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not read intensity data file: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">intensity_data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid format in intensity data file: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">intensity_data_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">angle_data</span> <span class="o">=</span> <span class="n">intensity_data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># angles in degrees</span>
+        <span class="n">theta_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">angle_data</span><span class="p">)</span>
+
+        <span class="c1"># Assume rotational symmetry around optical axis</span>
+        <span class="n">integrand</span> <span class="o">=</span> <span class="n">intensity_data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_rad</span><span class="p">)</span>
+        <span class="n">integral</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapezoid</span><span class="p">(</span><span class="n">integrand</span><span class="p">,</span> <span class="n">theta_rad</span><span class="p">)</span>  <span class="c1"># numerical integration</span>
+        <span class="n">I_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_power</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">integral</span><span class="p">)</span>
+
+        <span class="c1"># Calculate absolute intensity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intensity_data</span> <span class="o">=</span> <span class="n">I_max</span> <span class="o">*</span> <span class="n">intensity_data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># update intensity data with absolute values</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">intensity_data</span></div>
+</div>
+
+
+<span class="c1"># Define specific LED instances</span>
+<span class="n">LST1_01F06_GRN1_00</span> <span class="o">=</span> <span class="n">LED</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LST1-01F06-GRN1-00&quot;</span><span class="p">,</span>
+    <span class="n">optical_power</span><span class="o">=</span><span class="mf">0.281</span><span class="p">,</span>  <span class="c1"># @ 350 mA in W</span>
+    <span class="n">intensity_data_file</span><span class="o">=</span><span class="s2">&quot;utils/angle_intensity_data/LST1-01F06-GRN1-00.csv&quot;</span>
+<span class="p">)</span>
+
+<span class="n">LST1_01G01_UV01_00</span> <span class="o">=</span> <span class="n">LED</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;LST1-01G01-UV01-00&quot;</span><span class="p">,</span>
+    <span class="n">optical_power</span><span class="o">=</span><span class="mf">0.875</span><span class="p">,</span>  <span class="c1"># @ 500 mA in W</span>
+    <span class="n">intensity_data_file</span><span class="o">=</span><span class="s2">&quot;utils/angle_intensity_data/LST1-01G01-UV01-00.csv&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

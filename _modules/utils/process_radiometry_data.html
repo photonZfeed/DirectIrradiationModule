@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>utils.process_radiometry_data &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">utils.process_radiometry_data</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for utils.process_radiometry_data</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcolors</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LST1_01F06_GRN1_00</span><span class="p">,</span> <span class="n">LST1_01G01_UV01_00</span>
+
+<div class="viewcode-block" id="read_radiometry_file">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_radiometry_data.read_radiometry_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_radiometry_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads radiometry data from a CSV file and returns it as a pandas DataFrame.</span>
+
+<span class="sd">    The function attempts to read the file using two different decimal and separator conventions to accommodate variations in CSV formatting. The first attempt assumes European-style CSVs (comma decimal, semicolon separator). If the resulting DataFrame is empty, it retries with standard CSV formatting (dot decimal, comma separator). Column and index names are converted to floats for consistency.</span>
+
+<span class="sd">    :param filepath: Path to the CSV file containing radiometry data.</span>
+<span class="sd">    :type filepath: str</span>
+
+<span class="sd">    :returns: DataFrame containing irradiance data, with both index and columns as floats representing spatial positions (typically in cm).</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+
+<span class="sd">    :raises FileNotFoundError: If the file does not exist at the given path.</span>
+<span class="sd">    :raises pd.errors.ParserError: If the file cannot be parsed as a CSV.</span>
+
+<span class="sd">    :side effects: None.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Assumes the first row and column of the CSV are headers and indices, respectively.</span>
+<span class="sd">        - Handles both European and standard CSV formats.</span>
+<span class="sd">        - All positions are assumed to be in centimeters unless otherwise specified.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Read the CSV file</span>
+    <span class="n">irr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">decimal</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;;&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># ensure that column names are numeric</span>
+    <span class="n">irr</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">irr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="c1"># if dataframe empty read in differently</span>
+    <span class="k">if</span> <span class="n">irr</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">irr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">decimal</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">irr</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">irr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">irr</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">irr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">irr</span></div>
+
+
+<div class="viewcode-block" id="process_radiometry_file">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_radiometry_data.process_radiometry_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_radiometry_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">correction_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">33</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">34</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processes radiometry data from a CSV file, applies a correction factor, centers the data, and computes summary statistics.</span>
+
+<span class="sd">    The function reads the radiometry data, centers the detection plane around zero, applies a correction factor to the irradiance values, and calculates the mean irradiance and homogeneity of the distribution. The region of interest is defined by the specified height and width (in cm).</span>
+
+<span class="sd">    :param filepath: Path to the CSV file containing radiometry data.</span>
+<span class="sd">    :type filepath: str</span>
+<span class="sd">    :param correction_factor: Multiplicative factor to correct the irradiance data (default: 1.0).</span>
+<span class="sd">    :type correction_factor: float, optional</span>
+<span class="sd">    :param height: Height of the detection plane in centimeters (default: 33).</span>
+<span class="sd">    :type height: float, optional</span>
+<span class="sd">    :param width: Width of the detection plane in centimeters (default: 34).</span>
+<span class="sd">    :type width: float, optional</span>
+
+<span class="sd">    :returns: Tuple containing:</span>
+<span class="sd">        - Processed irradiance data as a DataFrame (index/columns: centered positions in cm).</span>
+<span class="sd">        - Mean irradiance in W/m² (float).</span>
+<span class="sd">        - Homogeneity of the irradiance distribution (float, 0 to 1).</span>
+<span class="sd">    :rtype: tuple[pandas.DataFrame, float, float]</span>
+
+<span class="sd">    :raises FileNotFoundError: If the file does not exist.</span>
+<span class="sd">    :raises pd.errors.ParserError: If the file cannot be parsed.</span>
+
+<span class="sd">    :side effects: None.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - The homogeneity is defined as 1 - (std/mean) of the irradiance values.</span>
+<span class="sd">        - The region is centered based on the mean of the column positions.</span>
+<span class="sd">        - Assumes spatial units are centimeters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Read the CSV file</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">read_radiometry_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+    <span class="n">center</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="n">half_width</span> <span class="o">=</span> <span class="n">width</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">half_height</span> <span class="o">=</span> <span class="n">height</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">center</span> <span class="o">-</span> <span class="n">half_height</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;=</span> <span class="n">center</span> <span class="o">+</span> <span class="n">half_height</span><span class="p">),</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">&gt;=</span> <span class="n">center</span> <span class="o">-</span> <span class="n">half_width</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">&lt;=</span> <span class="n">center</span> <span class="o">+</span> <span class="n">half_width</span><span class="p">)]</span>
+    <span class="c1"># reindex and recolumns to be centered around 0</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">-</span> <span class="n">center</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">-</span> <span class="n">center</span>
+
+    <span class="c1"># Apply correction factor to calculate the corrected irradiance</span>
+    <span class="n">irr</span> <span class="o">=</span> <span class="n">df</span> <span class="o">*</span> <span class="n">correction_factor</span>
+
+    <span class="c1"># calculate mean irradiance and homogeneity</span>
+    <span class="n">mean_irradiance</span> <span class="o">=</span> <span class="n">irr</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">homogeneity</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">irr</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">mean_irradiance</span>
+
+    <span class="k">return</span> <span class="n">irr</span><span class="p">,</span> <span class="n">mean_irradiance</span><span class="p">,</span> <span class="n">homogeneity</span></div>
+
+
+<div class="viewcode-block" id="process_all_cand_files">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_radiometry_data.process_all_cand_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_all_cand_files</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">correction_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">34</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processes all radiometry candidate CSV files in a folder and summarizes their irradiance statistics.</span>
+
+<span class="sd">    The function iterates over all CSV files in the specified folder whose filenames contain &#39;UV&#39; or &#39;GRN&#39;, processes each file, and collects the irradiance DataFrame, mean irradiance, and homogeneity in a results dictionary.</span>
+
+<span class="sd">    :param folder: Path to the folder containing radiometry candidate CSV files.</span>
+<span class="sd">    :type folder: str</span>
+<span class="sd">    :param correction_factor: Multiplicative factor to correct the irradiance data (default: 1.0).</span>
+<span class="sd">    :type correction_factor: float, optional</span>
+<span class="sd">    :param height: Height of the detection plane in centimeters (default: 33).</span>
+<span class="sd">    :type height: float, optional</span>
+<span class="sd">    :param width: Width of the detection plane in centimeters (default: 34).</span>
+<span class="sd">    :type width: float, optional</span>
+
+<span class="sd">    :returns: Dictionary mapping filenames to a dictionary with keys &#39;irradiance&#39; (DataFrame), &#39;mean_irradiance&#39; (float), and &#39;homogeneity&#39; (float).</span>
+<span class="sd">    :rtype: dict[str, dict[str, Any]]</span>
+
+<span class="sd">    :raises FileNotFoundError: If the folder does not exist.</span>
+<span class="sd">    :raises pd.errors.ParserError: If a file cannot be parsed.</span>
+
+<span class="sd">    :side effects: Reads all matching CSV files in the specified folder.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Only files ending with &#39;.csv&#39; and containing &#39;UV&#39; or &#39;GRN&#39; in the filename are processed.</span>
+<span class="sd">        - The irradiance DataFrame is centered and corrected as in :func:`process_radiometry_file`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">folder</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;UV&#39;</span> <span class="ow">in</span> <span class="n">file</span> <span class="ow">or</span> <span class="s1">&#39;GRN&#39;</span> <span class="ow">in</span> <span class="n">file</span><span class="p">):</span>
+            <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span>
+            <span class="n">irr</span><span class="p">,</span> <span class="n">mean_irradiance</span><span class="p">,</span> <span class="n">homogeneity</span> <span class="o">=</span> <span class="n">process_radiometry_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">correction_factor</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;irradiance&#39;</span><span class="p">:</span> <span class="n">irr</span><span class="p">,</span>
+                <span class="s1">&#39;mean_irradiance&#39;</span><span class="p">:</span> <span class="n">mean_irradiance</span><span class="p">,</span>
+                <span class="s1">&#39;homogeneity&#39;</span><span class="p">:</span> <span class="n">homogeneity</span>
+            <span class="p">}</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="calculate_correction_factor">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_radiometry_data.calculate_correction_factor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_correction_factor</span><span class="p">(</span><span class="n">reference_filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">expected_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes a correction factor for radiometry data using a reference measurement and an expected total irradiance value.</span>
+
+<span class="sd">    The function integrates the measured irradiance over the detection area (using pixel size inferred from the DataFrame&#39;s index/columns), compares it to the expected value, and returns the scaling factor needed to match the expected irradiance.</span>
+
+<span class="sd">    :param reference_filepath: Path to the reference CSV file containing measured irradiance data.</span>
+<span class="sd">    :type reference_filepath: str</span>
+<span class="sd">    :param expected_value: Expected total irradiance value in W/m².</span>
+<span class="sd">    :type expected_value: float</span>
+
+<span class="sd">    :returns: Correction factor to apply to radiometry data (float).</span>
+<span class="sd">    :rtype: float</span>
+
+<span class="sd">    :raises FileNotFoundError: If the reference file does not exist.</span>
+<span class="sd">    :raises pd.errors.ParserError: If the file cannot be parsed.</span>
+<span class="sd">    :raises IndexError: If the DataFrame does not contain enough data to infer pixel size.</span>
+
+<span class="sd">    :side effects: None.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - The units of the original data (e.g., umol m⁻² s⁻¹ or W m⁻²) do not affect the correction factor calculation.</span>
+<span class="sd">        - Assumes uniform pixel size and that index/columns are in centimeters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">read_radiometry_file</span><span class="p">(</span><span class="n">reference_filepath</span><span class="p">)</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.01</span> <span class="c1"># width of one pixel in meters</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mf">0.01</span> <span class="c1"># height of one pixel in meters</span>
+    <span class="n">measured_value</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="n">dy</span><span class="p">)</span>  <span class="c1"># calculate total irradiance</span>
+    <span class="n">correction_factor</span> <span class="o">=</span> <span class="n">expected_value</span> <span class="o">/</span> <span class="n">measured_value</span> <span class="c1"># scale value to expected value. Note: If the original data is in umol m⁻² s⁻¹ or W m⁻², does not matter for the correction factor calculation, as the conversion factor between both units cancels out.</span>
+    <span class="k">return</span> <span class="n">correction_factor</span></div>
+
+
+<div class="viewcode-block" id="plot_irradiance_radiometry">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_radiometry_data.plot_irradiance_radiometry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_irradiance_radiometry</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="n">irr</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">y_title</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">v_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">extent</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">shrink_cbar</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visualizes the irradiance distribution as a color-mapped image with a colorbar and labeled axes.</span>
+
+<span class="sd">    The function displays the irradiance DataFrame as an image on the provided matplotlib Axes, with optional title, color scaling, and extent. The colorbar is labeled with irradiance units. The plot is set to have equal aspect ratio and axis labels in centimeters.</span>
+
+<span class="sd">    :param ax: Matplotlib Axes object on which to plot the irradiance distribution.</span>
+<span class="sd">    :type ax: matplotlib.axes.Axes</span>
+<span class="sd">    :param irr: DataFrame containing irradiance data to plot (index/columns: positions in cm).</span>
+<span class="sd">    :type irr: pandas.DataFrame</span>
+<span class="sd">    :param title: Title of the plot (default: &#39;&#39;).</span>
+<span class="sd">    :type title: str, optional</span>
+<span class="sd">    :param y_title: Y position of the title (default: -0.5).</span>
+<span class="sd">    :type y_title: float, optional</span>
+<span class="sd">    :param v_max: Maximum value for the color scale. If -1, auto-scales to nearest multiple of 5 above max value (default: -1).</span>
+<span class="sd">    :type v_max: float, optional</span>
+<span class="sd">    :param extent: Plot extent as (xmin, xmax, ymin, ymax). If default, uses DataFrame min/max (default: (-2, -1, -2, -1)).</span>
+<span class="sd">    :type extent: tuple, optional</span>
+<span class="sd">    :param shrink_cbar: Factor to shrink the colorbar (default: 1.0).</span>
+<span class="sd">    :type shrink_cbar: float, optional</span>
+
+<span class="sd">    :returns: The matplotlib Axes object with the plot.</span>
+<span class="sd">    :rtype: matplotlib.axes.Axes</span>
+
+<span class="sd">    :raises ValueError: If the DataFrame is empty or extent is invalid.</span>
+
+<span class="sd">    :side effects: Modifies the provided Axes object and creates a colorbar.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - The color scale is set to start at 0 and end at v_max.</span>
+<span class="sd">        - The function auto-determines contour levels based on v_max.</span>
+<span class="sd">        - The colorbar is labeled with &#39;$E$ / W m⁻²&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Set color bar limits</span>
+    <span class="k">if</span> <span class="n">v_max</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">:</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">v_max</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">irr</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">//</span> <span class="mi">5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">5</span> <span class="c1"># round up to next multiple of 5</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">mcolors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># define contour levels based on vmax</span>
+    <span class="k">if</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">30</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="k">elif</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">50</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="k">elif</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="n">levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+    <span class="c1"># Create colormesh plot</span>
+    <span class="c1"># Ensure extent values are floats</span>
+    <span class="k">if</span> <span class="n">extent</span> <span class="o">==</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">x_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">irr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">x_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">irr</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">y_min</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">irr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">y_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">irr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">extent</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_min</span><span class="p">,</span> <span class="n">x_max</span><span class="p">,</span> <span class="n">y_min</span><span class="p">,</span> <span class="n">y_max</span><span class="p">)</span>
+    <span class="n">tc</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+        <span class="n">irr</span><span class="p">,</span>
+        <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span>
+        <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+        <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span>
+        <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;equal&#39;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># set subtitle</span>
+    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="c1"># Create colorbar with reduced size to match plot</span>
+    <span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">tc</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="n">shrink_cbar</span><span class="p">)</span>
+    <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;$E$ / W m⁻²&#39;</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;$X$ / cm&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$Y$ / cm&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="s1">&#39;box&#39;</span><span class="p">)</span>
+
+    <span class="c1"># Set x and y limits</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">extent</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">extent</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">extent</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">extent</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

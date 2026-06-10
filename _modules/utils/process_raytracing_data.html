@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>utils.process_raytracing_data &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">utils.process_raytracing_data</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for utils.process_raytracing_data</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcolors</span>
+
+<div class="viewcode-block" id="process_raytracing_file">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_raytracing_data.process_raytracing_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_raytracing_file</span><span class="p">(</span><span class="n">filename</span> <span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span> <span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a Speos raytracing output text file and return a DataFrame containing spatial coordinates and irradiance values.</span>
+
+<span class="sd">    This function reads a whitespace-delimited text file generated by Speos raytracing simulations, extracts the spatial coordinates (x, y, z in mm), and the irradiance (in W m⁻²), converts coordinates to centimeters, and returns a DataFrame with a uniform grid suitable for further analysis or visualization. Only the columns corresponding to the two varying spatial dimensions and the irradiance are retained in the output.</span>
+
+<span class="sd">    :param filename: Name of the Speos output text file to read.</span>
+<span class="sd">    :type filename: str</span>
+<span class="sd">    :param path: Path to the directory containing the text file.</span>
+<span class="sd">    :type path: str or pathlib.Path</span>
+
+<span class="sd">    :returns: DataFrame with columns [&quot;x&quot;, &quot;y&quot;, &quot;Irradiance&quot;], where x and y are in centimeters and Irradiance is in W m⁻².</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+
+<span class="sd">    :raises FileNotFoundError: If the specified file does not exist.</span>
+<span class="sd">    :raises ValueError: If the file format is not as expected or columns are missing.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Assumes the input file has a header row and columns in the order: x, y, z, Irradiance, Reflection (Radiometric), Transmission (Radiometric), Absorption (Radiometric).</span>
+<span class="sd">        - Only two spatial dimensions are retained (the two that vary in the dataset).</span>
+<span class="sd">        - Coordinates are converted from millimeters to centimeters.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">/</span> <span class="n">filename</span><span class="p">,</span> <span class="n">skiprows</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;Irradiance&quot;</span><span class="p">,</span> <span class="s2">&quot;Reflection (Radiometric)&quot;</span><span class="p">,</span> <span class="s2">&quot;Transmission (Radiometric)&quot;</span><span class="p">,</span> <span class="s2">&quot;Absorption (Radiometric)&quot;</span><span class="p">])</span>
+
+    <span class="c1"># convert mm to cm</span>
+    <span class="n">data</span><span class="p">[[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">]]</span> <span class="o">/</span> <span class="mf">10.0</span>
+    <span class="c1"># only return x,y,z, and irradiance columns</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;z&quot;</span><span class="p">,</span> <span class="s2">&quot;Irradiance&quot;</span><span class="p">]]</span>
+
+    <span class="c1"># check which of data[&quot;x&quot;] and data[&quot;y&quot;] and data[&quot;z&quot;] are not unique</span>
+    <span class="n">plot_variable_columns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">plot_variable_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">plot_variable_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">plot_variable_columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;z&quot;</span><span class="p">)</span>
+
+    <span class="c1"># create uniform grid by pivoting the data</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">plot_variable_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">plot_variable_columns</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">values</span><span class="o">=</span><span class="s1">&#39;Irradiance&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># remove the columns name</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span><span class="n">id_vars</span><span class="o">=</span><span class="n">plot_variable_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">var_name</span><span class="o">=</span><span class="n">plot_variable_columns</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">value_name</span><span class="o">=</span><span class="s1">&#39;Irradiance&#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="n">plot_variable_columns</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">plot_variable_columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># rename columns to x, y, irradiance</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;Irradiance&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+
+<div class="viewcode-block" id="calc_metrics">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_raytracing_data.calc_metrics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_metrics</span><span class="p">(</span><span class="n">irr</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the mean irradiance and homogeneity index from a series of irradiance values.</span>
+
+<span class="sd">    The homogeneity index is defined as :math:`1 - \frac{\sigma}{\mu}` where :math:`\sigma` is the standard deviation and :math:`\mu` is the mean of the irradiance values. This provides a measure of uniformity, with 1 indicating perfect homogeneity.</span>
+
+<span class="sd">    :param irr: Irradiance values to analyze.</span>
+<span class="sd">    :type irr: pandas.Series or numpy.ndarray</span>
+
+<span class="sd">    :returns: </span>
+<span class="sd">        Tuple containing:</span>
+<span class="sd">            - mean_irradiance (float): Mean of the irradiance values (W m⁻²).</span>
+<span class="sd">            - homogeneity (float): Homogeneity index (dimensionless, 0 to 1).</span>
+<span class="sd">    :rtype: tuple</span>
+
+<span class="sd">    :raises ValueError: If the input series is empty.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - If the mean irradiance is zero, the homogeneity index is set to 0 to avoid division by zero.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mean_irradiance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">irr</span><span class="p">)</span>
+    <span class="n">homogeneity</span><span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">irr</span><span class="p">)</span><span class="o">/</span><span class="n">mean_irradiance</span> <span class="k">if</span> <span class="n">mean_irradiance</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">mean_irradiance</span><span class="p">,</span> <span class="n">homogeneity</span></div>
+
+
+
+<div class="viewcode-block" id="plot_irradiance_raytracing">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.process_raytracing_data.plot_irradiance_raytracing">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_irradiance_raytracing</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="n">data</span> <span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">y_title</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">v_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">extent</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">shrink_cbar</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Axes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Visualize the irradiance distribution from raytracing data on a 2D grid using matplotlib.</span>
+
+<span class="sd">    This function creates a color map of irradiance values on a spatial grid, with options for customizing the color scale, axis labels, and colorbar. The input DataFrame must contain columns &#39;x&#39;, &#39;y&#39;, and &#39;Irradiance&#39;, where x and y are in centimeters and Irradiance is in W/m^2.</span>
+
+<span class="sd">    :param ax: Matplotlib Axes object to plot on. Must be created beforehand.</span>
+<span class="sd">    :type ax: matplotlib.axes.Axes</span>
+<span class="sd">    :param data: DataFrame containing columns &#39;x&#39;, &#39;y&#39;, and &#39;Irradiance&#39;.</span>
+<span class="sd">    :type data: pandas.DataFrame</span>
+<span class="sd">    :param title: Title of the plot. Default is empty string.</span>
+<span class="sd">    :type title: str, optional</span>
+<span class="sd">    :param y_title: Vertical position of the title. Default is -0.5.</span>
+<span class="sd">    :type y_title: float, optional</span>
+<span class="sd">    :param v_max: Maximum value for the color scale. If -1, auto-scales to the next multiple of 5 above the max irradiance. Default is -1.</span>
+<span class="sd">    :type v_max: float, optional</span>
+<span class="sd">    :param extent: Tuple specifying (xmin, xmax, ymin, ymax) for the plot. If default, computed from data. Units: cm. Default is (-2, -1, -2, -1).</span>
+<span class="sd">    :type extent: tuple, optional</span>
+<span class="sd">    :param shrink_cbar: Factor to shrink the color bar. Default is 1.0.</span>
+<span class="sd">    :type shrink_cbar: float, optional</span>
+
+<span class="sd">    :returns: The matplotlib Axes object with the irradiance plot.</span>
+<span class="sd">    :rtype: matplotlib.axes.Axes</span>
+
+<span class="sd">    :raises ValueError: If required columns are missing from the DataFrame.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - The function pivots the data to a 2D grid for plotting.</span>
+<span class="sd">        - The color scale is normalized from 0 to v_max.</span>
+<span class="sd">        - The function does not create a new figure; the user must supply an Axes object.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># set color bar limits</span>
+    <span class="k">if</span> <span class="n">v_max</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">:</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">v_max</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># set vmax to the next multiple of 5 above the max irradiance for better color scaling</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;Irradiance&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">//</span> <span class="mi">5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">5</span>
+    <span class="c1"># Set normalization so colorbar starts at 0 and ends at vmax</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">mcolors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># define contour levels based on vmax</span>
+    <span class="k">if</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">30</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="k">elif</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">50</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="k">elif</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="n">levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+    <span class="c1"># Pivot the data to create a 2D grid for imshow</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">&quot;Irradiance&quot;</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">irr</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># set extent if not provided</span>
+    <span class="k">if</span> <span class="n">extent</span> <span class="o">==</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">extent</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="c1"># Show the irradiance map using imshow</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+        <span class="n">irr</span><span class="p">,</span>
+        <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+        <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span>
+        <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span>
+        <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span>
+        <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span>
+    <span class="p">)</span>
+
+    <span class="n">cbar</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">figure</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="n">shrink_cbar</span><span class="p">)</span>
+    <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;$E$ / W m$^{-2}$&#39;</span><span class="p">)</span>
+
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;$X$ / cm&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$Y$ / cm&#39;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="s1">&#39;box&#39;</span><span class="p">)</span>
+
+    <span class="c1"># set x and y limits</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">extent</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">extent</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">extent</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">extent</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+    <span class="c1"># set subtitle</span>
+    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

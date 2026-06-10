@@ -1,0 +1,403 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Direct Irradiation Module Assembly &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Radiometric Measurements" href="radiometry.html" />
+    <link rel="prev" title="Multi-Batch Screening Reactor - Designing a Direct Irradiation Module Documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Direct Irradiation Module Assembly</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#heat-sink-and-led-mounting">Heat Sink and LED Mounting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reflector-modules">Reflector Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reflector-with-fixed-height">Reflector with Fixed Height</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modular-reflector-with-adjustable-height">Modular Reflector with Adjustable Height</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Direct Irradiation Module Assembly</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/module_assembly.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="direct-irradiation-module-assembly">
+<h1>Direct Irradiation Module Assembly<a class="headerlink" href="#direct-irradiation-module-assembly" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>This page describes the mechanical assembly of the direct LED irradiation
+module developed in this work, including the heat sink assembly, LED mounting,
+and the integration of diffuse reflector modules.</p>
+<p>All CAD models of the heat sinks and 3D-printed components are provided in the
+modularPhotoreactor GitHub repository <a class="footnote-reference brackets" href="#id2" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>: <a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor">https://github.com/photonZfeed/modularPhotoreactor</a></p>
+<figure class="align-center" id="id3">
+<span id="fig-assembly-overview"></span><a class="reference external image-reference" href="_images/assembly_overview.png"><img alt="Overview of the assembled direct irradiation module. a Fixed height reflector, b-c modular reflector with adjustable height." src="_images/assembly_overview.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 2 </span><span class="caption-text">Overview of the assembled direct irradiation module. <strong>a</strong> Fixed height reflector, <strong>b-c</strong> modular reflector with adjustable height.</span><a class="headerlink" href="#id3" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="heat-sink-and-led-mounting">
+<h2>Heat Sink and LED Mounting<a class="headerlink" href="#heat-sink-and-led-mounting" title="Link to this heading"></a></h2>
+<p>The irradiation module is based on a <strong>400 mm × 400 mm anodized aluminum base
+plate</strong>, which serves as both mechanical support and thermal interface for the
+LEDs. LEDs are mounted onto the aluminum plate using screws, with a fixed
+center-to-center spacing of <strong>25 mm</strong>, resulting in a total of 169 possible LED
+mounting positions. To ensure sufficient heat dissipation during operation, the aluminum plate is
+mounted onto <strong>four 200 mm × 200 mm finned heat sinks</strong> (RS PRO, 903-3090). A technical drawing of the heat sink assembly is shown in Table 1.</p>
+<p>To operate the LEDs, up to 2 × 8 LEDs were connected in series. The LED rows were operated at constant current using two programmable DC power supplies (Korad Lab KA3005P). All required parts are listed in Table 1.</p>
+<figure class="align-center" id="id4">
+<span id="fig-assembly-heatsink"></span><a class="reference external image-reference" href="_images/assembly_heatsink.png"><img alt="Heat sink assembly" src="_images/assembly_heatsink.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 3 </span><span class="caption-text">Technical drawings of heatsink dimensions and assembly. Four 200 mm x 200 mm aluminum heatsinks  (RS PRO, 903 3090) (left) and the corresponding aluminum LED mounting plate 400 mm x 400 mm with 225 LED mounting positions (right)</span><a class="headerlink" href="#id4" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<table class="docutils align-default" id="id5">
+<caption><span class="caption-number">Table 1 </span><span class="caption-text">Component list for the heat sink and LED</span><a class="headerlink" href="#id5" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 8.0%" />
+<col style="width: 42.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Nr.</p></th>
+<th class="head"><p>Component</p></th>
+<th class="head"><p>Material / Reference</p></th>
+<th class="head"><p>Repository filename</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>Aluminum LED mounting plate, 400 mm × 400 mm</p></td>
+<td><p>Aluminum, custom made</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/02_heatsink_and%20_LED_mounting_plate/LED_mount_400x400.stl">LED_mount_400x400.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>Aluminum heat sink, 200 mm × 200 mm</p></td>
+<td><p>RS PRO, 9033090</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/02_heatsink_and%20_LED_mounting_plate/heatsink_200x200.stl">heatsink_200.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>LEDs (e.g. LST1-01G01-UV00-00)</p></td>
+<td><p>—</p></td>
+<td><p>e.g. Mouser Electronics</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>Screws for LED mounting (M3)</p></td>
+<td><p>Stainless steel</p></td>
+<td><p>Standard</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>Power supplies (KA3005P)</p></td>
+<td><p>—</p></td>
+<td><p>Korad Lab</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reflector-modules">
+<h2>Reflector Modules<a class="headerlink" href="#reflector-modules" title="Link to this heading"></a></h2>
+<p>In this work, two different reflector modules were developed to provide diffuse
+reflectance around the LED irradiation area: a reflector with fixed height and a
+modular reflector with adjustable height (<a class="reference internal" href="#fig-assembly-overview"><span class="std std-numref">Figure 2</span></a>).
+In both cases, the reflector panels were manufactured from <strong>self-adhesive optical PTFE
+sheets</strong> (OPF200.XXX.300-U-K, BERGHOF Fluoroplastics) with a thickness of 2 mm,
+providing high diffuse reflectivity in the UV and visible spectral range.</p>
+<section id="reflector-with-fixed-height">
+<h3>Reflector with Fixed Height<a class="headerlink" href="#reflector-with-fixed-height" title="Link to this heading"></a></h3>
+<p>The fixed-height reflector module was developed for operation as an extension
+of the multi-batch screening photoreactor on a roller shaker
+(IKA Roller Shaker 10 Digital).</p>
+<p>The reflector consists of four vertical walls manufactured from red Plexiglass and lined with <strong>2 mm PTFE sheets</strong> on the inner surfaces.:</p>
+<ul class="simple">
+<li><p>Two walls with a length of <strong>330 mm</strong></p></li>
+<li><p>Two walls with a length of <strong>350 mm</strong></p></li>
+<li><p>Uniform wall height of <strong>100 mm</strong></p></li>
+</ul>
+<p>The walls are manufactured from red Plexiglass and lined with <strong>2 mm PTFE
+sheets</strong> on the inner surfaces.</p>
+<figure class="align-center" id="id6">
+<a class="reference external image-reference" href="_images/assembly_fixed_height_reflector.png"><img alt="Fixed-height reflector module" src="_images/assembly_fixed_height_reflector.png" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 4 </span><span class="caption-text"><strong>a</strong> Assembly of reflector with fixed height and <strong>b</strong> mounting scheme and components of direct irradiation module</span><a class="headerlink" href="#id6" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>A <strong>25 mm vertical gap</strong> between the reflector walls and the heat sink ensures
+sufficient airflow for convective cooling.</p>
+<p>Table 2 lists all components required for assembling the fixed-height reflector
+module, including references to the corresponding CAD files in the
+<a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor">modularPhotoreactor repository</a></p>
+<table class="docutils align-default" id="id7">
+<caption><span class="caption-number">Table 2 </span><span class="caption-text">Component list for the fixed-height reflector module</span><a class="headerlink" href="#id7" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 8.0%" />
+<col style="width: 42.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Nr.</p></th>
+<th class="head"><p>Component</p></th>
+<th class="head"><p>Material / Reference</p></th>
+<th class="head"><p>Repository filename</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>PTFE reflector support, 350 mm × 100 mm</p></td>
+<td><p>PMMA (red Plexiglass)</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>1a</p></td>
+<td><p>PTFE reflector lining, 350 mm × 100 mm</p></td>
+<td><p>OPF200.XXX.300-U-K, BERGHOF Fluoroplastics</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>PTFE reflector support, 330 mm × 100 mm</p></td>
+<td><p>PMMA (red Plexiglass)</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-odd"><td><p>2a</p></td>
+<td><p>PTFE reflector lining, 330 mm × 100 mm</p></td>
+<td><p>OPF200.XXX.300-U-K, BERGHOF Fluoroplastics</p></td>
+<td><p>—</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>3D-printed reflector and heat sink holder (assembly)</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/reflector_fixed_height_assembly.stl">reflector_fixed_height_assembly.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>5a</p></td>
+<td><p>Holder feet</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/holder_feet_assembly.stl">holder_feet_assembly.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>5b</p></td>
+<td><p>Corner pillars</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/corner_pillar_1.stl">corner_pillar_1.stl</a>
+<a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/corner_pillar_2.stl">corner_pillar_2.stl</a>
+<a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/corner_pillar_3.stl">corner_pillar_3.stl</a>
+<a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/corner_pillar_4.stl">corner_pillar_4.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>5c</p></td>
+<td><p>Corner pillar support</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/corner_pillar_support.stl">corner_pillar_support.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>5d</p></td>
+<td><p>Heat sink holder (male / female)</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/heatsink_holder_male.stl">heatsink_holder_male.stl</a>
+<a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/heatsink_holder_female.stl">heatsink_holder_female.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>5e</p></td>
+<td><p>Reflector holder</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/reflector_holder.stl">reflector_holder.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>5f</p></td>
+<td><p>Corner pillar connector (330 mm / 350 mm)</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/corner_pillar_connector_330mm.stl">corner_pillar_connector_330mm.stl</a>
+<a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/blob/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/00_reflector_fixed_height/corner_pillar_connector_350mm.stl">corner_pillar_connector_350mm.stl</a></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="modular-reflector-with-adjustable-height">
+<h3>Modular Reflector with Adjustable Height<a class="headerlink" href="#modular-reflector-with-adjustable-height" title="Link to this heading"></a></h3>
+<p>For systematic investigation of LED-to-detector distance effects, a modular,
+height-adjustable reflector system was developed.</p>
+<p>The modular reflector consists of three stackable segments with heights of
+60 mm, 20 mm, and 10 mm as illustrated in <a class="reference internal" href="#fig-assembly-modular-reflector"><span class="std std-numref">Figure 5</span></a>. By combining these elements, total reflector heights of
+<strong>60 mm, 80 mm, and 90 mm</strong> can be realized. The bill of materials for the modular
+reflector system is provided in Table 3.</p>
+<p>The reflector modules are placed <strong>directly onto the LED-mounted heat sink</strong>
+without clearance. The bottom plane of the reflector in contact with the heat
+sink defines the <strong>optical reference plane</strong> for all z-distance definitions.</p>
+<p>Reproducible positioning and stacking are ensured by <strong>3D-printed corner
+alignment holders</strong>, which prevent lateral displacement during assembly and
+operation.</p>
+<figure class="align-center" id="id8">
+<span id="fig-assembly-modular-reflector"></span><a class="reference external image-reference" href="_images/assembly_modular_reflector.png"><img alt="Modular reflector components" height="268" src="_images/assembly_modular_reflector.png" width="282" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 5 </span><span class="caption-text">Overview of the modular reflector components.</span><a class="headerlink" href="#id8" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<table class="docutils align-default" id="id9">
+<caption><span class="caption-number">Table 3 </span><span class="caption-text">Component list for the fixed-height reflector module</span><a class="headerlink" href="#id9" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 8.0%" />
+<col style="width: 42.0%" />
+<col style="width: 25.0%" />
+<col style="width: 25.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Nr.</p></th>
+<th class="head"><p>Component</p></th>
+<th class="head"><p>Material / Reference</p></th>
+<th class="head"><p>Repository filename</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1a</p></td>
+<td><p>Corner reflector holder a</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/corner_reflector_holder_1a.stl">corner_reflector_holder_1a.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>1b</p></td>
+<td><p>Corner reflector holder b</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/corner_reflector_holder_1b.stl">corner_reflector_holder_1b.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>2a</p></td>
+<td><p>Reflector holder 330 mm length, 60 mm height</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/reflector_holder_330mm_6cm.stl">reflector_holder_330mm_6cm.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>2b</p></td>
+<td><p>Reflector holder 350 mm length, 60 mm height</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/reflector_holder_350mm_6cm.stl">reflector_holder_350mm_6cm.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>3a</p></td>
+<td><p>Reflector holder 330 mm length, 20 mm height</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/reflector_holder_330mm_2cm.stl">reflector_holder_330mm_2cm.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>3b</p></td>
+<td><p>Reflector holder 350 mm length, 20 mm height</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/reflector_holder_350mm_2cm.stl">reflector_holder_350mm_2cm.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>4a</p></td>
+<td><p>Reflector holder 330 mm length, 10 mm height</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/reflector_holder_330mm_1cm.stl">reflector_holder_330mm_1cm.stl</a></p></td>
+</tr>
+<tr class="row-odd"><td><p>4b</p></td>
+<td><p>Reflector holder 350 mm length, 10 mm height</p></td>
+<td><p>ABS</p></td>
+<td><p><a class="reference external" href="https://github.com/photonZfeed/modularPhotoreactor/tree/main/01_CAD/03_Multi_Batch_Screening_Photoreactor/01_Direct_Irradiation_Module/01_modular_reflector_adjustable_height/reflector_holder_350mm_1cm.stl">reflector_holder_350mm_1cm.stl</a></p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>PTFE reflector lining</p></td>
+<td><p>OPF200.XXX.300-U-K, BERGHOF Fluoroplastics</p></td>
+<td><p>—</p></td>
+</tr>
+</tbody>
+</table>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<ol class="upperalpha simple" start="4">
+<li><p>Kowalczyk, P. Li, A. Abbas, J. Eichhorn, P. Buday, M. Heiland, A. Pannwitz, F. H. Schacher, W. Weigand, C. Streb, D. Ziegenbalg, ChemPhotoChem 2022, 6, DOI 10.1002/cptc.202200044.</p></li>
+</ol>
+</aside>
+</aside>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Multi-Batch Screening Reactor - Designing a Direct Irradiation Module Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="radiometry.html" class="btn btn-neutral float-right" title="Radiometric Measurements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

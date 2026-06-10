@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radiometric Measurements &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Ray Tracing Simulations" href="raytracing.html" />
+    <link rel="prev" title="Direct Irradiation Module Assembly" href="module_assembly.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Radiometric Measurements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#investigated-led-types">Investigated LED Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#operating-conditions">Operating Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#led-power-supply">LED Power Supply</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#measurement-distances">Measurement Distances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-processing-and-spectral-trimming">Data Processing and Spectral Trimming</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#photon-flux-correction">Photon Flux Correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Radiometric Measurements</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/radiometry.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="radiometric-measurements">
+<h1>Radiometric Measurements<a class="headerlink" href="#radiometric-measurements" title="Link to this heading"></a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Radiometric measurements were conducted to experimentally characterize the
+spatial irradiance distribution direct irradiation modules equipped with different
+LED configurations.
+All measurements were performed using the two-dimensional (2D) radiometry
+procedure introduced by Sender et al. <a class="footnote-reference brackets" href="#id4" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
+<p>The measurements were used to validate geometric radiation field modelling and
+ray tracing simulations and to assess the influence of LED configuration, led type, irradiation distance,
+and the use of reflectors.</p>
+</section>
+<section id="investigated-led-types">
+<h2>Investigated LED Types<a class="headerlink" href="#investigated-led-types" title="Link to this heading"></a></h2>
+<p>Two commercially available high-power LEDs were investigated:</p>
+<dl class="simple">
+<dt><strong>UV LED</strong></dt><dd><ul class="simple">
+<li><p><em>Peak emission wavelength</em>: 365 nm</p></li>
+<li><p><em>Model</em>: LST1-01G01-UV01-00</p></li>
+<li><p><em>Datasheet</em>: <a class="reference external" href="https://www.mouser.de/datasheet/3/1525/1/NewEnergy_StarBoard_Horticulture_Luminus_DataSheet.pdf">Luminus Horticulture Starboards Industry Leading High Powered LED Starboards</a></p></li>
+</ul>
+</dd>
+<dt><strong>Green LED</strong></dt><dd><ul class="simple">
+<li><p><em>Peak emission wavelength</em>: 530 nm</p></li>
+<li><p><em>Model</em>: LST1-01F06-GRN1-00</p></li>
+<li><p><em>Datasheet</em>: <a class="reference external" href="https://www.mouser.de/datasheet/3/1525/1/NewEnergy_StarBoard_Horticulture_Osram_DataSheet.pdf">OSRAM Horticulture Starboards Industry Leading High Powered LED Starboards</a></p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="operating-conditions">
+<h2>Operating Conditions<a class="headerlink" href="#operating-conditions" title="Link to this heading"></a></h2>
+<p>Radiometric measurements were carried out under the following operating conditions:</p>
+<ul class="simple">
+<li><p>UV LEDs were operated at a constant current of <strong>500 mA</strong> with an integration
+time of <strong>2.88 ms</strong>.</p></li>
+<li><p>Green LEDs were operated at a constant current of <strong>350 mA</strong> with an
+integration time of <strong>15.78 ms</strong>.</p></li>
+</ul>
+<p>These operating points were chosen to maximize signal quality while avoiding
+detector saturation.</p>
+</section>
+<section id="led-power-supply">
+<h2>LED Power Supply<a class="headerlink" href="#led-power-supply" title="Link to this heading"></a></h2>
+<p>Radiometric scans were performed for multiple LED configurations comprising a
+total of <strong>8</strong> or <strong>16 LEDs</strong>, both <strong>with and without diffuse reflectors</strong>.</p>
+<p>For each wavelength, two LED rows were assembled, each consisting of
+<code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">×</span> <span class="pre">8</span></code> LEDs connected in series. The LED rows were operated independently
+using two programmable DC power supplies (Korad Lab KA3005P) operated in
+constant-current mode.</p>
+</section>
+<section id="measurement-distances">
+<h2>Measurement Distances<a class="headerlink" href="#measurement-distances" title="Link to this heading"></a></h2>
+<p>Measurements were conducted at three defined vertical distances between the LED
+mounting plane and the cosine corrector of the spectrometer.</p>
+<p>Based on geometric radiation field modelling, nominal optimal distances of</p>
+<ul class="simple">
+<li><p>6 cm,</p></li>
+<li><p>8 cm, and</p></li>
+<li><p>9 cm</p></li>
+</ul>
+<p>were identified. To avoid mechanical collision between the irradiation module
+and the spectrometer, an additional safety offset of <strong>1 cm</strong> was applied during
+all measurements. Consequently, the effective measurement distances were:</p>
+<ul class="simple">
+<li><p><strong>7 cm</strong>,</p></li>
+<li><p><strong>9 cm</strong>, and</p></li>
+<li><p><strong>10 cm</strong>.</p></li>
+</ul>
+</section>
+<section id="data-processing-and-spectral-trimming">
+<h2>Data Processing and Spectral Trimming<a class="headerlink" href="#data-processing-and-spectral-trimming" title="Link to this heading"></a></h2>
+<p>For data evaluation, the recorded spectral data were trimmed to the relevant
+emission ranges of the respective LEDs prior to integration:</p>
+<ul class="simple">
+<li><p><strong>UV LEDs:</strong> 300 nm – 450 nm</p></li>
+<li><p><strong>Green LEDs:</strong> 450 nm – 600 nm</p></li>
+</ul>
+</section>
+<section id="photon-flux-correction">
+<h2>Photon Flux Correction<a class="headerlink" href="#photon-flux-correction" title="Link to this heading"></a></h2>
+<p>Using datasheet values for current-dependent photon flux <a class="footnote-reference brackets" href="#id5" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> <a class="footnote-reference brackets" href="#id6" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a>, the photon fluxes obtained from 2D radiometry were corrected
+based on reference measurements acquired at an effective distance of <strong>7 cm</strong>
+for direct irradiation <strong>without reflectors</strong>.</p>
+<p>The resulting correction factors were subsequently applied to all measurements
+recorded at the corresponding irradiation distances, including configurations
+both with and without reflectors.</p>
+<p>This procedure ensured consistent comparability of radiometric data across all
+evaluated module configurations.</p>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id4" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<ol class="upperalpha simple" start="13">
+<li><p>Sender, B. Wriedt, D. Ziegenbalg, React. Chem. Eng. 2021, 6, 1601–1613.</p></li>
+</ol>
+</aside>
+<aside class="footnote brackets" id="id5" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
+<p>New-EnergyLLC, “Luminus Horticulture Starboards Industry Leading High Powered LED Starboards,” <a class="reference external" href="https://www.mouser.de/datasheet/3/1525/1/NewEnergy_StarBoard_Horticulture_Luminus_DataSheet.pdf">https://www.mouser.de/datasheet/3/1525/1/NewEnergy_StarBoard_Horticulture_Luminus_DataSheet.pdf</a>, 2025.</p>
+</aside>
+<aside class="footnote brackets" id="id6" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">3</a><span class="fn-bracket">]</span></span>
+<p>New-EnergyLLC, “OSRAM Horticulture Starboards Industry Leading High Powered LED Starboards,” <a class="reference external" href="https://www.mouser.de/datasheet/3/1525/1/NewEnergy_StarBoard_Horticulture_Osram_DataSheet.pdf">https://www.mouser.de/datasheet/3/1525/1/NewEnergy_StarBoard_Horticulture_Osram_DataSheet.pdf</a>, 2025.</p>
+</aside>
+</aside>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="module_assembly.html" class="btn btn-neutral float-left" title="Direct Irradiation Module Assembly" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="raytracing.html" class="btn btn-neutral float-right" title="Ray Tracing Simulations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

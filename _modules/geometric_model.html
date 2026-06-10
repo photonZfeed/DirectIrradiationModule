@@ -1,0 +1,640 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>geometric_model &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">geometric_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for geometric_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">time</span><span class="w"> </span><span class="kn">import</span> <span class="n">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProcessPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span> 
+<span class="kn">from</span><span class="w"> </span><span class="nn">numba</span><span class="w"> </span><span class="kn">import</span> <span class="n">njit</span><span class="p">,</span> <span class="n">prange</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcolors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LED</span><span class="p">,</span> <span class="n">LST1_01F06_GRN1_00</span><span class="p">,</span> <span class="n">LST1_01G01_UV01_00</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+
+<div class="viewcode-block" id="GeometricModel">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.GeometricModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GeometricModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Geometric model for simulating direct irradiation from multiple LED sources over a 2D spatial grid.</span>
+
+<span class="sd">    This class is used to simulate the irradiance distribution from configurable LED arrangements on a defined grid. It supports single configuration simulations, </span>
+<span class="sd">    batch processing of multiple configurations (with parallelization), and visualization of irradiance distribution on the detection plane.</span>
+
+<span class="sd">    :param G: Grid object defining the area of interest, including width, height, and spatial discretization (units: cm).</span>
+<span class="sd">    :type G: Grid</span>
+<span class="sd">    :param led: LED source to be used in the simulation. Must provide angle and intensity data and implement ``calc_radiant_intensity()``.</span>
+<span class="sd">    :type led: LED</span>
+<span class="sd">    :param resolution_xy: Spatial resolution of the grid in centimeters (cm). Determines spacing between grid points. Default is 0.5 cm.</span>
+<span class="sd">    :type resolution_xy: float, optional</span>
+
+<span class="sd">    :ivar h: Planck constant (Joule seconds, J·s).</span>
+<span class="sd">    :vartype h: float</span>
+<span class="sd">    :ivar c: Speed of light (meters per second, m/s).</span>
+<span class="sd">    :vartype c: float</span>
+<span class="sd">    :ivar Na: Avogadro&#39;s number (1/mol).</span>
+<span class="sd">    :vartype Na: float</span>
+<span class="sd">    :ivar led: The LED object used for simulation.</span>
+<span class="sd">    :vartype led: LED</span>
+<span class="sd">    :ivar X: 2D array of x-coordinates for the simulation grid (units: cm).</span>
+<span class="sd">    :vartype X: numpy.ndarray</span>
+<span class="sd">    :ivar Y: 2D array of y-coordinates for the simulation grid (units: cm).</span>
+<span class="sd">    :vartype Y: numpy.ndarray</span>
+
+<span class="sd">    :raises ValueError: If the provided grid or LED object is invalid or missing required attributes.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        Calls ``calc_radiant_intensity()`` on the provided LED object, which may modify its internal state.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - The grid is centered at (0, 0) in the x-y plane.</span>
+<span class="sd">        - All spatial units are in centimeters unless otherwise specified.</span>
+<span class="sd">        - The LED object must provide angle and intensity data arrays.</span>
+<span class="sd">        - Designed for use with batch simulation and parallel processing for a large number of configurations.</span>
+<span class="sd">        - For visualization, use the :meth:`plot_irradiance` method with a Matplotlib Axes object as an argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">G</span><span class="p">:</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">led</span><span class="p">:</span> <span class="n">LED</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the geometric model with a grid, LED, and spatial resolution.</span>
+
+<span class="sd">        :param G: Grid object defining the area of interest (width, height, step size, etc.; units: cm).</span>
+<span class="sd">        :type G: Grid</span>
+<span class="sd">        :param led: LED source to be used in the simulation. Must provide angle and intensity data and implement ``calc_radiant_intensity()``.</span>
+<span class="sd">        :type led: LED</span>
+<span class="sd">        :param resolution_xy: Spatial resolution of the grid in centimeters (cm). Default is 0.5 cm.</span>
+<span class="sd">        :type resolution_xy: float, optional</span>
+
+<span class="sd">        :raises ValueError: If the provided grid or LED object is invalid or missing required attributes.</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            Calls ``calc_radiant_intensity()`` on the provided LED object, which may modify its internal state.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The grid is centered at (0, 0) in the x-y plane. All spatial units are in centimeters unless otherwise specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="mf">6.62607015e-34</span> <span class="c1"># Planck constant (J s)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="mi">299792458</span> <span class="c1"># Speed of light (m/s)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Na</span> <span class="o">=</span> <span class="mf">6.02214076e23</span> <span class="c1"># Avogadro&#39;s number (1/mol)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">led</span> <span class="o">=</span> <span class="n">led</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">calc_radiant_intensity</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_grid</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">G</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a 2D meshgrid for the area of interest, centered at (0, 0).</span>
+
+<span class="sd">        :param width: Width of the area (cm).</span>
+<span class="sd">        :type width: float</span>
+<span class="sd">        :param height: Height of the area (cm).</span>
+<span class="sd">        :type height: float</span>
+<span class="sd">        :param resolution_xy: Spatial resolution in centimeters (cm).</span>
+<span class="sd">        :type resolution_xy: float</span>
+
+<span class="sd">        :return: Tuple of meshgrid arrays for X and Y coordinates (both numpy.ndarray, units: cm).</span>
+<span class="sd">        :rtype: tuple[numpy.ndarray, numpy.ndarray]</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The grid is constructed such that its center is at (0, 0).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">resolution_xy</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">width</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">resolution_xy</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">height</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">resolution_xy</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">resolution_xy</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">&quot;xy&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GeometricModel.read_configurations">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.GeometricModel.read_configurations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_configurations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load LED array configurations and source heights from a compressed NumPy (.npz) file.</span>
+
+<span class="sd">        :param filename: Path to the .npz file containing configurations and heights.</span>
+<span class="sd">        :type filename: str</span>
+
+<span class="sd">        :return: Tuple containing the list/array of configurations and the corresponding heights (z values).</span>
+<span class="sd">        :rtype: tuple[list, float or numpy.ndarray]</span>
+
+<span class="sd">        :raises FileNotFoundError: If the file does not exist.</span>
+<span class="sd">        :raises KeyError: If required keys are missing in the file.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The .npz file must contain arrays named &#39;configurations&#39; and &#39;height&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">configurations</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;configurations&#39;</span><span class="p">]</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">configurations</span><span class="p">,</span> <span class="n">z</span></div>
+
+
+<div class="viewcode-block" id="GeometricModel.simulate">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.GeometricModel.simulate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the total irradiance over the 2D grid from multiple LED sources at specified positions and height.</span>
+
+<span class="sd">        :param config: List of tuples representing (x, y) positions (in cm) of the LED sources.</span>
+<span class="sd">        :type config: list[tuple[float, float]]</span>
+<span class="sd">        :param z: Height of the sources above the grid (cm).</span>
+<span class="sd">        :type z: float</span>
+
+<span class="sd">        :return: 2D array of total irradiance values over the grid (units: W/m²).</span>
+<span class="sd">        :rtype: numpy.ndarray</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            Calls the ``calculate_irradiance`` function for each LED source.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The result is converted from W/cm² to W/m² by multiplying by 1e4.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">irr_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">X_shift</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">-</span> <span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">Y_shift</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">-</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">irr_led</span> <span class="o">=</span> <span class="n">calculate_irradiance</span><span class="p">(</span><span class="n">X_shift</span><span class="p">,</span> <span class="n">Y_shift</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">angle_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">intensity_data</span><span class="p">)</span>
+            <span class="n">irr_total</span> <span class="o">+=</span> <span class="n">irr_led</span>
+        <span class="k">return</span> <span class="n">irr_total</span> <span class="o">*</span> <span class="mf">1e4</span>  <span class="c1"># convert from W/cm² to W/m²</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_batch_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_batch</span><span class="p">,</span> <span class="n">z_batch</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simulate a batch of configurations, returning summary irradiance metrics for each.</span>
+
+<span class="sd">        :param config_batch: List of configurations (each a list of (x, y) tuples) for the batch.</span>
+<span class="sd">        :type config_batch: list</span>
+<span class="sd">        :param z_batch: List or array of heights (cm) corresponding to each configuration.</span>
+<span class="sd">        :type z_batch: list or numpy.ndarray</span>
+
+<span class="sd">        :return: Dictionary containing configurations, heights, and irradiance metrics (mean, max, std for each configuration).</span>
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Used internally for parallel batch processing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">batch_results</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;configs&quot;</span><span class="p">:</span> <span class="n">config_batch</span><span class="p">,</span>
+            <span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="n">z_batch</span><span class="p">,</span>
+            <span class="s2">&quot;means&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;stds&quot;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">config</span><span class="p">,</span> <span class="n">z</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">config_batch</span><span class="p">,</span> <span class="n">z_batch</span><span class="p">):</span>
+            <span class="n">irr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+            <span class="n">batch_results</span><span class="p">[</span><span class="s2">&quot;means&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">irr</span><span class="p">))</span>
+            <span class="n">batch_results</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">irr</span><span class="p">))</span>
+            <span class="n">batch_results</span><span class="p">[</span><span class="s2">&quot;stds&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">irr</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">batch_results</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_worker_wrapper</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unpack arguments and call the batch worker for parallel processing.</span>
+
+<span class="sd">        :param args: Tuple of (config_batch, z_batch) for the worker.</span>
+<span class="sd">        :type args: tuple</span>
+
+<span class="sd">        :return: Result of :meth:`_batch_worker`.</span>
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Used internally for parallel batch processing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_worker</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GeometricModel.simulate_batch">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.GeometricModel.simulate_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configurations</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simulate a batch of configurations in parallel, returning summary irradiance metrics for each configuration.</span>
+
+<span class="sd">        :param configurations: List of configurations to simulate (each a list of (x, y) tuples).</span>
+<span class="sd">        :type configurations: list</span>
+<span class="sd">        :param z: Height(s) of the sources above the grid (cm). A scalar float is broadcast to all</span>
+<span class="sd">            configurations; a 1-D array must have one entry per configuration.</span>
+<span class="sd">        :type z: float or numpy.ndarray</span>
+<span class="sd">        :param batch_size: Number of configurations per batch. Default is 500.</span>
+<span class="sd">        :type batch_size: int, optional</span>
+<span class="sd">        :param max_workers: Maximum number of parallel workers. Default is None (uses os.cpu_count()).</span>
+<span class="sd">        :type max_workers: int, optional</span>
+
+<span class="sd">        :return: Dictionary containing configurations, heights, and irradiance metrics (mean, max, std for each configuration).</span>
+<span class="sd">        :rtype: dict</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            Uses multiprocessing for parallel execution; may increase memory usage and CPU load.</span>
+
+<span class="sd">        :raises Exception: Propagates exceptions from worker processes.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            Designed for efficient batch simulation of large configuration sets. Results are aggregated from all batches.</span>
+<span class="sd">            A plain Python ``float`` or a zero-dimensional array is accepted for ``z`` and is automatically</span>
+<span class="sd">            broadcast to the length of ``configurations``.</span>
+
+<span class="sd">        .. rubric:: Example</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from utils.grid import Grid</span>
+<span class="sd">            from utils.led import LST1_01G01_UV01_00</span>
+<span class="sd">            from geometric_model import GeometricModel, save_results</span>
+
+<span class="sd">            G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)</span>
+<span class="sd">            model = GeometricModel(G, LST1_01G01_UV01_00, resolution_xy=0.5)</span>
+
+<span class="sd">            configs, z = model.read_configurations(</span>
+<span class="sd">                &quot;results/examples/example_MonteCarlo_1-16_leds_5-15_cm_10000_samples.npz&quot;</span>
+<span class="sd">            )</span>
+<span class="sd">            results = model.simulate_batch(configs, z, batch_size=500)</span>
+<span class="sd">            save_results(results, model, &quot;results/examples/batch_results.npz&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">z</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">configurations</span><span class="p">),</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">configurations</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">batch_size</span><span class="p">],</span> <span class="n">z</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">batch_size</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">configurations</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;configs&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;means&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;stds&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="k">with</span> <span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_worker_wrapper</span><span class="p">,</span> <span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;Simulating Batches&quot;</span><span class="p">):</span>
+                <span class="n">batch_result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">&quot;configs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch_result</span><span class="p">[</span><span class="s2">&quot;configs&quot;</span><span class="p">])</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch_result</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">])</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">&quot;means&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch_result</span><span class="p">[</span><span class="s2">&quot;means&quot;</span><span class="p">])</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch_result</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">])</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">&quot;stds&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">batch_result</span><span class="p">[</span><span class="s2">&quot;stds&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">results</span></div>
+
+    
+<div class="viewcode-block" id="GeometricModel.plot_irradiance">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.GeometricModel.plot_irradiance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_irradiance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="n">irr</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">y_title</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">v_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">extent</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">shrink_cbar</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Visualize the irradiance distribution as a contour plot on a given Matplotlib Axes.</span>
+
+<span class="sd">        :param ax: Matplotlib Axes object to plot on.</span>
+<span class="sd">        :type ax: matplotlib.axes.Axes</span>
+<span class="sd">        :param irr: 2D array containing the irradiance data to plot (units: W/m²).</span>
+<span class="sd">        :type irr: numpy.ndarray</span>
+<span class="sd">        :param title: Title of the plot. Default is empty string.</span>
+<span class="sd">        :type title: str, optional</span>
+<span class="sd">        :param y_title: Y position of the title. Default is -0.4.</span>
+<span class="sd">        :type y_title: float, optional</span>
+<span class="sd">        :param v_max: Maximum value for color scale. Default is -1 (auto scale).</span>
+<span class="sd">        :type v_max: float, optional</span>
+<span class="sd">        :param extent: Extent of the plot in the form (xmin, xmax, ymin, ymax). Default is (-2, -1, -2, -1) (auto extent).</span>
+<span class="sd">        :type extent: tuple, optional</span>
+<span class="sd">        :param shrink_cbar: Factor to shrink the color bar. Default is 1.0.</span>
+<span class="sd">        :type shrink_cbar: float, optional</span>
+
+<span class="sd">        :side effects:</span>
+<span class="sd">            Modifies the provided Axes object and creates a colorbar. Does not return a value.</span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The color scale and contour levels are automatically determined based on the data unless specified.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Set color bar limits</span>
+        <span class="k">if</span> <span class="n">v_max</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1.</span><span class="p">:</span>
+            <span class="n">vmax</span> <span class="o">=</span> <span class="n">v_max</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">vmax</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">irr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">//</span> <span class="mi">5</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">5</span> <span class="c1"># round up to next multiple of 5</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">mcolors</span><span class="o">.</span><span class="n">Normalize</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">clip</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># define contour levels based on vmax</span>
+        <span class="k">if</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">30</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="k">elif</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">50</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="k">elif</span> <span class="n">vmax</span> <span class="o">&lt;=</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="mi">50</span>
+        <span class="n">levels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">extent</span> <span class="o">==</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">extent</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create colormesh plot</span>
+        <span class="n">tc</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span>
+            <span class="n">irr</span><span class="p">,</span>
+            <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span>
+            <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+            <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span>
+            <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span>
+            <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;equal&#39;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create colorbar</span>
+        <span class="n">cbar</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">tc</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="n">levels</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="n">shrink_cbar</span><span class="p">)</span>
+        <span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;$E$ / W m⁻²&#39;</span><span class="p">)</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;$X$ / cm&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;$Y$ / cm&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">&#39;equal&#39;</span><span class="p">,</span> <span class="s1">&#39;box&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Set x and y limits</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+        <span class="c1"># set subtitle</span>
+        <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y_title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span></div>
+</div>
+
+
+   
+<span class="nd">@njit</span><span class="p">(</span><span class="n">fastmath</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_angle</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the angle (theta) in radians between the z-axis and the point (x, y, z).</span>
+
+<span class="sd">    :param x: X-coordinate (float)</span>
+<span class="sd">    :type x: float</span>
+<span class="sd">    :param y: Y-coordinate (float)</span>
+<span class="sd">    :type y: float</span>
+<span class="sd">    :param z: Z-coordinate (float)</span>
+<span class="sd">    :type z: float</span>
+
+<span class="sd">    :return: Angle theta in radians between the z-axis and the point (x, y, z).</span>
+<span class="sd">    :rtype: float</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        Used for determining the emission angle from the LED to a grid point.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">z</span><span class="p">)</span>
+
+<span class="nd">@njit</span><span class="p">(</span><span class="n">parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fastmath</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_irradiance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">angle_data</span><span class="p">,</span> <span class="n">intensity_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the irradiance at each point in the grid from a single LED source.</span>
+
+<span class="sd">    :param X: 2D array of x-coordinates (cm).</span>
+<span class="sd">    :type X: numpy.ndarray</span>
+<span class="sd">    :param Y: 2D array of y-coordinates (cm).</span>
+<span class="sd">    :type Y: numpy.ndarray</span>
+<span class="sd">    :param z: Height of the LED source above the grid (cm).</span>
+<span class="sd">    :type z: float</span>
+<span class="sd">    :param angle_data: 1D array of emission angles (degrees) for the LED.</span>
+<span class="sd">    :type angle_data: numpy.ndarray</span>
+<span class="sd">    :param intensity_data: 1D array of intensities corresponding to angle_data.</span>
+<span class="sd">    :type intensity_data: numpy.ndarray</span>
+
+<span class="sd">    :return: 2D array of irradiance values at each grid point (units: W cm⁻²).</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The result is in W cm⁻². For W m⁻², multiply by 1e4.</span>
+<span class="sd">        Uses linear interpolation for intensity as a function of angle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">prange</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">calculate_angle</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">z</span><span class="p">))</span>
+            <span class="n">intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">angle_data</span><span class="p">,</span> <span class="n">intensity_data</span><span class="p">)</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">z</span> <span class="o">/</span> <span class="p">((</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mf">1.5</span><span class="p">)</span> <span class="o">*</span> <span class="n">intensity</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="save_irr">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.save_irr">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_irr</span><span class="p">(</span><span class="n">irr</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save the irradiance data of a single configuration to a compressed NumPy (.npz) file.</span>
+
+<span class="sd">    :param irr: 2D array of irradiance values (W m⁻²).</span>
+<span class="sd">    :type irr: numpy.ndarray</span>
+<span class="sd">    :param model: The geometric model used for the simulation (provides grid and LED info).</span>
+<span class="sd">    :type model: GeometricModel</span>
+<span class="sd">    :param filename: Path to the .npz file to save the data.</span>
+<span class="sd">    :type filename: str</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        Writes a file to disk at the specified location.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The saved file contains arrays for X, Y, irr, led_name, and optical_power_per_led.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">X</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">X</span><span class="p">,</span>
+        <span class="n">Y</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span>
+        <span class="n">irr</span><span class="o">=</span><span class="n">irr</span><span class="p">,</span>
+        <span class="n">led_name</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">optical_power_per_led</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">total_power</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="read_irr">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.read_irr">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_irr</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load irradiance data and associated metadata from a compressed NumPy (.npz) file.</span>
+
+<span class="sd">    :param filename: Path to the .npz file containing irradiance data.</span>
+<span class="sd">    :type filename: str</span>
+
+<span class="sd">    :return: Tuple containing X (grid x-coordinates), Y (grid y-coordinates), irr (irradiance array), led_name (str), and optical_power_per_led (float).</span>
+<span class="sd">    :rtype: tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, str, float]</span>
+
+<span class="sd">    :raises FileNotFoundError: If the file does not exist.</span>
+<span class="sd">    :raises KeyError: If required keys are missing in the file.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The file must contain arrays for X, Y, irr, led_name, and optical_power_per_led.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;X&#39;</span><span class="p">]</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Y&#39;</span><span class="p">]</span>
+    <span class="n">irr</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;irr&#39;</span><span class="p">]</span>
+    <span class="n">led_name</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;led_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="n">optical_power_per_led</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;optical_power_per_led&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">irr</span><span class="p">,</span> <span class="n">led_name</span><span class="p">,</span> <span class="n">optical_power_per_led</span></div>
+
+
+<div class="viewcode-block" id="save_results">
+<a class="viewcode-back" href="../api/geometric_model.html#geometric_model.save_results">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save simulation results for all configurations to a compressed NumPy (.npz) file.</span>
+
+<span class="sd">    :param results: Dictionary containing simulation results (configs, z, means, max, stds).</span>
+<span class="sd">    :type results: dict</span>
+<span class="sd">    :param model: The geometric model used for the simulation (provides LED info).</span>
+<span class="sd">    :type model: GeometricModel</span>
+<span class="sd">    :param filename: Path to the .npz file to save the data.</span>
+<span class="sd">    :type filename: str</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The saved file contains arrays for configs, z, means, max, stds, led_name, and optical_power_per_led.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span>
+        <span class="n">filename</span><span class="p">,</span>
+        <span class="n">configs</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;configs&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
+        <span class="n">z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;z&quot;</span><span class="p">]),</span>
+        <span class="n">means</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;means&quot;</span><span class="p">]),</span>
+        <span class="nb">max</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">]),</span>
+        <span class="n">stds</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;stds&quot;</span><span class="p">]),</span>
+        <span class="n">led_name</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">optical_power_per_led</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">led</span><span class="o">.</span><span class="n">total_power</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="c1"># create grid, led, and model</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+    <span class="n">led</span> <span class="o">=</span> <span class="n">LST1_01G01_UV01_00</span>
+    <span class="c1"># led = LST1_01F06_GRN1_00</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+    <span class="c1"># simulate batch of configurations and save results</span>
+    <span class="n">config_path</span> <span class="o">=</span> <span class="s2">&quot;results</span><span class="se">\\</span><span class="s2">sampled_configs</span><span class="se">\\</span><span class="s2">systematic_8_leds_13_cm_482931_samples.npz&quot;</span> <span class="c1"># 8 leds, 13 cm height</span>
+    <span class="c1"># config_path = &quot;results\\sampled_configs\\MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz&quot; # 1-16 leds, 5-15 cm height</span>
+    
+    <span class="n">configs</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">read_configurations</span><span class="p">(</span><span class="n">config_path</span><span class="p">)</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">configs</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate_batch</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">save_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;results/geometric/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/simulation_results_</span><span class="si">{</span><span class="n">config_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># simulate single configuration</span>
+    <span class="c1"># config = [(-7.5,0), (7.5,0), (-10, -10), (10, 10), (-10, 10), (10, -10), (0,12.5), (0,-12.5)]</span>
+    <span class="c1"># z = 13</span>
+
+    <span class="c1"># irr = model.simulate(config, z)</span>
+    <span class="c1"># print(f&quot;Mean Irradiance: {np.mean(irr):.4f} W/m²&quot;)</span>
+    <span class="c1"># print(f&quot;Homogeneity: {1 - np.std(irr) / np.mean(irr):.4f}&quot;)</span>
+    <span class="c1"># fig, ax = plt.subplots(1, 1, figsize=(2.5, 2.5))</span>
+    <span class="c1"># model.plot_irradiance(ax, irr, shrink_cbar=0.8)</span>
+    <span class="c1"># plt.show()</span>
+
+    <span class="c1"># print(f&quot;Mean Irradiance: {np.mean(irr):.2f} W/m²&quot;)</span>
+    <span class="c1"># print(f&quot;Std Dev of Irradiance: {np.std(irr):.2f} W/m²&quot;)</span>
+
+    <span class="c1"># track runtime of single simulation</span>
+    <span class="c1"># simulate five times and measure time and print average time and standard deviation</span>
+    <span class="c1"># sim_times = []</span>
+    <span class="c1"># for i in range(5):</span>
+    <span class="c1">#     start_time = time()</span>
+    <span class="c1">#     model.simulate(config, z)</span>
+    <span class="c1">#     end_time = time()</span>
+    <span class="c1">#     sim_times.append(end_time - start_time)</span>
+
+    <span class="c1"># # convert to array of milliseconds</span>
+    <span class="c1"># sim_times = np.array(sim_times) * 1000</span>
+    <span class="c1"># print(f&quot;Simulation Time: {np.mean(sim_times):.2f} ± {np.std(sim_times):.2f} milliseconds&quot;)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

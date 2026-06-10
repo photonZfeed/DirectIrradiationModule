@@ -1,0 +1,468 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monte-Carlo Sampler &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Geometric Model" href="geometric_model.html" />
+    <link rel="prev" title="Systematic Sampler" href="systematic_sampler.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="systematic_sampler.html">Systematic Sampler</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Monte-Carlo Sampler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler.calculate_quadrant_weights"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler.calculate_quadrant_weights()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler.generate_random_configuration"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler.generate_random_configuration()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler.generate_samples"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler.generate_samples()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler.generate_unique_samples"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler.generate_unique_samples()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler.get_quadrant_weight"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler.get_quadrant_weight()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler.set_seed"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler.set_seed()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler.verify_configuration"><code class="docutils literal notranslate"><span class="pre">MonteCarloSampler.verify_configuration()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#monte_carlo_sampler.analyze_configurations"><code class="docutils literal notranslate"><span class="pre">analyze_configurations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monte_carlo_sampler.save_configurations"><code class="docutils literal notranslate"><span class="pre">save_configurations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example-usage">Example Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="geometric_model.html">Geometric Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optimizer.html">Optimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/index.html">Utility Modules</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API</a></li>
+      <li class="breadcrumb-item active">Monte-Carlo Sampler</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/monte_carlo_sampler.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-monte_carlo_sampler">
+<span id="monte-carlo-sampler"></span><h1>Monte-Carlo Sampler<a class="headerlink" href="#module-monte_carlo_sampler" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">monte_carlo_sampler.</span></span><span class="sig-name descname"><span class="pre">MonteCarloSampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">G</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="utils/utils.html#utils.grid.Grid" title="utils.grid.Grid"><span class="pre">Grid</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">led_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">led_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height_min</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">15.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height_step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'uniform'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generates random, symmetric LED configurations with variable LED counts and heights using Monte Carlo sampling.</p>
+<p>This class supports reproducible sampling via seeding and enforces point symmetry and quadrant balance on a square grid.
+Configurations are generated such that the spatial distribution of LEDs is symmetric about the grid center, and the number of LEDs per quadrant is balanced.</p>
+<p>The grid is assumed to be square and centered at (0, 0). The number of LEDs and their heights can be varied within user-specified ranges. Sampling can be performed uniformly or weighted by the number of possible configurations for each LED count.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>G</strong> (<a class="reference internal" href="utils/utils.html#utils.grid.Grid" title="utils.grid.Grid"><em>Grid</em></a>) – Grid object defining the possible LED positions. Must be a square grid with an odd number of points per side.</p></li>
+<li><p><strong>led_min</strong> (<em>int</em>) – Minimum number of LEDs to place in a configuration (inclusive). Must be &gt;= 1.</p></li>
+<li><p><strong>led_max</strong> (<em>int</em>) – Maximum number of LEDs to place in a configuration (inclusive). Must be &gt;= led_min.</p></li>
+<li><p><strong>height_min</strong> (<em>float</em>) – Minimum height above the grid for any LED, in centimeters.</p></li>
+<li><p><strong>height_max</strong> (<em>float</em>) – Maximum height above the grid for any LED, in centimeters. Must be &gt;= height_min.</p></li>
+<li><p><strong>height_step</strong> (<em>float</em>) – Step size for possible LED heights, in centimeters.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – Random seed for reproducible results. If None, results are non-reproducible.</p></li>
+<li><p><strong>sampling_mode</strong> (<em>str</em>) – Sampling strategy for LED counts. <code class="docutils literal notranslate"><span class="pre">&quot;uniform&quot;</span></code> yields roughly equal samples per LED count; <code class="docutils literal notranslate"><span class="pre">&quot;weighted&quot;</span></code> samples proportional to the number of possible configurations.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – If True, prints initialization and sampling details to stdout.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the grid is not square with an odd number of points per side, or if parameter constraints are violated.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The grid must be square and have an odd number of points per side to ensure a unique center point for symmetry.</p></li>
+<li><p>The class precomputes all valid symmetric configurations for each LED count in the specified range.</p></li>
+<li><p>All random sampling is performed using the provided seed for reproducibility, if specified.</p></li>
+</ul>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler.calculate_quadrant_weights">
+<span class="sig-name descname"><span class="pre">calculate_quadrant_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler.calculate_quadrant_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler.calculate_quadrant_weights" title="Link to this definition"></a></dt>
+<dd><p>Calculates the total fractional weight of LEDs in each quadrant for a given configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – List of (x, y) grid points representing the LED configuration.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The total weights for (Q1, Q2, Q3, Q4), summing to the total number of LEDs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float, float]</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Used to verify that a configuration is balanced across all quadrants.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler.generate_random_configuration">
+<span class="sig-name descname"><span class="pre">generate_random_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_led_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler.generate_random_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler.generate_random_configuration" title="Link to this definition"></a></dt>
+<dd><p>Generates a single random valid LED configuration and associated height, enforcing symmetry and quadrant balance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_led_count</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified, generates a configuration with this exact number of LEDs. If None, the LED count is sampled according to the sampler’s distribution.</p></li>
+<li><p><strong>target_height</strong> (<em>float</em><em>, </em><em>optional</em>) – If specified, selects the LED height closest to this value. If None, height is sampled from possible values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing configuration details (positions, LED count, height, symmetry tuple, and seed), or None if generation failed after maximum attempts.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict or None</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>May print debug information to stdout if configuration generation fails or is invalid.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Attempts up to 1000 times to generate a valid configuration.</p></li>
+<li><p>Uses the sampler’s random state for reproducibility.</p></li>
+<li><p>The returned dictionary includes the configuration, LED count, height, symmetry tuple (a, b, c), and seed used.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler.generate_samples">
+<span class="sig-name descname"><span class="pre">generate_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">led_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_parallel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">worker_seeds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_samples_per_led</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler.generate_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler.generate_samples" title="Link to this definition"></a></dt>
+<dd><p>Generates multiple random LED configurations with variable LED counts and heights, supporting parallel processing and custom distributions.</p>
+<p>This method creates a specified number of random, symmetric LED configurations on a square grid, optionally using user-defined distributions for LED counts and heights. Sampling can be performed in parallel for efficiency. If <cite>target_samples_per_led</cite> is specified, the method generates approximately that many samples for each valid LED count.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_samples</strong> (<em>int</em>) – Number of samples to generate.</p></li>
+<li><p><strong>led_distribution</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Optional probability distribution for LED counts, as a dictionary mapping LED count to probability. If None, uses the sampler’s default distribution.</p></li>
+<li><p><strong>height_distribution</strong> (<em>dict</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling over allowed heights.</p></li>
+<li><p><strong>use_parallel</strong> (<em>bool</em>) – Whether to use parallel processing for sample generation.</p></li>
+<li><p><strong>max_workers</strong> (<em>int</em><em>, </em><em>optional</em>) – Maximum number of parallel worker processes. If None, uses the number of CPU cores.</p></li>
+<li><p><strong>worker_seeds</strong> (<em>list</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – Optional list of random seeds for each worker to ensure reproducibility in parallel mode.</p></li>
+<li><p><strong>target_samples_per_led</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified, generates approximately this many samples for each valid LED count, overriding <code class="docutils literal notranslate"><span class="pre">num_samples</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of configuration dictionaries, each containing LED positions, count, height, and other metadata.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If parameter constraints are violated or grid is not properly initialized.</p>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>May print progress and distribution information to stdout if verbose mode is enabled.</p></li>
+<li><p>May use parallel processing and spawn worker processes.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>If <cite>target_samples_per_led</cite> is set, the total number of samples is determined by the number of valid LED counts times this value.</p></li>
+<li><p>Parallel processing is recommended for large sample counts.</p></li>
+<li><p>All random sampling is reproducible if a seed is provided.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler.generate_unique_samples">
+<span class="sig-name descname"><span class="pre">generate_unique_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_attempts_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">led_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_parallel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_samples_per_led</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler.generate_unique_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler.generate_unique_samples" title="Link to this definition"></a></dt>
+<dd><p>Generates a specified number of unique, random, symmetric LED configurations with variable LED counts and heights.</p>
+<p>This method attempts to generate <code class="docutils literal notranslate"><span class="pre">num_samples</span></code> unique configurations, each satisfying symmetry and quadrant balance constraints, with LED counts and heights optionally sampled from user-provided distributions. Uniqueness is enforced on the combination of LED positions and heights. Sampling can be performed in parallel for efficiency. If <code class="docutils literal notranslate"><span class="pre">target_samples_per_led</span></code> is specified, the method generates approximately that many unique samples for each valid LED count.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_samples</strong> (<em>int</em>) – Number of unique samples to generate.</p></li>
+<li><p><strong>max_attempts_factor</strong> (<em>int</em>) – Multiplier for the maximum number of attempts allowed (max_attempts = num_samples * max_attempts_factor).</p></li>
+<li><p><strong>led_distribution</strong> (<em>dict</em><em>[</em><em>int</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Optional probability distribution for LED counts, as a dictionary mapping LED count to probability. If None, uses the sampler’s default distribution.</p></li>
+<li><p><strong>height_distribution</strong> (<em>dict</em><em>[</em><em>float</em><em>, </em><em>float</em><em>]</em><em>, </em><em>optional</em>) – Optional probability distribution for LED heights, as a dictionary mapping height to probability. If None, uses uniform sampling over allowed heights.</p></li>
+<li><p><strong>use_parallel</strong> (<em>bool</em>) – Whether to use parallel processing for sample generation.</p></li>
+<li><p><strong>target_samples_per_led</strong> (<em>int</em><em>, </em><em>optional</em>) – If specified, generates approximately this many unique samples for each valid LED count, overriding <code class="docutils literal notranslate"><span class="pre">num_samples</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of unique configuration dictionaries, each containing LED positions, count, height, and metadata.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict]</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Prints progress and distribution information to stdout.</p></li>
+<li><p>May use parallel processing and spawn worker processes.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Uniqueness is enforced on the combination of LED positions and heights.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">target_samples_per_led</span></code> is set, the total number of samples is determined by the number of valid LED counts times this value.</p></li>
+<li><p>The method will stop after <code class="docutils literal notranslate"><span class="pre">num_samples</span> <span class="pre">*</span> <span class="pre">max_attempts_factor</span></code> attempts if not enough unique samples are found.</p></li>
+<li><p>All random sampling is reproducible if a seed is provided.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler.get_quadrant_weight">
+<span class="sig-name descname"><span class="pre">get_quadrant_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler.get_quadrant_weight"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler.get_quadrant_weight" title="Link to this definition"></a></dt>
+<dd><p>Determines the fractional contribution of a grid point to each of the four quadrants (Q1, Q2, Q3, Q4).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>point</strong> (<em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – The (x, y) coordinates of the grid point.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The weights for (Q1, Q2, Q3, Q4), each in [0, 1], summing to 1 for the center, or 1 for a single quadrant/axis.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[float, float, float, float]</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Used for verifying quadrant balance in LED configurations.</p></li>
+<li><p>Axis points contribute to two quadrants; the center contributes equally to all.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler.set_seed">
+<span class="sig-name descname"><span class="pre">set_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler.set_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler.set_seed" title="Link to this definition"></a></dt>
+<dd><p>Sets the random seed for reproducible sampling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seed</strong> (<em>int</em>) – The random seed value to use for both Python’s random module and NumPy.</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Updates the internal random state and NumPy’s global seed.</p></li>
+<li><p>Prints the seed value to stdout.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Use this method to ensure reproducibility of generated configurations.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="monte_carlo_sampler.MonteCarloSampler.verify_configuration">
+<span class="sig-name descname"><span class="pre">verify_configuration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configuration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#MonteCarloSampler.verify_configuration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.MonteCarloSampler.verify_configuration" title="Link to this definition"></a></dt>
+<dd><p>Checks whether a given LED configuration satisfies all symmetry and balance constraints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>configuration</strong> (<em>list</em><em>[</em><em>tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em><em>]</em>) – List of (x, y) grid points representing the LED configuration.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if the configuration is valid (correct LED count, point symmetry, and quadrant balance), False otherwise.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The configuration must have a valid LED count, be symmetric about the center, and be balanced across all quadrants.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="monte_carlo_sampler.analyze_configurations">
+<span class="sig-prename descclassname"><span class="pre">monte_carlo_sampler.</span></span><span class="sig-name descname"><span class="pre">analyze_configurations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler" title="monte_carlo_sampler.MonteCarloSampler"><span class="pre">MonteCarloSampler</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#analyze_configurations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.analyze_configurations" title="Link to this definition"></a></dt>
+<dd><p>Analyzes a list of generated LED configurations and prints detailed statistics, including distributions, uniqueness, and validity checks.</p>
+<p>This function provides a summary of the generated configurations, including the distribution of LED counts and heights, the number of unique configurations (by position and by position+height), and a validity check on a sample of configurations using the generator’s verification method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>configurations</strong> (<em>list</em><em>[</em><em>dict</em><em>]</em>) – List of configuration dictionaries, each containing at least <code class="docutils literal notranslate"><span class="pre">'configuration'</span></code>, <code class="docutils literal notranslate"><span class="pre">'led_count'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'height'</span></code>.</p></li>
+<li><p><strong>generator</strong> (<a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler" title="monte_carlo_sampler.MonteCarloSampler"><em>MonteCarloSampler</em></a>) – The MonteCarloSampler instance used to generate or verify the configurations.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>Prints analysis results and statistics to stdout.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Uniqueness is checked both for (positions + height) and for positions only.</p></li>
+<li><p>Validity is checked for up to 10 randomly selected configurations using the generator’s verification method.</p></li>
+<li><p>The function assumes all configurations are compatible with the provided generator’s grid and parameter ranges.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="monte_carlo_sampler.save_configurations">
+<span class="sig-prename descclassname"><span class="pre">monte_carlo_sampler.</span></span><span class="sig-name descname"><span class="pre">save_configurations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">configurations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler" title="monte_carlo_sampler.MonteCarloSampler"><span class="pre">MonteCarloSampler</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/monte_carlo_sampler.html#save_configurations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#monte_carlo_sampler.save_configurations" title="Link to this definition"></a></dt>
+<dd><p>Saves a list of LED configuration dictionaries to a compressed NumPy NPZ file, including metadata such as heights, LED counts, and generation parameters.</p>
+<p>The function extracts relevant data from the provided configurations and stores them in a compressed NPZ file for efficient storage and later retrieval. Metadata about the grid, LED range, height range, and random seed are also included for reproducibility and documentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>configurations</strong> (<em>list</em><em>[</em><em>dict</em><em>]</em>) – List of configuration dictionaries, each containing at least <code class="docutils literal notranslate"><span class="pre">'configuration'</span></code>, <code class="docutils literal notranslate"><span class="pre">'led_count'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'height'</span></code>.</p></li>
+<li><p><strong>sampler</strong> (<a class="reference internal" href="#monte_carlo_sampler.MonteCarloSampler" title="monte_carlo_sampler.MonteCarloSampler"><em>MonteCarloSampler</em></a>) – The MonteCarloSampler instance used to generate the configurations.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Output filename for the compressed NPZ file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>Writes a compressed NPZ file to disk at the specified filename.</p></li>
+<li><p>Prints a summary message to stdout upon successful save.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The NPZ file contains arrays for configurations, LED counts, heights, and metadata fields for reproducibility.</p></li>
+<li><p>The function assumes all configurations are compatible with the provided sampler’s grid and parameter ranges.</p></li>
+</ul>
+</div>
+</dd></dl>
+
+<section id="example-usage">
+<h2>Example Usage<a class="headerlink" href="#example-usage" title="Link to this heading"></a></h2>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">monte_carlo_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloSampler</span><span class="p">,</span> <span class="n">save_configurations</span>
+
+<span class="n">G</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+
+<span class="c1"># Create a Monte Carlo sampler for flexible LED counts and heights</span>
+<span class="n">mc_sampler</span> <span class="o">=</span> <span class="n">MonteCarloSampler</span><span class="p">(</span>
+    <span class="n">G</span><span class="o">=</span><span class="n">G</span><span class="p">,</span> <span class="n">led_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">led_max</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+    <span class="n">height_min</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">height_max</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">height_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">sampling_mode</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+<span class="c1"># Generate and save 10000 Monte Carlo samples</span>
+<span class="n">num_samples</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">samples_mc</span> <span class="o">=</span> <span class="n">mc_sampler</span><span class="o">.</span><span class="n">generate_unique_samples</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="n">num_samples</span><span class="p">,</span> <span class="n">use_parallel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">save_configurations</span><span class="p">(</span><span class="n">samples_mc</span><span class="p">,</span> <span class="n">mc_sampler</span><span class="p">,</span>
+    <span class="sa">f</span><span class="s2">&quot;results/examples/example_MonteCarlo_</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">led_min</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">led_max</span><span class="si">}</span><span class="s2">_leds_&quot;</span>
+    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">height_min</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">mc_sampler</span><span class="o">.</span><span class="n">height_max</span><span class="si">}</span><span class="s2">_cm_</span><span class="si">{</span><span class="n">num_samples</span><span class="si">}</span><span class="s2">_samples.npz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="systematic_sampler.html" class="btn btn-neutral float-left" title="Systematic Sampler" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="geometric_model.html" class="btn btn-neutral float-right" title="Geometric Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
