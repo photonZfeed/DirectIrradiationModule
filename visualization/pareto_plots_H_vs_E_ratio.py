@@ -250,7 +250,7 @@ def create_pareto_1_16_leds_5_15cm():
     # Single legend for all subplots
     handles, labels = axs[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', ncol=4, bbox_to_anchor=(0.5, 0.94))
-    # plt.savefig(os.path.join(figure_path, f"pareto_plots_{results_path.split('/')[-2]}.svg"))
+    plt.savefig(os.path.join(figure_path, f"pareto_plots_{results_path.split('/')[-2]}.svg"))
     plt.show()
 
 def create_pareto_8_leds_13cm():
