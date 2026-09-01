@@ -12,6 +12,7 @@ This project is part of the publication ["Making Photocatalyst Screening Photo-E
 - Geometric radiation field model
 - Optimization algorithms to find best trade-offs between mean irradiance and homogeneity
 - Raytracing- and radiometry data evaluation
+- Point-by-point comparison of geometric model, raytracing and radiometry (residual maps and error statistics)
 - Data analysis and visualization
 
 ## Installation
@@ -64,4 +65,5 @@ This repository was developed with assistance of AI language models. These tools
 The following AI tools were used:
 
 - **Claude Code** (command-line interface by Anthropic), powered by the **Claude Sonnet 4.6** model (Anthropic, PBC).
-- **GitHub Copilot** (Visual Studio Code extension by GitHub, Inc.), powered by the **OpenAI GPT-4** model (OpenAI, L.L.C.).
+- **Claude Cowork** (desktop interface by Anthropic), powered by the **Claude Opus 5** model (Anthropic, PBC).
+- **GitHub Copilot** (Visual Studio Code extension by GitHub, Inc.), powered by the **OpenAI GPT-4** model (OpenAI, L.L.C()).
