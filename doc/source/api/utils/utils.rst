@@ -110,3 +110,31 @@ Example Usage
         fig, ax = plt.subplots(figsize=(8, 6))
         plot_irradiance_raytracing(ax, irr.rename(columns={'z': 'Irradiance'}), title='Indirect Irradiation - Irradiance Distribution')
         plt.show()
+
+
+Method Comparison
+=================
+
+.. automodule:: utils.compare_methods
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Example Usage
+--------------
+
+    .. code-block:: python
+
+        from utils.compare_methods import CASES, common_grid, compare_all, compare_case
+        from utils.led import LST1_01G01_UV01_00
+
+        # compare all configurations of both LED types on the common evaluation grid
+        residuals, statistics = compare_all('results/')
+        print(statistics[['LED', 'configuration', 'comparison', 'RMSE / %']].round(1))
+
+        # evaluate a single configuration
+        x, y = common_grid()
+        case = CASES[LST1_01G01_UV01_00.name][0]  # the best manual arrangement
+        residual_fields, rows = compare_case(LST1_01G01_UV01_00, case, x, y)
+        delta = residual_fields['geometric model - ray tracing']
+        print(f"RMSE: {rows[0]['RMSE / %']:.1f} % of the mean irradiance")

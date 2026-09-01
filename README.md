@@ -29,7 +29,7 @@ Follow these steps to set up the project:
 4. Move into the project folder:
 
 	```bash
-	cd direct_irradiation_module_optimization
+	cd DirectIrradiationModule
 	```
 
 5. Install the required Python packages:

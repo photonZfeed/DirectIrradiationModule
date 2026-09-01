@@ -32,5 +32,6 @@ The underlying Python code, radiometry data, and raytracing simulations are avai
    module_assembly
    radiometry
    raytracing
+   installation
    tutorial
    api/index
