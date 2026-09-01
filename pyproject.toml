@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "direct-irradiation-module"
+version = "1.1.0"
+description = "Geometric radiation field model and optimization tools for the design of homogeneous direct-LED irradiation modules"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Benedikt Wiedemann", email = "benedikt.wiedemann@uni-ulm.de" },
+    { name = "Daniel Kowalczyk" },
+]
+maintainers = [
+    { name = "Benedikt Wiedemann", email = "benedikt.wiedemann@uni-ulm.de" },
+]
+# license.md covers the hardware (CERN-OHL-W) and the documents (CC-BY); no SPDX identifier is
+# asserted here because the repository does not state a separate licence for the software.
+license-files = ["license.md"]
+keywords = [
+    "photoreactor engineering",
+    "LED irradiation",
+    "radiation field modeling",
+    "irradiation homogeneity",
+    "ray tracing",
+    "high-throughput photocatalyst screening",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+# Kept identical to requirements.txt; change both together. The versions are those of the
+# repository venv (Python 3.13.3), i.e. the environment the published results were produced in.
+dependencies = [
+    "ICIW_Plots==1.0.42",
+    "matplotlib==3.10.8",
+    "numba==0.63.1",
+    "numpy==2.3.5",
+    "pandas==3.0.0",
+    "scipy==1.17.0",
+    "openpyxl==3.1.5",
+    "tqdm==4.67.3",
+]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx==9.1.0",
+    "sphinx-rtd-theme==3.1.0",
+]
+
+[project.urls]
+Repository = "https://github.com/photonZfeed/DirectIrradiationModule"
+Documentation = "https://photonzfeed.github.io/DirectIrradiationModule"
+Dataset = "https://zenodo.org/records/18610997"
+
+[tool.setuptools]
+py-modules = [
+    "geometric_model",
+    "monte_carlo_sampler",
+    "optimizer",
+    "systematic_sampler",
+]
+
+[tool.setuptools.packages.find]
+# `create_manuscript_plots.py` and `usage_example.py` are entry-point scripts meant to be run from
+# the repository root and are deliberately not installed.
+include = ["utils*", "visualization*"]
