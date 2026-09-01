@@ -1,5 +1,5 @@
-Installation
-============
+Getting Started: Installation
+==============================
 
 The geometric radiation field model, the sampling and optimization routines and the evaluation code
 for the radiometry and raytracing data form a single Python project. This page describes how to
