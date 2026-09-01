@@ -138,7 +138,7 @@ def main():
     correction_factor = calculate_correction_factor(reference_file, expected_value)
     irr, mean_irradiance, homogeneity = process_radiometry_file(radiometry_file, correction_factor)
     fig, ax = plt.subplots(figsize=(8, 6))
-    fig.suptitle(f"Radiometry Data Analysis for {radiometry_file.split('/')[-1]}", fontsize=14)
+    fig.suptitle(f"Radiometry Data Analysis for {os.path.basename(radiometry_file)}", fontsize=14)
     plot_irradiance_radiometry(ax=ax, irr=irr)
     plt.show()
     plt.close(fig)

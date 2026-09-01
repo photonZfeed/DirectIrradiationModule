@@ -475,13 +475,13 @@ if __name__ == "__main__":
     model = GeometricModel(G, led, resolution_xy=0.5)
 
     # simulate batch of configurations and save results
-    config_path = "results\\sampled_configs\\systematic_8_leds_13_cm_482931_samples.npz" # 8 leds, 13 cm height
-    # config_path = "results\\sampled_configs\\MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz" # 1-16 leds, 5-15 cm height
+    config_path = "results/sampled_configs/systematic_8_leds_13_cm_482931_samples.npz" # 8 leds, 13 cm height
+    # config_path = "results/sampled_configs/MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz" # 1-16 leds, 5-15 cm height
     
     configs, z = model.read_configurations(config_path)
     configs = configs[:10]
     results = model.simulate_batch(configs, z, batch_size=500, max_workers=None)
-    config_name = config_path.split("\\")[-1]
+    config_name = Path(config_path).name
     save_results(results, model, f"results/geometric/{led.name}/simulation_results_{config_name}")
 
     # simulate single configuration
