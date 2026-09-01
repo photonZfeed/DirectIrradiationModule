@@ -481,7 +481,8 @@ if __name__ == "__main__":
     configs, z = model.read_configurations(config_path)
     configs = configs[:10]
     results = model.simulate_batch(configs, z, batch_size=500, max_workers=None)
-    save_results(results, model, f"results/geometric/{led.name}/simulation_results_{config_path.split('\\')[-1]}")
+    config_name = config_path.split("\\")[-1]
+    save_results(results, model, f"results/geometric/{led.name}/simulation_results_{config_name}")
 
     # simulate single configuration
     # config = [(-7.5,0), (7.5,0), (-10, -10), (10, 10), (-10, 10), (10, -10), (0,12.5), (0,-12.5)]
