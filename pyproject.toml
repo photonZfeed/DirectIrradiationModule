@@ -9,12 +9,9 @@ description = "Geometric radiation field model and optimization tools for the de
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [
-    { name = "Benedikt Wiedemann", email = "benedikt.wiedemann@uni-ulm.de" },
-    { name = "Daniel Kowalczyk" },
+    { name = "Benedikt Wiedemann"},
 ]
-maintainers = [
-    { name = "Benedikt Wiedemann", email = "benedikt.wiedemann@uni-ulm.de" },
-]
+
 # license.md covers the hardware (CERN-OHL-W) and the documents (CC-BY); no SPDX identifier is
 # asserted here because the repository does not state a separate licence for the software.
 license-files = ["license.md"]
@@ -35,8 +32,6 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Chemistry",
-    "Topic :: Scientific/Engineering :: Physics",
-    "Topic :: Scientific/Engineering :: Visualization",
 ]
 # Kept identical to requirements.txt; change both together. The versions are those of the
 # repository venv (Python 3.13.3), i.e. the environment the published results were produced in.
