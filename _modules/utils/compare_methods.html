@@ -1,0 +1,517 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>utils.compare_methods &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">utils.compare_methods</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for utils.compare_methods</h1><div class="highlight"><pre>
+<span></span><span class="c1"># written by claude cowork powered by Opus 5 (Anthropic, PBC)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.interpolate</span><span class="w"> </span><span class="kn">import</span> <span class="n">RegularGridInterpolator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">binned_statistic_2d</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LST1_01F06_GRN1_00</span><span class="p">,</span> <span class="n">LST1_01G01_UV01_00</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.process_radiometry_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_correction_factor</span><span class="p">,</span> <span class="n">process_radiometry_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.process_raytracing_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">process_raytracing_file</span>
+
+<span class="c1">#: Width (x extent) of the detection plane in cm.</span>
+<span class="n">PLANE_WIDTH</span> <span class="o">=</span> <span class="mf">33.0</span>
+<span class="c1">#: Height (y extent) of the detection plane in cm.</span>
+<span class="n">PLANE_HEIGHT</span> <span class="o">=</span> <span class="mf">34.0</span>
+<span class="c1">#: Resolution of the common evaluation grid in cm.</span>
+<span class="n">RESOLUTION</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+
+<div class="viewcode-block" id="Case">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.Case">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Case</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    One configuration for which all three evaluation methods are available.</span>
+
+<span class="sd">    :param label: Human-readable name of the configuration, e.g. ``"UV1"``.</span>
+<span class="sd">    :type label: str</span>
+<span class="sd">    :param stem: File stem used in ``results/raytracing/&lt;led&gt;/`` and ``results/radiometry/&lt;led&gt;/``.</span>
+<span class="sd">    :type stem: str</span>
+<span class="sd">    :param config_json: Path of the JSON file with the LED positions and the module height. ``None``</span>
+<span class="sd">        selects ``results/sampled_configs/best_manual.json``.</span>
+<span class="sd">    :type config_json: str | None</span>
+<span class="sd">    :param n_leds: Number of LEDs of the configuration.</span>
+<span class="sd">    :type n_leds: int</span>
+<span class="sd">    :param reference_stem: Radiometric scan used to derive the photon-flux correction factor. The</span>
+<span class="sd">        convention of the manuscript is reproduced: the best manual configuration serves as its own</span>
+<span class="sd">        reference, the model-based configurations are referenced to UV3/GRN3 with reflectors.</span>
+<span class="sd">    :type reference_stem: str</span>
+<span class="sd">    :param reference_n_leds: Number of LEDs assumed for the reference measurement.</span>
+<span class="sd">    :type reference_n_leds: int</span>
+<span class="sd">    """</span>
+
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stem</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">config_json</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">n_leds</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">reference_stem</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reference_n_leds</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<span class="c1">#: Reflector-free configurations compared in the manuscript and in Supporting Information S8.</span>
+<span class="c1">#: Configurations with reflectors are excluded because the geometric model does not describe</span>
+<span class="c1">#: reflective components.</span>
+<span class="n">CASES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Case</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"LST1-01G01-UV01-00"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"best manual"</span><span class="p">,</span> <span class="s2">"best_manual_no_reflector"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">"best_manual_no_reflector"</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"UV1"</span><span class="p">,</span> <span class="s2">"UV1_no_reflector"</span><span class="p">,</span>
+             <span class="s2">"results/sampled_configs/near_optimal_configs/LST1-01G01-UV01-00/UV1.json"</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span>
+             <span class="s2">"UV3_reflector"</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"UV2"</span><span class="p">,</span> <span class="s2">"UV2_no_reflector"</span><span class="p">,</span>
+             <span class="s2">"results/sampled_configs/near_optimal_configs/LST1-01G01-UV01-00/UV2.json"</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span>
+             <span class="s2">"UV3_reflector"</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"UV3"</span><span class="p">,</span> <span class="s2">"UV3_no_reflector"</span><span class="p">,</span>
+             <span class="s2">"results/sampled_configs/near_optimal_configs/LST1-01G01-UV01-00/UV3.json"</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span>
+             <span class="s2">"UV3_reflector"</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"best manual"</span><span class="p">,</span> <span class="s2">"best_manual_no_reflector"</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="s2">"best_manual_no_reflector"</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"GRN1"</span><span class="p">,</span> <span class="s2">"GRN1_no_reflector"</span><span class="p">,</span>
+             <span class="s2">"results/sampled_configs/near_optimal_configs/LST1-01F06-GRN1-00/GRN1.json"</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span>
+             <span class="s2">"GRN3_reflector"</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"GRN2"</span><span class="p">,</span> <span class="s2">"GRN2_no_reflector"</span><span class="p">,</span>
+             <span class="s2">"results/sampled_configs/near_optimal_configs/LST1-01F06-GRN1-00/GRN2.json"</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span>
+             <span class="s2">"GRN3_reflector"</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+        <span class="n">Case</span><span class="p">(</span><span class="s2">"GRN3"</span><span class="p">,</span> <span class="s2">"GRN3_no_reflector"</span><span class="p">,</span>
+             <span class="s2">"results/sampled_configs/near_optimal_configs/LST1-01F06-GRN1-00/GRN3.json"</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span>
+             <span class="s2">"GRN3_reflector"</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">}</span>
+
+<span class="c1">#: The three pairwise comparisons, in the order used in the figures.</span>
+<span class="n">PAIRS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">"geometric model"</span><span class="p">,</span> <span class="s2">"ray tracing"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"geometric model"</span><span class="p">,</span> <span class="s2">"radiometry"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"ray tracing"</span><span class="p">,</span> <span class="s2">"radiometry"</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">LEDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"LST1-01G01-UV01-00"</span><span class="p">:</span> <span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">:</span> <span class="n">LST1_01F06_GRN1_00</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="common_grid">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.common_grid">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">common_grid</span><span class="p">(</span><span class="n">resolution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">RESOLUTION</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Create the common evaluation grid on which all three methods are compared.</span>
+
+<span class="sd">    :param resolution: Grid resolution in centimeters. Default is :data:`RESOLUTION`.</span>
+<span class="sd">    :type resolution: float, optional</span>
+
+<span class="sd">    :returns: 1D arrays of the x and y coordinates of the grid points in centimeters.</span>
+<span class="sd">    :rtype: tuple[numpy.ndarray, numpy.ndarray]</span>
+<span class="sd">    """</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">PLANE_WIDTH</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">resolution</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">PLANE_WIDTH</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">PLANE_HEIGHT</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">resolution</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">PLANE_HEIGHT</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">resolution</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="read_configuration">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.read_configuration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_configuration</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Read LED positions and module height from a configuration JSON file.</span>
+
+<span class="sd">    :param path: Path of the configuration file relative to the repository root. ``None`` selects</span>
+<span class="sd">        the best manual configuration.</span>
+<span class="sd">    :type path: str | None</span>
+<span class="sd">    :param results_path: Path of the results directory, used when ``path`` is ``None``.</span>
+<span class="sd">    :type results_path: str, optional</span>
+
+<span class="sd">    :returns: List of (x, y) LED positions in centimeters and the module height in centimeters.</span>
+<span class="sd">    :rtype: tuple[list, float]</span>
+
+<span class="sd">    :raises FileNotFoundError: If the configuration file does not exist.</span>
+<span class="sd">    """</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="n">path</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"sampled_configs/best_manual.json"</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">position</span><span class="p">)</span> <span class="k">for</span> <span class="n">position</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"(x, y) Positions in [cm]"</span><span class="p">]],</span> <span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"Height in [cm]"</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="regrid_interpolated">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.regrid_interpolated">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">regrid_interpolated</span><span class="p">(</span><span class="n">x_src</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_src</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                        <span class="n">x_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Interpolate a field bilinearly onto the destination grid.</span>
+
+<span class="sd">    :param x_src: x coordinates of the source grid in centimeters (shape ``(nx,)``).</span>
+<span class="sd">    :type x_src: numpy.ndarray</span>
+<span class="sd">    :param y_src: y coordinates of the source grid in centimeters (shape ``(ny,)``).</span>
+<span class="sd">    :type y_src: numpy.ndarray</span>
+<span class="sd">    :param values: Field values on the source grid (shape ``(ny, nx)``), in W m\\ :sup:`-2`.</span>
+<span class="sd">    :type values: numpy.ndarray</span>
+<span class="sd">    :param x_dst: x coordinates of the destination grid in centimeters.</span>
+<span class="sd">    :type x_dst: numpy.ndarray</span>
+<span class="sd">    :param y_dst: y coordinates of the destination grid in centimeters.</span>
+<span class="sd">    :type y_dst: numpy.ndarray</span>
+
+<span class="sd">    :returns: Field on the destination grid; points outside the source grid are ``numpy.nan``.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    """</span>
+    <span class="n">interpolator</span> <span class="o">=</span> <span class="n">RegularGridInterpolator</span><span class="p">((</span><span class="n">y_src</span><span class="p">,</span> <span class="n">x_src</span><span class="p">),</span> <span class="n">values</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">,</span>
+                                           <span class="n">bounds_error</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_dst</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">interpolator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">Y</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">X</span><span class="o">.</span><span class="n">ravel</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="regrid_averaged">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.regrid_averaged">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">regrid_averaged</span><span class="p">(</span><span class="n">x_src</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_src</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                    <span class="n">x_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Block-average a fine field onto a coarser destination grid.</span>
+
+<span class="sd">    All source cells falling into one destination cell are averaged. This is used for the ray</span>
+<span class="sd">    tracing fields, whose 1 mm mesh carries Monte-Carlo noise that would otherwise dominate the</span>
+<span class="sd">    residual maps, while systematic deviations are unaffected by the averaging.</span>
+
+<span class="sd">    :param x_src: x coordinates of the source grid in centimeters.</span>
+<span class="sd">    :type x_src: numpy.ndarray</span>
+<span class="sd">    :param y_src: y coordinates of the source grid in centimeters.</span>
+<span class="sd">    :type y_src: numpy.ndarray</span>
+<span class="sd">    :param values: Field values on the source grid (shape ``(ny, nx)``), in W m\\ :sup:`-2`.</span>
+<span class="sd">    :type values: numpy.ndarray</span>
+<span class="sd">    :param x_dst: x coordinates of the destination grid in centimeters.</span>
+<span class="sd">    :type x_dst: numpy.ndarray</span>
+<span class="sd">    :param y_dst: y coordinates of the destination grid in centimeters.</span>
+<span class="sd">    :type y_dst: numpy.ndarray</span>
+
+<span class="sd">    :returns: Averaged field on the destination grid.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    """</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x_src</span><span class="p">,</span> <span class="n">y_src</span><span class="p">)</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">x_dst</span><span class="p">)))</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">y_dst</span><span class="p">)))</span>
+    <span class="n">x_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_dst</span> <span class="o">-</span> <span class="n">dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">x_dst</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">y_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_dst</span> <span class="o">-</span> <span class="n">dy</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">binned_statistic_2d</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">X</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">values</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">statistic</span><span class="o">=</span><span class="s2">"mean"</span><span class="p">,</span>
+                               <span class="n">bins</span><span class="o">=</span><span class="p">[</span><span class="n">y_edges</span><span class="p">,</span> <span class="n">x_edges</span><span class="p">])</span><span class="o">.</span><span class="n">statistic</span></div>
+
+
+
+<div class="viewcode-block" id="field_geometric">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.field_geometric">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">field_geometric</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">x_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                    <span class="n">y_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Evaluate the geometric radiation field model on the common grid.</span>
+
+<span class="sd">    :param led: LED object used for the simulation.</span>
+<span class="sd">    :type led: :class:`utils.led.LED`</span>
+<span class="sd">    :param positions: LED positions in centimeters.</span>
+<span class="sd">    :type positions: list</span>
+<span class="sd">    :param height: Distance between the LEDs and the detection plane in centimeters.</span>
+<span class="sd">    :type height: float</span>
+<span class="sd">    :param x_dst: x coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type x_dst: numpy.ndarray</span>
+<span class="sd">    :param y_dst: y coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type y_dst: numpy.ndarray</span>
+
+<span class="sd">    :returns: Irradiance field in W m\\ :sup:`-2` on the common grid, mirrored on the y axis so</span>
+<span class="sd">        that it is directly comparable with the ray tracing and radiometry fields.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The geometric model describes the detection plane as seen from the opposite side compared</span>
+<span class="sd">        with the ray tracing export and the radiometric scan, so the simulated field is mirrored on</span>
+<span class="sd">        the y axis before it is returned. The same convention is applied in</span>
+<span class="sd">        :func:`visualization.irradiance_plots_SI.create_irradiance_plots_SI`. Mean irradiance and</span>
+<span class="sd">        homogeneity are invariant under this operation; only the point-by-point residuals depend</span>
+<span class="sd">        on it.</span>
+<span class="sd">    """</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="n">PLANE_WIDTH</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">PLANE_HEIGHT</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="n">RESOLUTION</span><span class="p">)</span>
+    <span class="n">irradiance</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="n">height</span><span class="p">)</span>
+    <span class="c1"># mirror the model field on the y axis for comparability with ray tracing and radiometry</span>
+    <span class="n">irradiance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">irradiance</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">regrid_interpolated</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">model</span><span class="o">.</span><span class="n">Y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">irradiance</span><span class="p">,</span> <span class="n">x_dst</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="field_raytracing">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.field_raytracing">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">field_raytracing</span><span class="p">(</span><span class="n">led_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stem</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">x_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                     <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Load a ray tracing result and block-average it onto the common grid.</span>
+
+<span class="sd">    :param led_name: Name of the LED, used to build the data path.</span>
+<span class="sd">    :type led_name: str</span>
+<span class="sd">    :param stem: File stem of the ray tracing export without extension.</span>
+<span class="sd">    :type stem: str</span>
+<span class="sd">    :param x_dst: x coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type x_dst: numpy.ndarray</span>
+<span class="sd">    :param y_dst: y coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type y_dst: numpy.ndarray</span>
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+
+<span class="sd">    :returns: Irradiance field in W m\\ :sup:`-2` on the common grid.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+
+<span class="sd">    :raises FileNotFoundError: If the ray tracing file does not exist.</span>
+<span class="sd">    """</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">process_raytracing_file</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"raytracing"</span><span class="p">,</span> <span class="n">led_name</span><span class="p">),</span>
+                                   <span class="n">filename</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.txt"</span><span class="p">)</span>
+    <span class="n">pivot</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="s2">"y"</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s2">"x"</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s2">"Irradiance"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">regrid_averaged</span><span class="p">(</span><span class="n">pivot</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">pivot</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+                           <span class="n">pivot</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">x_dst</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="field_radiometry">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.field_radiometry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">field_radiometry</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">case</span><span class="p">:</span> <span class="n">Case</span><span class="p">,</span> <span class="n">x_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                     <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Load a radiometric scan, apply the photon-flux correction and interpolate onto the common grid.</span>
+
+<span class="sd">    :param led: LED object of the measurement.</span>
+<span class="sd">    :type led: :class:`utils.led.LED`</span>
+<span class="sd">    :param case: Configuration to be processed.</span>
+<span class="sd">    :type case: :class:`Case`</span>
+<span class="sd">    :param x_dst: x coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type x_dst: numpy.ndarray</span>
+<span class="sd">    :param y_dst: y coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type y_dst: numpy.ndarray</span>
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+
+<span class="sd">    :returns: Irradiance field in W m\\ :sup:`-2` on the common grid.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+
+<span class="sd">    :raises FileNotFoundError: If the radiometry file does not exist.</span>
+<span class="sd">    """</span>
+    <span class="n">folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"radiometry"</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">correction_factor</span> <span class="o">=</span> <span class="n">calculate_correction_factor</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">case</span><span class="o">.</span><span class="n">reference_stem</span><span class="si">}</span><span class="s2">.csv"</span><span class="p">),</span> <span class="n">case</span><span class="o">.</span><span class="n">reference_n_leds</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span><span class="p">)</span>
+    <span class="n">frame</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">process_radiometry_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">case</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s2">.csv"</span><span class="p">),</span>
+                                          <span class="n">correction_factor</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="n">PLANE_HEIGHT</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">PLANE_WIDTH</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">regrid_interpolated</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">frame</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+                               <span class="n">frame</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="n">x_dst</span><span class="p">,</span> <span class="n">y_dst</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="residual_statistics">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.residual_statistics">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">residual_statistics</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Summarize a residual field by bias, root mean square error and maximum deviation.</span>
+
+<span class="sd">    :param delta: Residual field in W m\\ :sup:`-2`.</span>
+<span class="sd">    :type delta: numpy.ndarray</span>
+<span class="sd">    :param reference: Field of the second method of the pair, used for the relative values.</span>
+<span class="sd">    :type reference: numpy.ndarray</span>
+
+<span class="sd">    :returns: Dictionary with the absolute values in W m\\ :sup:`-2` and the relative values in</span>
+<span class="sd">        percent of the mean irradiance of the reference.</span>
+<span class="sd">    :rtype: dict[str, float]</span>
+<span class="sd">    """</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
+    <span class="n">delta</span><span class="p">,</span> <span class="n">reference</span> <span class="o">=</span> <span class="n">delta</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">reference</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+    <span class="n">reference_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+    <span class="n">bias</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">delta</span><span class="p">))</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">delta</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="n">max_abs</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"bias / W m-2"</span><span class="p">:</span> <span class="n">bias</span><span class="p">,</span>
+        <span class="s2">"RMSE / W m-2"</span><span class="p">:</span> <span class="n">rmse</span><span class="p">,</span>
+        <span class="s2">"max |dE| / W m-2"</span><span class="p">:</span> <span class="n">max_abs</span><span class="p">,</span>
+        <span class="s2">"bias / %"</span><span class="p">:</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">bias</span> <span class="o">/</span> <span class="n">reference_mean</span><span class="p">,</span>
+        <span class="s2">"RMSE / %"</span><span class="p">:</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">rmse</span> <span class="o">/</span> <span class="n">reference_mean</span><span class="p">,</span>
+        <span class="s2">"max |dE| / %"</span><span class="p">:</span> <span class="mf">100.0</span> <span class="o">*</span> <span class="n">max_abs</span> <span class="o">/</span> <span class="n">reference_mean</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="compare_case">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.compare_case">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_case</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">case</span><span class="p">:</span> <span class="n">Case</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                 <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Evaluate all three methods for one configuration and compute the pairwise residuals.</span>
+
+<span class="sd">    :param led: LED object of the configuration.</span>
+<span class="sd">    :type led: :class:`utils.led.LED`</span>
+<span class="sd">    :param case: Configuration to be processed.</span>
+<span class="sd">    :type case: :class:`Case`</span>
+<span class="sd">    :param x: x coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type x: numpy.ndarray</span>
+<span class="sd">    :param y: y coordinates of the common grid in centimeters.</span>
+<span class="sd">    :type y: numpy.ndarray</span>
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+
+<span class="sd">    :returns: Dictionary mapping the name of each comparison to its residual field, and a list of</span>
+<span class="sd">        one summary dictionary per comparison.</span>
+<span class="sd">    :rtype: tuple[dict[str, numpy.ndarray], list[dict]]</span>
+<span class="sd">    """</span>
+    <span class="n">positions</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">read_configuration</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">config_json</span><span class="p">,</span> <span class="n">results_path</span><span class="p">)</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"geometric model"</span><span class="p">:</span> <span class="n">field_geometric</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
+        <span class="s2">"ray tracing"</span><span class="p">:</span> <span class="n">field_raytracing</span><span class="p">(</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">case</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">results_path</span><span class="p">),</span>
+        <span class="s2">"radiometry"</span><span class="p">:</span> <span class="n">field_radiometry</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">case</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">results_path</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="n">residuals</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">first</span><span class="p">,</span> <span class="n">second</span> <span class="ow">in</span> <span class="n">PAIRS</span><span class="p">:</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="n">first</span><span class="p">]</span> <span class="o">-</span> <span class="n">fields</span><span class="p">[</span><span class="n">second</span><span class="p">]</span>
+        <span class="n">residuals</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">second</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+            <span class="s2">"LED"</span><span class="p">:</span> <span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">"configuration"</span><span class="p">:</span> <span class="n">case</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="s2">"height / cm"</span><span class="p">:</span> <span class="n">height</span><span class="p">,</span>
+            <span class="s2">"comparison"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">first</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">second</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"E_mean(A) / W m-2"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">first</span><span class="p">])),</span>
+            <span class="s2">"E_mean(B) / W m-2"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">second</span><span class="p">])),</span>
+            <span class="s2">"H(A) / 1"</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">first</span><span class="p">]))</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">first</span><span class="p">])),</span>
+            <span class="s2">"H(B) / 1"</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">second</span><span class="p">]))</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">second</span><span class="p">])),</span>
+            <span class="o">**</span><span class="n">residual_statistics</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">fields</span><span class="p">[</span><span class="n">second</span><span class="p">]),</span>
+        <span class="p">})</span>
+    <span class="k">return</span> <span class="n">residuals</span><span class="p">,</span> <span class="n">rows</span></div>
+
+
+
+<div class="viewcode-block" id="compare_all">
+<a class="viewcode-back" href="../../api/utils/utils.html#utils.compare_methods.compare_all">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compare_all</span><span class="p">(</span><span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compare all configurations of both LED types and collect residual fields and statistics.</span>
+
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+
+<span class="sd">    :returns: Dictionary ``{led_name: {configuration_label: residual fields}}`` and the table of</span>
+<span class="sd">        residual statistics.</span>
+<span class="sd">    :rtype: tuple[dict, pandas.DataFrame]</span>
+<span class="sd">    """</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">common_grid</span><span class="p">()</span>
+    <span class="n">all_residuals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">statistics</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">led_name</span><span class="p">,</span> <span class="n">cases</span> <span class="ow">in</span> <span class="n">CASES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">led</span> <span class="o">=</span> <span class="n">LEDS</span><span class="p">[</span><span class="n">led_name</span><span class="p">]</span>
+        <span class="n">all_residuals</span><span class="p">[</span><span class="n">led_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span>
+            <span class="n">residuals</span><span class="p">,</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">compare_case</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">case</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">results_path</span><span class="p">)</span>
+            <span class="n">all_residuals</span><span class="p">[</span><span class="n">led_name</span><span class="p">][</span><span class="n">case</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">residuals</span>
+            <span class="n">statistics</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">all_residuals</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">statistics</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

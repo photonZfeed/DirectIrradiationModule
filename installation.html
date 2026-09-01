@@ -1,0 +1,205 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting Started: Installation &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Getting Started: Full Optimization Workflow" href="tutorial.html" />
+    <link rel="prev" title="Ray Tracing Simulations" href="raytracing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started: Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#obtaining-the-code">Obtaining the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#setting-up-a-virtual-environment">Setting up a virtual environment</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#linux-and-macos">Linux and macOS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-the-dependencies">Installing the dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installing-the-project-as-a-package">Installing the project as a package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-the-documentation">Building the documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#checking-the-installation">Checking the installation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Getting Started: Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started-installation">
+<h1>Getting Started: Installation<a class="headerlink" href="#getting-started-installation" title="Link to this heading"></a></h1>
+<p>The geometric radiation field model, the sampling and optimization routines and the evaluation code
+for the radiometry and raytracing data form a single Python project. This page describes how to
+obtain it and how to set up a working environment.</p>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Python <strong>3.12 or newer</strong> is required. The published results were produced with <strong>Python 3.13.3</strong>.</p>
+<p>All dependencies are pinned, in <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> and in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>, to the versions of
+that reference environment, so a fresh installation reproduces the published figures and statistics.
+Both files are kept identical; <code class="docutils literal notranslate"><span class="pre">doc/requirements.txt</span></code> holds the two additional packages needed to
+build this documentation.</p>
+</section>
+<section id="obtaining-the-code">
+<h2>Obtaining the code<a class="headerlink" href="#obtaining-the-code" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/photonZfeed/DirectIrradiationModule
+<span class="nb">cd</span><span class="w"> </span>DirectIrradiationModule
+</pre></div>
+</div>
+</section>
+<section id="setting-up-a-virtual-environment">
+<h2>Setting up a virtual environment<a class="headerlink" href="#setting-up-a-virtual-environment" title="Link to this heading"></a></h2>
+<p>Working in a virtual environment keeps the pinned versions separate from the rest of the system.</p>
+<section id="linux-and-macos">
+<h3>Linux and macOS<a class="headerlink" href="#linux-and-macos" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<span class="nb">source</span><span class="w"> </span>venv/bin/activate
+</pre></div>
+</div>
+</section>
+<section id="windows">
+<h3>Windows<a class="headerlink" href="#windows" title="Link to this heading"></a></h3>
+<div class="highlight-doscon notranslate"><div class="highlight"><pre><span></span><span class="go">py -m venv venv</span>
+<span class="go">venv\Scripts\activate</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="installing-the-dependencies">
+<h2>Installing the dependencies<a class="headerlink" href="#installing-the-dependencies" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p>This is the recommended route for reproducing the results of the publication: the scripts
+<code class="docutils literal notranslate"><span class="pre">usage_example.py</span></code> and <code class="docutils literal notranslate"><span class="pre">create_manuscript_plots.py</span></code> resolve the <code class="docutils literal notranslate"><span class="pre">results/</span></code> and <code class="docutils literal notranslate"><span class="pre">figures/</span></code>
+directories relative to the current working directory, so they are run from the root of the clone.</p>
+</section>
+<section id="installing-the-project-as-a-package">
+<h2>Installing the project as a package<a class="headerlink" href="#installing-the-project-as-a-package" title="Link to this heading"></a></h2>
+<p>If the modules are to be imported from outside the repository, the project can also be installed
+from its <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>.<span class="w">      </span><span class="c1"># regular installation</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w">   </span><span class="c1"># editable installation for development</span>
+</pre></div>
+</div>
+<p>This installs the top-level modules <a class="reference internal" href="api/geometric_model.html#module-geometric_model" title="geometric_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">geometric_model</span></code></a>, <a class="reference internal" href="api/systematic_sampler.html#module-systematic_sampler" title="systematic_sampler"><code class="xref py py-mod docutils literal notranslate"><span class="pre">systematic_sampler</span></code></a>,
+<a class="reference internal" href="api/monte_carlo_sampler.html#module-monte_carlo_sampler" title="monte_carlo_sampler"><code class="xref py py-mod docutils literal notranslate"><span class="pre">monte_carlo_sampler</span></code></a> and <a class="reference internal" href="api/optimizer.html#module-optimizer" title="optimizer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">optimizer</span></code></a> together with the <code class="docutils literal notranslate"><span class="pre">utils</span></code> and
+<code class="docutils literal notranslate"><span class="pre">visualization</span></code> packages. The two runner scripts above are deliberately <strong>not</strong> installed, and
+the measurement and simulation data under <code class="docutils literal notranslate"><span class="pre">results/</span></code> are not part of the distribution, so
+reproducing the publication figures still requires a clone.</p>
+</section>
+<section id="building-the-documentation">
+<h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>doc/requirements.txt
+<span class="nb">cd</span><span class="w"> </span>doc
+make<span class="w"> </span>html
+</pre></div>
+</div>
+<p>On Windows use <code class="docutils literal notranslate"><span class="pre">make.bat</span> <span class="pre">html</span></code> instead. The rendered pages are written to <code class="docutils literal notranslate"><span class="pre">doc/build/html</span></code>.
+The same build runs automatically on every push to <code class="docutils literal notranslate"><span class="pre">main</span></code> and is published to GitHub Pages.</p>
+</section>
+<section id="checking-the-installation">
+<h2>Checking the installation<a class="headerlink" href="#checking-the-installation" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>usage_example.py
+</pre></div>
+</div>
+<p>The script walks through the full workflow — grid and LED definition, candidate generation,
+simulation with the geometric model, optimization and the evaluation of radiometry and raytracing
+data — and is described step by step in <a class="reference internal" href="tutorial.html"><span class="doc">Getting Started: Full Optimization Workflow</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="raytracing.html" class="btn btn-neutral float-left" title="Ray Tracing Simulations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial.html" class="btn btn-neutral float-right" title="Getting Started: Full Optimization Workflow" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
