@@ -1,0 +1,19 @@
+# Line endings: normalise everything to LF in the repository.
+# The working tree is checked out with LF as well, so a Windows clone and a
+# Linux/WSL clone produce identical blobs and `git status` stays clean.
+* text=auto eol=lf
+
+# Assets that must never be line-ending converted or diffed as text.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.npz  binary
+*.zip  binary
+*.docx binary
+*.xlsx binary
+*.ttf  binary
+*.woff binary
+*.woff2 binary
