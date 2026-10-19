@@ -1,9 +1,11 @@
 """Reviewer 3, comment 3: convergence of the Monte-Carlo Pareto optimisation.
 
-Uses the runs produced by ``r3_mc_runs.py`` (seeds 1-5, 10 million distinct configurations each,
-drawn with the repository sampler) and the published 5 million-sample set (seed 42). For every
-seed and every sample size n in {0.5, 1, 2.5, 5, 10} million (the first n distinct configurations
-of a run, i.e. nested samples), it reports for both LED types at E_bound = 150 W m-2:
+Uses the runs produced by ``r3_mc_runs.py`` (default seeds 42, 1, 2 and 3; 10 million distinct
+configurations each, drawn with the repository's ``MonteCarloSampler``). The first 5 million
+distinct configurations of seed 42 are the published sample of the manuscript
+(``check_seed42_published.py``). For every seed and every sample size n in {0.5, 1, 2.5, 5, 10}
+million (the first n distinct configurations of a run, i.e. nested samples), it reports for both
+LED types at E_bound = 150 W m-2:
 
 * the configuration that maximises H * E_mean / E_bound and whether it is the published UV3/GRN3,
 * the three configurations that the manuscript's procedure exports for ray tracing,
@@ -11,8 +13,12 @@ of a run, i.e. nested samples), it reports for both LED types at E_bound = 150 W
 * the additive epsilon indicator against the reference front (union of all runs): the smallest
   shift by which the run's front weakly dominates every reference point.
 
-A best-improvement local search started from the 20 best configurations of every run estimates
-how far the sampled optimum is from a local optimum of the full (unsampled) design space.
+The configuration with the highest H * E_mean / E_bound of every run and sample size is written
+with its LED positions to ``r3_3_best_configurations.csv`` (input of Figure S19).
+
+Optional (``--local-search``, not part of the publication): a best-improvement local search
+started from the 20 best configurations of every run estimates how far the sampled optimum is
+from a local optimum of the full (unsampled) design space.
 """
 from __future__ import annotations
 
@@ -22,12 +28,17 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from r2_common import DEFAULT_OUT, FieldBank, common_args, pareto_mask_fast, hypervolume_2d, position_index, repo_path
+from r2_common import DEFAULT_OUT, FieldBank, common_args, hypervolume_2d, index_to_xy, pareto_mask_fast, position_index, repo_path
 
 SIZES = [500_000, 1_000_000, 2_500_000, 5_000_000, 10_000_000]
 BOUND = 150.0
 LED_NAME = {"UV": "LST1-01G01-UV01-00", "GRN": "LST1-01F06-GRN1-00"}
 CENTER = 84
+
+
+def run_list(res: Path, seeds: list[int]) -> list[tuple[str, int, Path, list[int]]]:
+    """(label, seed, configuration file, nested sample sizes) of every run, in the order of ``seeds``."""
+    return [(f"seed {s}", s, res / f"mc_seed{s}_10000000_configs.npz", SIZES) for s in seeds]
 
 
 def published_index_key(repo: Path, key: str, k: int):
@@ -110,26 +121,25 @@ def local_search(bank: FieldBank, start_pos, start_z, max_iter=50):
 
 def main() -> None:
     ap = common_args(__doc__)
-    ap.add_argument("--results", default=str(DEFAULT_OUT))
-    ap.add_argument("--seeds", default="1,2,3,4,5")
+    ap.add_argument("--results", default=str(DEFAULT_OUT), help="folder with the sampled configurations and metrics")
+    ap.add_argument("--seeds", default="42,1,2,3", help="comma-separated seeds (42: the published sample)")
+    ap.add_argument("--local-search", action="store_true", help="also run the local search (not reported)")
     args = ap.parse_args()
     repo = repo_path(args.repo)
     res = Path(args.results)
     seeds = [int(s) for s in args.seeds.split(",")]
-    runs = [("published (seed 42)", res / "mc_published_seed42_5000000_configs.npz", [5_000_000])]
-    runs += [(f"seed {s}", res / f"mc_seed{s}_10000000_configs.npz", SIZES) for s in seeds]
+    runs = run_list(res, seeds)
     Path(args.out).mkdir(parents=True, exist_ok=True)
-    rows, fronts = [], {}
+    rows, fronts, best_rows = [], {}, []
     for key in ("UV", "GRN"):
         pub = {f"{k}": published_index_key(repo, key, k) for k in (1, 2, 3)}
         pub_inv = {v: f"{'UV' if key == 'UV' else 'GRN'}{k}" for k, v in pub.items()}
         union_e, union_h, union_key = [], [], []
         per_run = []
-        for label, cpath, sizes in runs:
+        for label, seed, cpath, sizes in runs:
             mpath = Path(str(cpath).replace("_configs.npz", f"_metrics_{key}.npz"))
             if not (cpath.exists() and mpath.exists()):
-                print(f"missing {cpath.name} or {mpath.name} - skipped")
-                continue
+                raise FileNotFoundError(f"missing {cpath} or {mpath}")
             c = np.load(cpath)
             m = np.load(mpath)
             pos, z = c["pos"], c["z"].astype(int)
@@ -143,7 +153,14 @@ def main() -> None:
                 union_e.append(e_nd); union_h.append(h_nd)
                 union_key += [cfg_key(pos[i], z[i]) for i in np.flatnonzero(nd)]
                 bk = cfg_key(pos[best], z[best])
-                rows.append(dict(led=key, run=label, n=n, best_N=len(bk[0]), best_z=bk[1],
+                bx, by = index_to_xy(np.asarray(bk[0]))
+                best_rows.append(dict(led=key, run=label, seed=seed, n=n, N=len(bk[0]), z_cm=bk[1],
+                                      E_mean=float(mean[best]), H=float(1 - std[best] / mean[best]),
+                                      max_irradiance=float(mx[best]), score=float(ratio[best] * Hf[best]),
+                                      is_published=pub_inv.get(bk, ""), sample_index=int(best),
+                                      position_indices=" ".join(str(int(i)) for i in bk[0]),
+                                      positions_cm="; ".join(f"{x:g} {y:g}" for x, y in zip(bx, by))))
+                rows.append(dict(led=key, run=label, seed=seed, n=n, best_N=len(bk[0]), best_z=bk[1],
                                  best_E_mean=float(mean[best]), best_H=float(1 - std[best] / mean[best]),
                                  best_score=float(ratio[best] * Hf[best]), best_is=pub_inv.get(bk, "other"),
                                  exported=" / ".join(pub_inv.get(cfg_key(pos[i], z[i]),
@@ -158,10 +175,12 @@ def main() -> None:
         for r, (label, n, e_nd, h_nd) in zip([r for r in rows if r["led"] == key], per_run):
             r["eps_vs_reference_front"] = eps_indicator(e_nd, h_nd, ref_e, ref_h)
             r["hv_shortfall_pct"] = 100 * (1 - r["hypervolume"] / hv_ref)
+        if not args.local_search:
+            continue
         # local search from the 20 best product scores among all runs (largest run of every seed)
         bank = FieldBank(repo, key)
         starts = {}
-        for label, cpath, sizes in runs:
+        for label, seed, cpath, sizes in runs:
             mpath = Path(str(cpath).replace("_configs.npz", f"_metrics_{key}.npz"))
             if not (cpath.exists() and mpath.exists()):
                 continue
@@ -181,8 +200,8 @@ def main() -> None:
         print(pd.DataFrame(ls).to_string(index=False, float_format=lambda v: f"{v:.4f}"))
     df = pd.DataFrame(rows)
     out = Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
     df.to_csv(out / "r3_3_convergence.csv", index=False, float_format="%.6g")
+    pd.DataFrame(best_rows).to_csv(out / "r3_3_best_configurations.csv", index=False, float_format="%.6g")
     np.savez_compressed(out / "r3_3_reference_fronts.npz", **{f"{k}_E_ratio": v[0] for k, v in fronts.items()},
                         **{f"{k}_H": v[1] for k, v in fronts.items()})
     with pd.option_context("display.width", 300, "display.max_columns", 30, "display.max_rows", 200):
