@@ -45,10 +45,12 @@ def config_keys(pos: np.ndarray, z: np.ndarray) -> np.ndarray:
 def sample(repo: Path, out: Path, seed: int, n: int, chunk: int = 500_000) -> Path:
     """Draw configurations until ``n`` distinct ones exist; keep them in order of first draw.
 
-    The published 5 million-sample set contains no duplicate (configuration, height) pair and
-    holds the complete design space for 1-5 LEDs, so duplicates are removed here as well. The
-    first k entries of the result are therefore exactly the sample that "draw until k distinct
-    configurations" would give, which makes the prefixes usable as smaller sample sizes.
+    The draws and the deduplication are those of ``MonteCarloSampler.generate_unique_samples``
+    (same random stream, first occurrence kept); drawing in chunks does not change the stream.
+    For seed 42 the first 5 million entries are the published sample of the manuscript, row by
+    row (``check_seed42_published.py``). The first k entries of the result are exactly the sample
+    that "draw until k distinct configurations" would give, which makes the prefixes usable as
+    smaller sample sizes.
     """
     dst = out / f"mc_seed{seed}_{n}_configs.npz"
     if dst.exists():
