@@ -1,7 +1,7 @@
 Monte-Carlo Sampler
 ========================
 
-.. automodule:: monte_carlo_sampler
+.. automodule:: utils.monte_carlo_sampler
    :members:
    :undoc-members:
    :show-inheritance:
@@ -12,7 +12,7 @@ Example Usage
    .. code-block:: python
 
       from utils.grid import Grid
-      from monte_carlo_sampler import MonteCarloSampler, save_configurations
+      from utils.monte_carlo_sampler import MonteCarloSampler, save_configurations
 
       G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
 

@@ -4,7 +4,7 @@ from ICIW_Plots import make_rect_subplots, cm2inch
 import os
 from analysis.process_radiometry_data import calculate_correction_factor, process_all_cand_files
 from analysis.process_raytracing_data import process_raytracing_file, calc_metrics
-from systematic_sampler import Sampler
+from utils.systematic_sampler import Sampler
 from utils.grid import Grid
 from geometric_model import GeometricModel
 from utils.led import LST1_01F06_GRN1_00, LST1_01G01_UV01_00

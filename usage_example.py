@@ -20,10 +20,10 @@ For a narrative walkthrough of each step with explanatory prose, see the tutoria
 in the documentation: ``doc/source/tutorial.rst``.
 """
 
-from systematic_sampler import Sampler
-from systematic_sampler import save_configurations as save_sys_configurations
-from monte_carlo_sampler import MonteCarloSampler
-from monte_carlo_sampler import save_configurations as save_mc_configurations
+from utils.systematic_sampler import Sampler
+from utils.systematic_sampler import save_configurations as save_sys_configurations
+from utils.monte_carlo_sampler import MonteCarloSampler
+from utils.monte_carlo_sampler import save_configurations as save_mc_configurations
 from geometric_model import GeometricModel, save_results
 from optimizer import Optimizer, save_optimization_results
 

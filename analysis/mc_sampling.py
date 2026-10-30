@@ -2,7 +2,7 @@
 Monte-Carlo samples of the convergence study (Supporting Information S12) and their evaluation.
 
 The study draws 10 million distinct configurations (1-16 LEDs, heights 5-15 cm in 1 cm steps) for
-each of the seeds 42, 1, 2 and 3 with the repository's :class:`monte_carlo_sampler.MonteCarloSampler`
+each of the seeds 42, 1, 2 and 3 with the repository's :class:`utils.monte_carlo_sampler.MonteCarloSampler`
 (uniform LED-count sampling, sequential mode, duplicates removed in the order of the first draw, as
 in :meth:`MonteCarloSampler.generate_unique_samples`). With seed 42 the first 5 million
 configurations are the published sample of the manuscript, row by row
@@ -37,7 +37,7 @@ import time
 import numpy as np
 
 from analysis.fast_evaluation import GRID_KW, HALF, LEDS, FieldBank
-from monte_carlo_sampler import MonteCarloSampler
+from utils.monte_carlo_sampler import MonteCarloSampler
 from utils.grid import Grid
 
 #: Folder of the samples and metrics of the convergence study.

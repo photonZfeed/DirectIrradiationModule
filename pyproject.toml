@@ -63,9 +63,7 @@ Dataset = "https://zenodo.org/records/18610997"
 [tool.setuptools]
 py-modules = [
     "geometric_model",
-    "monte_carlo_sampler",
     "optimizer",
-    "systematic_sampler",
 ]
 
 [tool.setuptools.packages.find]

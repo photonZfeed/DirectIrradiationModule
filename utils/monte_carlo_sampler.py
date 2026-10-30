@@ -8,7 +8,7 @@ import time
 from typing import List, Tuple, Optional, Dict, Any
 from collections import defaultdict
 from utils.grid import Grid
-from systematic_sampler import Sampler 
+from utils.systematic_sampler import Sampler 
 from numba import njit
 
 class MonteCarloSampler():

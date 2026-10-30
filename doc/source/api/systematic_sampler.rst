@@ -1,7 +1,7 @@
 Systematic Sampler
 ========================
 
-.. automodule:: systematic_sampler
+.. automodule:: utils.systematic_sampler
    :members:
    :undoc-members:
    :show-inheritance:
@@ -13,7 +13,7 @@ Example Usage
 
       from utils.grid import Grid
       from utils.led import LED
-      from systematic_sampler import Sampler, save_configurations
+      from utils.systematic_sampler import Sampler, save_configurations
 
       # initialize the grid and LED
       G = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)

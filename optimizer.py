@@ -1,7 +1,7 @@
 from utils.grid import Grid
 from utils.led import LST1_01G01_UV01_00, LST1_01F06_GRN1_00
-from systematic_sampler import Sampler
-from monte_carlo_sampler import MonteCarloSampler
+from utils.systematic_sampler import Sampler
+from utils.monte_carlo_sampler import MonteCarloSampler
 from geometric_model import GeometricModel
 import numpy as np
 import matplotlib.pyplot as plt

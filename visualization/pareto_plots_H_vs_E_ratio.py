@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from geometric_model import GeometricModel
-from systematic_sampler import Sampler
+from utils.systematic_sampler import Sampler
 from utils.grid import Grid
 from utils.led import LST1_01G01_UV01_00, LST1_01F06_GRN1_00
 from analysis.process_radiometry_indirect import process_radiometry_data

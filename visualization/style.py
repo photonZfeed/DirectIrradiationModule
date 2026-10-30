@@ -30,7 +30,7 @@ def register_iciw_styles() -> None:
 
     ICIW-Plots 1.0.42 installs its styles with a Windows path separator, so on Linux and macOS
     ``plt.style.use("ICIWstyle")`` fails. :mod:`optimizer` (on import) and
-    :meth:`systematic_sampler.Sampler.plot_configuration` use the style by name; registering the
+    :meth:`utils.systematic_sampler.Sampler.plot_configuration` use the style by name; registering the
     styles in matplotlib's style library for the running process makes them work everywhere. Nothing
     is written to the matplotlib configuration directory.
     """

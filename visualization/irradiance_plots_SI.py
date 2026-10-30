@@ -19,7 +19,7 @@ from analysis.process_radiometry_data import process_radiometry_file, calculate_
 from utils.led import LST1_01F06_GRN1_00, LST1_01G01_UV01_00
 from ICIW_Plots import cm2inch, make_square_subplots
 from geometric_model import GeometricModel
-from systematic_sampler import Sampler
+from utils.systematic_sampler import Sampler
 from utils.grid import Grid
 from visualization.style import finish
 
