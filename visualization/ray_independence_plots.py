@@ -16,12 +16,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ICIW_Plots import cm2inch, make_square_subplots
 import numpy as np
+from visualization.style import finish, use_publication_style
 
-def create_ray_independence_plots_SI():
+def create_ray_independence_plots_SI(show: bool = True):
     """
     Generates and saves a set of 2x2 subplots visualizing the dependence of raytracing simulation results on the number of rays used. The function compares the standard deviation of irradiance and computation time for two wavelengths (365 nm and 530 nm), each with and without reflectors, as a function of the number of rays. Data is read from an Excel file, and the resulting figure is saved as an SVG file.
 
     The function is intended to help assess the statistical independence and convergence of raytracing results with increasing ray count, and to visualize the computational cost associated with higher ray numbers.
+
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
 
     :raises FileNotFoundError: If the Excel data file is not found at the specified path.
     :raises KeyError: If the expected sheet or data ranges are missing in the Excel file.
@@ -46,8 +50,7 @@ def create_ray_independence_plots_SI():
     """
     
     # Set plot style
-    plt.style.use("ICIWstyle")
-    plt.style.use("visualization/publication_style.mplstyle")
+    use_publication_style()
 
     # read results/raytracing/ray_indepence_test.xlsx
     path = "results/raytracing/ray_independence_test.xlsx"
@@ -98,6 +101,6 @@ def create_ray_independence_plots_SI():
 
     fig.legend(legend_handles, legend_labels, loc='upper center', ncol=2, bbox_to_anchor=(0.5, 1.))
     plt.savefig('figures/ray_independence_plots.svg', dpi=300, bbox_inches='tight')
-    plt.show()
+    finish(fig, show)
 
 

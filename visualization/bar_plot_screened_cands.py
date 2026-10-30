@@ -2,16 +2,17 @@ import matplotlib.pyplot as plt
 from math import nan
 from ICIW_Plots import make_rect_subplots, cm2inch
 import os
-from utils.process_radiometry_data import calculate_correction_factor, process_all_cand_files
-from utils.process_raytracing_data import process_raytracing_file, calc_metrics
+from analysis.process_radiometry_data import calculate_correction_factor, process_all_cand_files
+from analysis.process_raytracing_data import process_raytracing_file, calc_metrics
 from systematic_sampler import Sampler
 from utils.grid import Grid
 from geometric_model import GeometricModel
 from utils.led import LST1_01F06_GRN1_00, LST1_01G01_UV01_00
+from visualization.style import finish, use_publication_style
 import numpy as np
 
 
-def create_bar_plots(keys: list, geometric: dict, raytracing: dict, radiometric: dict, export_path: str = "", filename: str = "bar_plots_selected_configurations.svg", export_type: str = "svg"):
+def create_bar_plots(keys: list, geometric: dict, raytracing: dict, radiometric: dict, export_path: str = "", filename: str = "bar_plots_selected_configurations.svg", export_type: str = "svg", show: bool | None = None):
     """
     Generate comparative grouped bar plots for mean irradiance and homogeneity across multiple evaluation methods.
 
@@ -39,6 +40,8 @@ def create_bar_plots(keys: list, geometric: dict, raytracing: dict, radiometric:
         Name of the output file (default: 'bar_plots_selected_configurations.svg'). Only used if ``export_path`` is provided.
     export_type : str, optional
         File format for export (default: 'svg'). Passed to ``matplotlib.pyplot.savefig``.
+    show : bool or None, optional
+        Display the plot (True) or close it (False). Default None: display it only if ``export_path`` is empty.
 
     Returns
     -------
@@ -142,10 +145,9 @@ def create_bar_plots(keys: list, geometric: dict, raytracing: dict, radiometric:
 
     if export_path:
         plt.savefig(os.path.join(export_path, filename+"."+export_type), format=export_type, bbox_inches='tight')
-    else:
-        plt.show()
+    finish(plt.gcf(), (not export_path) if show is None else show)
 
-def create_bar_plot_screened_cands():
+def create_bar_plot_screened_cands(figure_path: str = "figures/", show: bool = True):
 
     """
     Generates comparative bar plots for screened candidate LED module configurations, visualizing results from three different evaluation methods: geometric modeling, raytracing simulation, and radiometric measurement.
@@ -154,8 +156,11 @@ def create_bar_plot_screened_cands():
 
     Parameters
     ----------
-    None
-        This function does not accept any parameters. All paths and settings are hardcoded for the current project structure.
+    figure_path : str, optional
+        Directory the figures ``bar_plots_screened_candidates_<LED>.svg`` are saved to (default: 'figures/').
+        Figure 7 of the manuscript is the 365 nm version, Figure S17 the 530 nm version.
+    show : bool, optional
+        Display the figures after saving; with False they are closed instead (default: True).
 
     Returns
     -------
@@ -191,8 +196,7 @@ def create_bar_plot_screened_cands():
     """
 
     # Set plot style
-    plt.style.use("ICIWstyle")
-    plt.style.use("visualization/publication_style.mplstyle")
+    use_publication_style()
 
     # define height and width of detection plane
     height = 33  # cm
@@ -263,4 +267,5 @@ def create_bar_plot_screened_cands():
                     "H": raytracing_result[1],
                 }
             
-        create_bar_plots(keys, geometric, raytracing, radiometric) #, export_path="./figures", filename=f"bar_plots_screened_candidates_{led_name}", export_type="svg")
+        create_bar_plots(keys, geometric, raytracing, radiometric, export_path=figure_path,
+                         filename=f"bar_plots_screened_candidates_{led_name}", export_type="svg", show=show)

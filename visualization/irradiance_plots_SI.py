@@ -14,15 +14,16 @@ Typical usage::
 import os
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
-from utils.process_raytracing_data import process_raytracing_file, calc_metrics, plot_irradiance_raytracing
-from utils.process_radiometry_data import process_radiometry_file, calculate_correction_factor, plot_irradiance_radiometry
+from analysis.process_raytracing_data import process_raytracing_file, calc_metrics, plot_irradiance_raytracing
+from analysis.process_radiometry_data import process_radiometry_file, calculate_correction_factor, plot_irradiance_radiometry
 from utils.led import LST1_01F06_GRN1_00, LST1_01G01_UV01_00
 from ICIW_Plots import cm2inch, make_square_subplots
 from geometric_model import GeometricModel
 from systematic_sampler import Sampler
 from utils.grid import Grid
+from visualization.style import finish
 
-def create_irradiance_plots_SI():
+def create_irradiance_plots_SI(show: bool = True):
     """
     Generates and saves irradiance comparison plots for multiple LED configurations using both radiometry and raytracing data in SI units (W/m²).
 
@@ -38,6 +39,9 @@ def create_irradiance_plots_SI():
     Each subplot visualizes the irradiance distribution on the target plane. All subplots share a unified colorbar for direct comparison.
 
     The function reads input data from specific directories, applies correction factors to radiometry data, and simulates the geometric model for each configuration. Figures are saved as SVG files in the 'figures' directory.
+
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
 
     :raises FileNotFoundError: If required data files or configuration JSONs are missing.
     :raises ValueError: If data files are malformed or contain unexpected values.
@@ -242,4 +246,4 @@ def create_irradiance_plots_SI():
             plt.savefig(os.path.join('figures', f'irradiance_plots_SI_best_manual_{config["led_obj"].name}.svg'), format='svg')
         else:
             plt.savefig(os.path.join('figures', f'irradiance_plots_SI_{config["label"]}.svg'), format='svg')
-        plt.show()
+        finish(fig, show)
