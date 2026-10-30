@@ -124,8 +124,8 @@ def main():
 
     # ===== Step 8: Analyze raytracing and radiometry data =====
     print("\nStep 8: Analyzing raytracing and radiometry data...")
-    from utils.process_radiometry_data import calculate_correction_factor, process_radiometry_file, plot_irradiance_radiometry
-    from utils.process_raytracing_data import process_raytracing_file, plot_irradiance_raytracing
+    from analysis.process_radiometry_data import calculate_correction_factor, process_radiometry_file, plot_irradiance_radiometry
+    from analysis.process_raytracing_data import process_raytracing_file, plot_irradiance_raytracing
     
     # Uncomment the lines below to analyze radiometry and raytracing data
     # Configuration parameters
