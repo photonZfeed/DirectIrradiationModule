@@ -59,20 +59,9 @@ Measurement Distances
 ---------------------
 
 The distances were measured vertically between the LED mounting plane and the
-cosine corrector of the spectrometer. For the configurations UV1–UV3 and
-GRN1–GRN3, the geometric radiation field model gave the optimal distances of
-
-* 6 cm,
-* 8 cm, and
-* 9 cm.
-
-To avoid a mechanical collision between the irradiation module and the
+cosine corrector of the spectrometer. To avoid a mechanical collision between the irradiation module and the
 spectrometer, an additional safety offset of **1 cm** was applied during all
-measurements. Consequently, the effective measurement distances were:
-
-* **7 cm**,
-* **9 cm**, and
-* **10 cm**.
+measurements.
 
 Data Processing and Spectral Trimming
 -------------------------------------
