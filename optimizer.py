@@ -8,9 +8,11 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from ICIW_Plots import make_square_subplots, cm2inch
 import os
+from visualization.style import use_publication_style
 
-plt.style.use("ICIWstyle")
-plt.style.use("visualization/publication_style.mplstyle")
+# the figures of this module use the publication style; it is applied by file path, so it works on
+# every operating system and from any working directory
+use_publication_style()
 
 class Optimizer:
     """

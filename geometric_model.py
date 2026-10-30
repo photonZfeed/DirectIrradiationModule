@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import numpy as np
 
 from time import time
@@ -214,7 +215,8 @@ class GeometricModel:
         :rtype: dict
 
         :side effects:
-            Uses multiprocessing for parallel execution; may increase memory usage and CPU load.
+            Uses multiprocessing for parallel execution (worker processes started with ``spawn`` on every
+            operating system); may increase memory usage and CPU load.
 
         :raises Exception: Propagates exceptions from worker processes.
 
@@ -248,7 +250,9 @@ class GeometricModel:
             for i in range(0, len(configurations), batch_size)
         ]
         results = {"configs": [], "z": [], "means": [], "max": [], "stds": []}
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # worker processes are started with "spawn" on every operating system: forking a process in which
+        # numba's OpenMP threads already run aborts on Linux, and Windows and macOS use "spawn" anyway
+        with ProcessPoolExecutor(max_workers=max_workers, mp_context=multiprocessing.get_context("spawn")) as executor:
             futures = [executor.submit(self._worker_wrapper, task) for task in tasks]
             for future in tqdm(as_completed(futures), total=len(futures), desc="Simulating Batches"):
                 batch_result = future.result()

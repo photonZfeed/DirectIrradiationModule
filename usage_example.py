@@ -3,16 +3,18 @@ Direct Irradiation Module Optimization - Usage Example
 
 This script demonstrates the main functionality of the project:
 
-1. Setting up a grid and LED configuration
-2./3. Sampling LED configurations systematically or via Monte Carlo
+1. Setting up the grid and the LED
+2./3. Sampling LED configurations systematically or by Monte Carlo
 4. Simulating the irradiance distribution of a single configuration
-5. Simulating irradiance for a batch of configurations
-6. Find the best configuration based on highest product of irradiance ratio and homogeneity
-7. Creating Pareto fronts for multi-objective analysis
-8. Analyzing and visualizing raytracing and radiometry data
+5. Simulating the irradiance of a batch of configurations
+6. Finding the best configuration, i.e. the highest product of irradiance ratio and homogeneity
+7. Creating the Pareto front for the multi-objective analysis
+8. Analyzing and visualizing ray-tracing and radiometry data
 
-To get started, uncomment the sections you want to run and ensure the required
-data files and results directories exist.
+All steps run one after the other and write their results to ``results/examples/`` (the example
+files of the repository are overwritten). The script can be started from any folder on Windows,
+Linux and macOS; it changes to the repository root itself, because the paths are relative to it.
+Each figure is displayed until its window is closed.
 
 See Also
 --------
@@ -51,7 +53,7 @@ def main():
     print("\nStep 2: Generating configurations with systematic sampler...")
     # Create a systematic sampler for 8 LEDs at height 13 cm
     sampler = Sampler(G=G, led_count=8, height=13)
-    # Uncomment the lines below to generate and save all systematic configurations
+    # Generate and save all symmetric configurations of 8 LEDs
     samples_sys = sampler.generate_all_configurations()
     save_sys_configurations(samples_sys, sampler, "results/examples/example_systematic_8_leds_13_cm.npz")
     
@@ -63,7 +65,7 @@ def main():
         height_min=5, height_max=15, height_step=1, 
         seed=42, sampling_mode="uniform", verbose=False
     )
-    # Uncomment the lines below to generate and save Monte Carlo samples
+    # Generate and save 10,000 distinct Monte Carlo samples
     num_samples = 10000
     samples_mc = mc_sampler.generate_unique_samples(num_samples=num_samples, use_parallel=True)
     save_mc_configurations(samples_mc, mc_sampler, 
@@ -78,14 +80,14 @@ def main():
     
     # Plot the result
     fig, ax = plt.subplots(figsize=(8, 6))
-    fig.suptitle(f"Irradiance Distribution of UV3 (Geometric Model)", fontsize=14)
+    fig.suptitle("Irradiance Distribution of UV3 (Geometric Model)", fontsize=14)
     model.plot_irradiance(ax=ax, irr=irr)
     plt.show()
     plt.close(fig)
     
     # ===== STEP 5: Batch simulate configurations =====
     print("\nStep 5: Batch simulating all configurations...")
-    # Uncomment the lines below to simulate all configurations from Monte Carlo samples
+    # Simulate all configurations of the Monte Carlo samples
     configs, z = model.read_configurations(
         f"results/examples/example_MonteCarlo_{mc_sampler.led_min}-{mc_sampler.led_max}_leds_"
         f"{mc_sampler.height_min}-{mc_sampler.height_max}_cm_{num_samples}_samples.npz")
@@ -94,9 +96,8 @@ def main():
     
     # ===== STEP 6: Optimize for best configuration =====
     print("\nStep 6: Finding optimal configuration...")
-    irradiance_bound = 150  # Target irradiance threshold
+    irradiance_bound = 150  # upper limit of the local irradiance in W/m^2
     optimizer = Optimizer(irradiance_bound=irradiance_bound)
-    # Uncomment to run optimization
     configs, z, means, maxs, stds = optimizer.read_simulations(
         "results/examples/example_MonteCarlo_simulation_results.npz")
     best_config, best_z, best_ratio, best_homogeneity, best_score = \
@@ -106,7 +107,7 @@ def main():
     
     # ===== STEP 7: Create and visualize Pareto front =====
     print("\nStep 7: Creating Pareto front analysis...")
-    # Uncomment to create and visualize pareto front. Make sure to uncomment step 6 as well 
+    # Pareto front over 100 weighting factors t (uses the simulation results of step 6)
     t_values = np.linspace(0, 1, 100)
     pareto_configs, pareto_z, pareto_ratios, pareto_homogeneities, pareto_scores = \
         optimizer.create_pareto_front(t_values=t_values, configurations=configs, z=z, 
@@ -122,19 +123,18 @@ def main():
         best_config, best_z, best_ratio, best_homogeneity, best_score
     )
 
-    # ===== Step 8: Analyze raytracing and radiometry data =====
-    print("\nStep 8: Analyzing raytracing and radiometry data...")
+    # ===== STEP 8: Analyze ray-tracing and radiometry data =====
+    print("\nStep 8: Analyzing ray-tracing and radiometry data...")
     from analysis.process_radiometry_data import calculate_correction_factor, process_radiometry_file, plot_irradiance_radiometry
     from analysis.process_raytracing_data import process_raytracing_file, plot_irradiance_raytracing
     
-    # Uncomment the lines below to analyze radiometry and raytracing data
     # Configuration parameters
     N_led = 16  # number of LEDs in the module
     
     # Process radiometry data
     radiometry_file = f"./results/radiometry/{led.name}/UV3_no_reflector.csv"
     reference_file = (f"./results/radiometry/{led.name}/UV3_reflector.csv")
-    expected_value = N_led * led.total_power  # expected irradiance value in W/m^2
+    expected_value = N_led * led.total_power  # emitted radiant flux of all LEDs in W, to which the reference scan is scaled
     correction_factor = calculate_correction_factor(reference_file, expected_value)
     irr, mean_irradiance, homogeneity = process_radiometry_file(radiometry_file, correction_factor)
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -143,12 +143,12 @@ def main():
     plt.show()
     plt.close(fig)
     
-    # Process raytracing data
-    filename ="UV3_no_reflector.txt"
+    # Process ray-tracing data
+    filename = "UV3_no_reflector.txt"
     raytracing_path = f"./results/raytracing/{led.name}/"
     data = process_raytracing_file(filename=filename, path=raytracing_path)
     fig, ax = plt.subplots(figsize=(8, 6))
-    fig.suptitle(f"Raytracing Data Analysis for {filename}", fontsize=14)
+    fig.suptitle(f"Ray-Tracing Data Analysis for {filename}", fontsize=14)
     plot_irradiance_raytracing(ax=ax, data=data)
     plt.show()
     plt.close(fig)
@@ -156,4 +156,6 @@ def main():
     print("\nDemo complete!")
 
 if __name__ == "__main__":
+    # the paths of this script are relative to the repository root
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     main()

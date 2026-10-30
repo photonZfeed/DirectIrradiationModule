@@ -232,9 +232,6 @@ def main(argv: list[str] | None = None) -> int:
         matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    from visualization.style import register_iciw_styles
-    register_iciw_styles()               # some modules use the ICIW style by name (Linux, macOS)
-
     os.makedirs(FIGURES, exist_ok=True)
     os.makedirs(TABLES, exist_ok=True)
     if args.recompute:

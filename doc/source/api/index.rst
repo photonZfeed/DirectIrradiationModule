@@ -10,3 +10,5 @@ API
    geometric_model
    optimizer
    utils/index
+   analysis
+   visualization

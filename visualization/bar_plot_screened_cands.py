@@ -219,7 +219,7 @@ def create_bar_plot_screened_cands(figure_path: str = "figures/", show: bool = T
         else:
             reference_file = f"./results/radiometry/{led.name}/GRN3_reflector.csv" # reference file for correction factor
         N_led = 16 # number of LEDs in the module
-        expected_value = N_led*led.total_power # expected irradiance value in W m^-2 according to LED datasheet
+        expected_value = N_led*led.total_power # emitted radiant flux in W according to the LED datasheet
         correction_factor = calculate_correction_factor(reference_file, expected_value) # calculate correction factor based on reference file
         results_radiometry = process_all_cand_files(folder, correction_factor, height, width) # process all candidate files in the folder
 

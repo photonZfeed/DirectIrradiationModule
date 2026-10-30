@@ -2,6 +2,7 @@ from tabnanny import verbose
 import numpy as np
 from itertools import combinations
 import concurrent.futures
+import multiprocessing
 import os
 import random
 import time
@@ -10,6 +11,10 @@ from collections import defaultdict
 from utils.grid import Grid
 from utils.systematic_sampler import Sampler 
 from numba import njit
+
+# worker processes are started with "spawn" on every operating system: forking a process in which numba's
+# OpenMP threads already run aborts on Linux, and Windows and macOS use "spawn" anyway
+_SPAWN = multiprocessing.get_context("spawn")
 
 class MonteCarloSampler():
     """
@@ -861,7 +866,7 @@ class MonteCarloSampler():
         
         start_time = time.time()
         
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=_SPAWN) as executor:
             # Submit tasks to workers
             futures = []
             for i, worker_samples in enumerate(samples_per_worker):

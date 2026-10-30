@@ -135,13 +135,14 @@ def process_all_cand_files(folder, correction_factor=1.0, height=33, width=34):
 
 def calculate_correction_factor(reference_filepath: str, expected_value: float) -> float:
     """
-    Computes a correction factor for radiometry data using a reference measurement and an expected total irradiance value.
+    Computes a correction factor for radiometry data using a reference measurement and an expected radiant flux.
 
-    The function integrates the measured irradiance over the detection area (using pixel size inferred from the DataFrame's index/columns), compares it to the expected value, and returns the scaling factor needed to match the expected irradiance.
+    The function integrates the measured irradiance over the scanned area (using the pixel size inferred from the DataFrame's index/columns), compares the result with the expected value, and returns the scaling factor that makes the integral of the reference scan equal to the expected radiant flux.
 
     :param reference_filepath: Path to the reference CSV file containing measured irradiance data.
     :type reference_filepath: str
-    :param expected_value: Expected total irradiance value in W/m².
+    :param expected_value: Expected radiant flux on the scanned area in W, e.g. the number of LEDs times the
+        optical power per LED from the datasheet.
     :type expected_value: float
 
     :returns: Correction factor to apply to radiometry data (float).
@@ -156,12 +157,16 @@ def calculate_correction_factor(reference_filepath: str, expected_value: float) 
     .. note::
         - The units of the original data (e.g., umol m⁻² s⁻¹ or W m⁻²) do not affect the correction factor calculation.
         - Assumes uniform pixel size and that index/columns are in centimeters.
+        - Scaling the reference scan to the emitted flux assumes that the entire emitted flux reaches the
+          scanned area. The share that actually reaches it, and its effect on the radiometric mean
+          irradiance, are estimated in :func:`analysis.uncertainty.radiometry_corrections`
+          (Supporting Information Section S10).
     """
 
     df = read_radiometry_file(reference_filepath)
     dx = (df.columns.to_numpy()[1] - df.columns.to_numpy()[0]) * 0.01 # width of one pixel in meters
     dy = (df.index.to_numpy()[1] - df.index.to_numpy()[0]) * 0.01 # height of one pixel in meters
-    measured_value = df.to_numpy().sum() * (dx * dy)  # calculate total irradiance
+    measured_value = df.to_numpy().sum() * (dx * dy)  # integral of the scan over the scanned area
     correction_factor = expected_value / measured_value # scale value to expected value. Note: If the original data is in umol m⁻² s⁻¹ or W m⁻², does not matter for the correction factor calculation, as the conversion factor between both units cancels out.
     return correction_factor
 
