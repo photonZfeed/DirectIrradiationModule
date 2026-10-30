@@ -99,8 +99,8 @@ Checking the installation
 The script walks through the full workflow — grid and LED definition, candidate generation,
 simulation with the geometric model, optimization and the evaluation of radiometry and ray-tracing
 data — and is described step by step in :doc:`tutorial`. It displays its figures one after the other
-and writes its results to ``results/examples/``; the example files stored there in the repository are
-overwritten.
+and writes its results to ``results/examples/`` only if the files are not there yet, so the example
+results stored in the repository are kept; delete a file to store new results.
 
 The tests check the fast evaluation of many configurations against the geometric model and, if the
 Zenodo data are present, the reproducibility of the published Monte-Carlo sample (see :doc:`reproduce`):

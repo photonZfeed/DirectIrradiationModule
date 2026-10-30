@@ -447,11 +447,10 @@ class Sampler:
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=_SPAWN) as executor:
             futures = [executor.submit(self._process_axis_chunk, chunk) for chunk in chunks]
             
-            completed = 0
-            for future in concurrent.futures.as_completed(futures):
-                chunk_configs = future.result()
-                all_configs.extend(chunk_configs)
-                completed += 1
+            # the results are collected in the order of the chunks, so the order of the configurations does
+            # not depend on which worker finishes first
+            for completed, future in enumerate(futures, start=1):
+                all_configs.extend(future.result())
                 if len(chunks) > 1 and self.verbose:
                     print(f"Axis case progress: {completed}/{len(chunks)} chunks")
         
@@ -537,11 +536,10 @@ class Sampler:
         with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=_SPAWN) as executor:
             futures = [executor.submit(self._process_no_axis_chunk, chunk, q2_combinations) for chunk in chunks]
             
-            completed = 0
-            for future in concurrent.futures.as_completed(futures):
-                chunk_configs = future.result()
-                all_configs.extend(chunk_configs)
-                completed += 1
+            # the results are collected in the order of the chunks, so the order of the configurations does
+            # not depend on which worker finishes first
+            for completed, future in enumerate(futures, start=1):
+                all_configs.extend(future.result())
                 if len(chunks) > 1 and self.verbose:
                     print(f"No-axis case progress: {completed}/{len(chunks)} chunks")
         
@@ -645,11 +643,10 @@ class Sampler:
             futures = [executor.submit(self._process_mixed_chunk, chunk, q2_combinations, axis_combinations) 
                       for chunk in q1_chunks]
             
-            completed = 0
-            for future in concurrent.futures.as_completed(futures):
-                chunk_configs = future.result()
-                all_configs.extend(chunk_configs)
-                completed += 1
+            # the results are collected in the order of the chunks, so the order of the configurations does
+            # not depend on which worker finishes first
+            for completed, future in enumerate(futures, start=1):
+                all_configs.extend(future.result())
                 if len(q1_chunks) > 1 and self.verbose:
                     print(f"Mixed case progress: {completed}/{len(q1_chunks)} chunks")
         

@@ -11,10 +11,11 @@ This script demonstrates the main functionality of the project:
 7. Creating the Pareto front for the multi-objective analysis
 8. Analyzing and visualizing ray-tracing and radiometry data
 
-All steps run one after the other and write their results to ``results/examples/`` (the example
-files of the repository are overwritten). The script can be started from any folder on Windows,
-Linux and macOS; it changes to the repository root itself, because the paths are relative to it.
-Each figure is displayed until its window is closed.
+All steps run one after the other. Their results are written to ``results/examples/`` only if the
+files are not there yet, so the example results stored in the repository are kept; delete a file to
+store new results. The script can be started from any folder on Windows, Linux and macOS; it changes
+to the repository root itself, because the paths are relative to it. Each figure is displayed until
+its window is closed.
 
 See Also
 --------
@@ -37,6 +38,14 @@ from matplotlib import pyplot as plt
 import os
 
 
+def store_once(path: str, save) -> None:
+    """Store results with ``save(path)`` only if ``path`` does not exist yet."""
+    if os.path.exists(path):
+        print(f"{path} exists and is kept (delete it to store new results).")
+    else:
+        save(path)
+
+
 def main():
     """Demonstration of the radiation field optimization workflow."""
     
@@ -55,7 +64,8 @@ def main():
     sampler = Sampler(G=G, led_count=8, height=13)
     # Generate and save all symmetric configurations of 8 LEDs
     samples_sys = sampler.generate_all_configurations()
-    save_sys_configurations(samples_sys, sampler, "results/examples/example_systematic_8_leds_13_cm.npz")
+    store_once("results/examples/example_systematic_8_leds_13_cm.npz",
+               lambda path: save_sys_configurations(samples_sys, sampler, path))
     
     # ===== STEP 3: Generate configurations using Monte Carlo sampler =====
     print("\nStep 3: Generating configurations with Monte Carlo sampler...")
@@ -68,9 +78,9 @@ def main():
     # Generate and save 10,000 distinct Monte Carlo samples
     num_samples = 10000
     samples_mc = mc_sampler.generate_unique_samples(num_samples=num_samples, use_parallel=True)
-    save_mc_configurations(samples_mc, mc_sampler, 
-        f"results/examples/example_MonteCarlo_{mc_sampler.led_min}-{mc_sampler.led_max}_leds_"
-        f"{mc_sampler.height_min}-{mc_sampler.height_max}_cm_{num_samples}_samples.npz")
+    store_once(f"results/examples/example_MonteCarlo_{mc_sampler.led_min}-{mc_sampler.led_max}_leds_"
+               f"{mc_sampler.height_min}-{mc_sampler.height_max}_cm_{num_samples}_samples.npz",
+               lambda path: save_mc_configurations(samples_mc, mc_sampler, path))
     
     # ===== STEP 4: Simulate irradiance for a single configuration =====
     print("\nStep 4: Simulating irradiance distribution of an example configuration...")
@@ -92,7 +102,8 @@ def main():
         f"results/examples/example_MonteCarlo_{mc_sampler.led_min}-{mc_sampler.led_max}_leds_"
         f"{mc_sampler.height_min}-{mc_sampler.height_max}_cm_{num_samples}_samples.npz")
     sim_results = model.simulate_batch(configurations=configs, z=z, batch_size=500)
-    save_results(sim_results, model, "results/examples/example_MonteCarlo_simulation_results.npz")
+    store_once("results/examples/example_MonteCarlo_simulation_results.npz",
+               lambda path: save_results(sim_results, model, path))
     
     # ===== STEP 6: Optimize for best configuration =====
     print("\nStep 6: Finding optimal configuration...")
@@ -117,11 +128,10 @@ def main():
                                pareto_homogeneities=pareto_homogeneities)
     plt.show()
     
-    save_optimization_results(
-        "results/examples/example_optimization_results.npz",
-        pareto_configs, pareto_z, pareto_ratios, pareto_homogeneities, pareto_scores,
-        best_config, best_z, best_ratio, best_homogeneity, best_score
-    )
+    store_once("results/examples/example_optimization_results.npz",
+               lambda path: save_optimization_results(
+                   path, pareto_configs, pareto_z, pareto_ratios, pareto_homogeneities, pareto_scores,
+                   best_config, best_z, best_ratio, best_homogeneity, best_score))
 
     # ===== STEP 8: Analyze ray-tracing and radiometry data =====
     print("\nStep 8: Analyzing ray-tracing and radiometry data...")
