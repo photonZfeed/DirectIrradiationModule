@@ -1,8 +1,9 @@
 import json
+import multiprocessing
 import numpy as np
 
 from time import time
-from concurrent.futures import ProcessPoolExecutor, as_completed 
+from concurrent.futures import ProcessPoolExecutor
 from numba import njit, prange
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -210,11 +211,13 @@ class GeometricModel:
         :param max_workers: Maximum number of parallel workers. Default is None (uses os.cpu_count()).
         :type max_workers: int, optional
 
-        :return: Dictionary containing configurations, heights, and irradiance metrics (mean, max, std for each configuration).
+        :return: Dictionary containing configurations, heights, and irradiance metrics (mean, max, std for each
+            configuration), in the order of ``configurations``.
         :rtype: dict
 
         :side effects:
-            Uses multiprocessing for parallel execution; may increase memory usage and CPU load.
+            Uses multiprocessing for parallel execution (worker processes started with ``spawn`` on every
+            operating system); may increase memory usage and CPU load.
 
         :raises Exception: Propagates exceptions from worker processes.
 
@@ -248,9 +251,12 @@ class GeometricModel:
             for i in range(0, len(configurations), batch_size)
         ]
         results = {"configs": [], "z": [], "means": [], "max": [], "stds": []}
-        with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # worker processes are started with "spawn" on every operating system: forking a process in which
+        # numba's OpenMP threads already run aborts on Linux, and Windows and macOS use "spawn" anyway
+        with ProcessPoolExecutor(max_workers=max_workers, mp_context=multiprocessing.get_context("spawn")) as executor:
             futures = [executor.submit(self._worker_wrapper, task) for task in tasks]
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Simulating Batches"):
+            # the results are collected in the order of the batches, so they keep the order of the configurations
+            for future in tqdm(futures, total=len(futures), desc="Simulating Batches"):
                 batch_result = future.result()
                 results["configs"].extend(batch_result["configs"])
                 results["z"].extend(batch_result["z"])

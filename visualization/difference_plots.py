@@ -1,13 +1,12 @@
-# written by claude cowork powered by Opus 5 (Anthropic, PBC)
-
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 from ICIW_Plots import cm2inch, make_square_subplots
 
-from utils.compare_methods import CASES, LEDS, common_grid, compare_all, compare_case
+from analysis.compare_methods import CASES, LEDS, common_grid, compare_all, compare_case
 from utils.led import LST1_01F06_GRN1_00, LST1_01G01_UV01_00
+from visualization.style import finish, use_publication_style
 
 #: Column titles of the three pairwise comparisons.
 COLUMN_TITLES = ["geometric model\n$-$ ray tracing",
@@ -43,70 +42,7 @@ def _plot_residual(ax, delta: np.ndarray, x: np.ndarray, y: np.ndarray, limit: f
                      extent=(x.min(), x.max(), y.min(), y.max()))
 
 
-# def create_residual_plots_validation(results_path: str = "results/", figure_path: str = "figures/"):
-#     r"""
-#     Create the residual maps of the validation configuration for the main manuscript.
-
-#     For each LED type, the three pairwise residuals between geometric model, ray tracing and
-#     radiometry are plotted for the best manual configuration without reflectors. These panels
-#     complement the irradiance distributions of the validation figure and show *where* the methods
-#     deviate from each other, which averaged metrics cannot reveal.
-
-#     :param results_path: Path of the results directory.
-#     :type results_path: str, optional
-#     :param figure_path: Directory the figures are written to.
-#     :type figure_path: str, optional
-
-#     :returns: None
-
-#     :raises FileNotFoundError: If a required radiometry, ray tracing or configuration file is
-#         missing.
-
-#     :side effects:
-#         - Saves ``validation_residuals_<led name>.svg`` to ``figure_path``.
-#         - Displays the figures with :func:`matplotlib.pyplot.show`.
-
-#     .. note::
-#         Only the reflector-free configuration is evaluated, since the geometric model does not
-#         describe reflective components.
-
-#     **Usage Example**::
-
-#         from visualization.difference_plots import create_residual_plots_validation
-#         create_residual_plots_validation()
-#     """
-#     plt.style.use("ICIWstyle")
-#     plt.style.use("visualization/publication_style.mplstyle")
-
-#     x, y = common_grid()
-#     os.makedirs(figure_path, exist_ok=True)
-
-#     for led in [LST1_01G01_UV01_00, LST1_01F06_GRN1_00]:
-#         case = CASES[led.name][0]  # best manual configuration
-#         residuals, rows = compare_case(led, case, x, y, results_path)
-#         limit = float(np.nanmax([np.nanmax(np.abs(delta)) for delta in residuals.values()]))
-
-#         fig, axs = plt.subplots(1, 3, figsize=(19 * cm2inch, 8 * cm2inch), constrained_layout=True)
-#         for ax, title, (label, delta) in zip(axs, COLUMN_TITLES, residuals.items()):
-#             image = _plot_residual(ax, delta, x, y, limit)
-#             ax.set_title(title)
-#             ax.set_xlabel("$x$ / cm")
-#         axs[0].set_ylabel("$y$ / cm")
-#         for ax in axs[1:]:
-#             ax.set_yticklabels([])
-#         fig.colorbar(image, ax=axs, shrink=0.75, label=r"$\Delta E$ / W m$^{-2}$")
-
-#         fig.savefig(os.path.join(figure_path, f"validation_residuals_{led.name}.svg"), dpi=300,
-#                     bbox_inches="tight")
-#         plt.show()
-
-#         for row in rows:
-#             print(f"{led.name} | {row['comparison']:<30s} "
-#                   f"bias {row['bias / %']:+6.1f} %  RMSE {row['RMSE / %']:5.1f} %  "
-#                   f"max {row['max |dE| / %']:5.1f} %")
-
-
-def create_residual_statistics_plot(statistics, figure_path: str = "figures/"):
+def create_residual_statistics_plot(statistics, figure_path: str = "figures/", show: bool = True):
     r"""
     Plot the root mean square error of the pairwise residuals as a grouped bar chart.
 
@@ -118,10 +54,12 @@ def create_residual_statistics_plot(statistics, figure_path: str = "figures/"):
     to the difference of the mean irradiances already reported in the manuscript.
 
     :param statistics: Table of residual statistics as returned by
-        :func:`utils.compare_methods.compare_all`.
+        :func:`analysis.compare_methods.compare_all`.
     :type statistics: :class:`pandas.DataFrame`
     :param figure_path: Directory the figure is written to.
     :type figure_path: str, optional
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
 
     :returns: None
 
@@ -133,13 +71,12 @@ def create_residual_statistics_plot(statistics, figure_path: str = "figures/"):
 
     **Usage Example**::
 
-        from utils.compare_methods import compare_all
+        from analysis.compare_methods import compare_all
         from visualization.difference_plots import create_residual_statistics_plot
-        _, statistics, _ = compare_all()
+        _, statistics = compare_all()
         create_residual_statistics_plot(statistics)
     """
-    plt.style.use("ICIWstyle")
-    plt.style.use("visualization/publication_style.mplstyle")
+    use_publication_style()
     os.makedirs(figure_path, exist_ok=True)
 
     comparisons = [f"{first} - {second}" for first, second in
@@ -154,7 +91,7 @@ def create_residual_statistics_plot(statistics, figure_path: str = "figures/"):
     fig = plt.figure(figsize=(19 * cm2inch, 10.5 * cm2inch))
     axs = make_square_subplots(fig=fig, ax_width=8 * cm2inch, ax_layout=(1, len(led_groups)),
                                h_sep=1.5 * cm2inch, v_sep=0 * cm2inch, sharex=False, sharey=True,
-                               sharelabel=False, ylabel="RMSE / %")
+                               sharelabel=False, xlabel="", ylabel="RMSE / %")
     for index, (led, led_title) in enumerate(led_groups):
         ax = axs[0, index]
         subset = statistics[statistics["LED"] == led.name]
@@ -182,14 +119,15 @@ def create_residual_statistics_plot(statistics, figure_path: str = "figures/"):
     fig.legend(handles, labels, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.0))
     fig.savefig(os.path.join(figure_path, "difference_statistics.svg"), dpi=300,
                 bbox_inches="tight")
-    plt.show()
+    finish(fig, show)
 
     for led, led_title in led_groups:
         largest = statistics[statistics["LED"] == led.name]["max |dE| / %"].max()
         print(f"largest absolute residual, {led_title}: {largest:.1f} % of the mean irradiance")
 
 
-def create_difference_plots_SI(results_path: str = "results/", figure_path: str = "figures/"):
+def create_difference_plots_SI(results_path: str = "results/", figure_path: str = "figures/", show: bool = True,
+                               table_path: str | None = None):
     r"""
     Create the residual maps and the residual statistics of all compared configurations.
 
@@ -203,6 +141,10 @@ def create_difference_plots_SI(results_path: str = "results/", figure_path: str 
     :type results_path: str, optional
     :param figure_path: Directory the figures are written to.
     :type figure_path: str, optional
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
+    :param table_path: Directory ``difference_summary.csv`` is written to. Default None: ``<results_path>/difference_maps/``.
+    :type table_path: str | None, optional
 
     :returns: None
 
@@ -211,7 +153,7 @@ def create_difference_plots_SI(results_path: str = "results/", figure_path: str 
 
     :side effects:
         - Saves ``difference_maps_<365nm|530nm>.svg`` to ``figure_path``.
-        - Saves ``difference_summary.csv`` to ``<results_path>/difference_maps/``.
+        - Saves ``difference_summary.csv`` to ``table_path`` (default ``<results_path>/difference_maps/``).
         - Displays the figures with :func:`matplotlib.pyplot.show`.
 
     .. note::
@@ -224,13 +166,12 @@ def create_difference_plots_SI(results_path: str = "results/", figure_path: str 
         from visualization.difference_plots import create_difference_plots_SI
         create_difference_plots_SI()
     """
-    plt.style.use("ICIWstyle")
-    plt.style.use("visualization/publication_style.mplstyle")
+    use_publication_style()
 
     x, y = common_grid()
     residuals_all, statistics = compare_all(results_path)
 
-    export_path = os.path.join(results_path, "difference_maps")
+    export_path = table_path if table_path is not None else os.path.join(results_path, "difference_maps")
     os.makedirs(export_path, exist_ok=True)
     os.makedirs(figure_path, exist_ok=True)
     statistics.to_csv(os.path.join(export_path, "difference_summary.csv"), index=False)
@@ -263,9 +204,9 @@ def create_difference_plots_SI(results_path: str = "results/", figure_path: str 
 
         fig.savefig(os.path.join(figure_path, f"difference_maps_{tag}.svg"), dpi=300,
                     bbox_inches="tight")
-        plt.show()
+        finish(fig, show)
 
-    create_residual_statistics_plot(statistics, figure_path)
+    create_residual_statistics_plot(statistics, figure_path, show)
 
     with pd_option_context():
         print(statistics.round(2).to_string(index=False))

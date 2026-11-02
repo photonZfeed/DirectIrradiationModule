@@ -1,5 +1,3 @@
-# written by claude cowork powered by Opus 5 (Anthropic, PBC)
-
 import json
 import os
 from dataclasses import dataclass
@@ -12,8 +10,8 @@ from scipy.stats import binned_statistic_2d
 from geometric_model import GeometricModel
 from utils.grid import Grid
 from utils.led import LST1_01F06_GRN1_00, LST1_01G01_UV01_00
-from utils.process_radiometry_data import calculate_correction_factor, process_radiometry_file
-from utils.process_raytracing_data import process_raytracing_file
+from analysis.process_radiometry_data import calculate_correction_factor, process_radiometry_file
+from analysis.process_raytracing_data import process_raytracing_file
 
 #: Width (x extent) of the detection plane in cm.
 PLANE_WIDTH = 33.0

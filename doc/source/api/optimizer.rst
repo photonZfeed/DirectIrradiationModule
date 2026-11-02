@@ -11,11 +11,15 @@ Example Usage
 
     .. code-block:: python
 
+      import matplotlib.pyplot as plt
+      import numpy as np
+      from optimizer import Optimizer, read_optimization_results, save_optimization_results
+
       # Initialize the optimizer with an irradiance bound of 150.0 W/m²
       optimizer = Optimizer(irradiance_bound=150.0)
       
       # Load simulation results from file
-      configs, z, means, max_vals, stds = optimizer.read_simulations('results\\examples\\example_MonteCarlo_simulation_results.npz')
+      configs, z, means, max_vals, stds = optimizer.read_simulations('results/examples/example_MonteCarlo_simulation_results.npz')
       
       # Calculate metrics for all configurations
       ratio_to_bound, homogeneity = optimizer.calc_metrics(means, max_vals, stds)
@@ -45,7 +49,7 @@ Example Usage
       
       # Save optimization results to file
       save_optimization_results(
-         filename="results\\examples\\example_optimization_results.npz",
+         filename="results/examples/example_optimization_results.npz",
          pareto_configs=pareto_configs,
          pareto_z=pareto_z,
          pareto_ratios=pareto_ratios,
@@ -59,4 +63,4 @@ Example Usage
       )
       
       # Load optimization results from file
-      results = read_optimization_results("results\\examples\\example_optimization_results.npz")
+      results = read_optimization_results("results/examples/example_optimization_results.npz")

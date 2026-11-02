@@ -1,5 +1,5 @@
 from utils.grid import Grid
-from systematic_sampler import Sampler
+from utils.systematic_sampler import Sampler
 import matplotlib.pyplot as plt
 
 def plot_cand(conf_name):

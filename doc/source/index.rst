@@ -15,15 +15,17 @@ Overview
 
 
 
-This project is part of the publication `Making Photocatalyst Screening Photo-Efficient – Geometric Radiation Field Model Assisted Design of a Direct Irradiation Module for the Multi-Batch Screening Reactor <https://doi.org/10.5281/zenodo.17867874>`_ (DOI: `10.5281/zenodo.17867874 <https://doi.org/10.5281/zenodo.17867874>`_).
+This project belongs to the manuscript "Rapid Design of Homogeneous Direct-LED Irradiation Modules Using a Geometric Radiation Field Model". An earlier version of the manuscript is available as a preprint on Zenodo under the title "Making Photocatalyst Screening Photo-Efficient – Geometric Radiation Field Model Assisted Design of a Direct Irradiation Module for the Multi-Batch Screening Reactor" (DOI: `10.5281/zenodo.17867874 <https://doi.org/10.5281/zenodo.17867874>`_).
 
-This documentation provides comprehensive guides and API references for designing and optimizing the presented direct irradiation module. It covers:
+This documentation provides guides and API references for designing and optimizing the presented direct irradiation module. It covers:
 
-* Required components and assembly instructions for the direct irradiation module
-* Methodology for radiometry and raytracing simulations to validate the geometric model
-* Detailed API documentation of the sampling algorithms, the geometric model and the optimization routine used for module design as well as the evaluation of the radiometry and raytracing simulations.
+* the required components and the assembly instructions of the direct irradiation module,
+* the methodology of the radiometric measurements and the ray-tracing simulations used to validate the geometric model,
+* the installation of the code and a tutorial of the optimization workflow,
+* the reproduction of all figures and tables of the publication and its Supporting Information,
+* the API documentation of the sampling algorithms, the geometric model and the optimization routine used for the module design, of the evaluation of the radiometry and ray-tracing data and of the analyses and figures of the publication.
 
-The underlying Python code, radiometry data, and raytracing simulations are available on `GitHub <https://github.com/photonZfeed/DirectIrradiationModule>`_ and `Zenodo <https://zenodo.org/record/17867874>`_.
+The Python code, the radiometry data and the ray-tracing simulations are available on `GitHub <https://github.com/photonZfeed/DirectIrradiationModule>`_; the full dataset, including the radiometry raw data and the electronic lab notebook entries of the simulations, is available on Zenodo (DOI: `10.5281/zenodo.18610997 <https://doi.org/10.5281/zenodo.18610997>`_).
 
 .. toctree::
    :maxdepth: 1
@@ -34,4 +36,5 @@ The underlying Python code, radiometry data, and raytracing simulations are avai
    raytracing
    installation
    tutorial
+   reproduce
    api/index

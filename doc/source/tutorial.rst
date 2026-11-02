@@ -1,13 +1,13 @@
 Getting Started: Full Optimization Workflow
 ============================================
 
-This tutorial walks through the complete workflow for designing and optimizing a direct irradiation module, from defining the physical geometry to selecting the best LED configuration according to the defined objective function. The full code shown is summarized in ``usage_example.py``.
+This tutorial walks through the complete workflow for designing and optimizing a direct irradiation module, from defining the physical geometry to selecting the best LED configuration according to the defined objective function. The code shown here is collected in ``usage_example.py``, which runs all steps one after the other. All paths are relative to the root of the repository; run the code from there.
 
 
 Setting Up the Grid and LED
 ---------------------------
 
-The :class:`~utils.grid.Grid` object defines the measurement plane over which irradiance is evaluated. Its dimensions (in centimetres) and the spacing between evaluation points are set here. The :class:`~utils.led.LED` object encodes the physical properties of a single LED, including its optical output power and its angle-resolved intensity distribution loaded from a CSV file.
+The :class:`~utils.grid.Grid` object defines the detection plane (here 33 cm × 34 cm) and the possible LED mounting positions on it: a square grid with a pitch of ``step`` = 2.5 cm, kept ``side_space`` and ``top_bottom_space`` away from the edges, which gives the 13 × 13 = 169 mounting positions of the module. The resolution at which the irradiance is evaluated is set later by the geometric model (``resolution_xy``, 0.5 cm by default). The :class:`~utils.led.LED` object encodes the physical properties of a single LED, including its optical output power and its relative angular intensity distribution loaded from a CSV file.
 
 .. code-block:: python
 
@@ -25,12 +25,12 @@ The :class:`~utils.grid.Grid` object defines the measurement plane over which ir
 Generating Configurations: Systematic Sampler
 ----------------------------------------------
 
-The :class:`~systematic_sampler.Sampler` generates all symmetrically valid arrangements of a fixed number of LEDs on the grid at a single height. This exhaustive enumeration is practical when the LED count is small, because the symmetry constraints keep the search space manageable. The resulting configurations and their metadata are saved to a compressed ``.npz`` file for later use.
+The :class:`~utils.systematic_sampler.Sampler` generates all symmetrically valid arrangements of a fixed number of LEDs on the grid at a single height. This exhaustive enumeration is practical when the LED count is small, because the symmetry constraints keep the search space manageable. The resulting configurations and their metadata are saved to a compressed ``.npz`` file for later use.
 
 .. code-block:: python
 
-    from systematic_sampler import Sampler
-    from systematic_sampler import save_configurations as save_sys_configurations
+    from utils.systematic_sampler import Sampler
+    from utils.systematic_sampler import save_configurations as save_sys_configurations
 
     sampler = Sampler(G=G, led_count=8, height=13)
     samples_sys = sampler.generate_all_configurations()
@@ -41,12 +41,12 @@ The :class:`~systematic_sampler.Sampler` generates all symmetrically valid arran
 Generating Configurations: Monte Carlo Sampler
 -----------------------------------------------
 
-When the design space is too large for exhaustive enumeration, the :class:`~monte_carlo_sampler.MonteCarloSampler` draws random unique configurations from the full space. The ``seed`` parameter ensures reproducibility. Setting ``use_parallel=True`` distributes the sampling across available CPU cores. The file path is constructed to encode the key sampling parameters so that it is self-documenting.
+When the design space is too large for exhaustive enumeration, the :class:`~utils.monte_carlo_sampler.MonteCarloSampler` draws random unique configurations from the full space. The ``seed`` parameter ensures reproducibility: :meth:`~utils.monte_carlo_sampler.MonteCarloSampler.generate_unique_samples` draws the configurations one after the other (``use_parallel`` only takes effect together with ``target_samples_per_led``), so the result depends on the seed only. With ``seed=42`` and 5 million samples, it reproduces the sample of the publication. The file path is constructed to encode the key sampling parameters so that it is self-documenting.
 
 .. code-block:: python
 
-    from monte_carlo_sampler import MonteCarloSampler
-    from monte_carlo_sampler import save_configurations as save_mc_configurations
+    from utils.monte_carlo_sampler import MonteCarloSampler
+    from utils.monte_carlo_sampler import save_configurations as save_mc_configurations
 
     mc_sampler = MonteCarloSampler(
         G=G, led_min=1, led_max=16,
@@ -85,7 +85,7 @@ The :class:`~geometric_model.GeometricModel` takes the grid and LED objects and 
 Batch Simulating a Configuration Set
 -------------------------------------
 
-Simulating thousands of configurations one at a time would be slow. :meth:`~geometric_model.GeometricModel.simulate_batch` processes configurations in parallel using a ``ProcessPoolExecutor`` and accepts a ``batch_size`` argument to control memory usage. It reads the configurations saved in the previous Monte Carlo step and returns a structured result object that is then written to disk with :func:`~geometric_model.save_results`.
+Simulating thousands of configurations one at a time would be slow. :meth:`~geometric_model.GeometricModel.simulate_batch` processes configurations in parallel using a ``ProcessPoolExecutor`` and accepts a ``batch_size`` argument to control memory usage. The worker processes are started with ``spawn`` on every operating system, so code that calls it from a script must be guarded by ``if __name__ == "__main__":``, as in ``usage_example.py``. It reads the configurations saved in the previous Monte Carlo step and returns a structured result object that is then written to disk with :func:`~geometric_model.save_results`.
 
 .. code-block:: python
 
@@ -107,7 +107,7 @@ The :class:`~optimizer.Optimizer` is initialized with an irradiance bound — th
 
     from optimizer import Optimizer
 
-    irradiance_bound = 150  # W m⁻²
+    irradiance_bound = 150  # upper limit of the local irradiance in W m⁻²
     optimizer = Optimizer(irradiance_bound=irradiance_bound)
     configs, z, means, maxs, stds = optimizer.read_simulations(
         "results/examples/example_MonteCarlo_simulation_results.npz")
@@ -143,24 +143,24 @@ In practice, mean irradiance and homogeneity are competing objectives: increasin
     )
 
 
-Analysing Radiometry and Raytracing Data
+Analyzing Radiometry and Ray-Tracing Data
 -----------------------------------------
 
-Once a physical prototype is built, measured radiometry data and independent raytracing simulations can be compared against the geometric model predictions. The ``calculate_correction_factor`` function derives a scalar correction from a reference measurement (e.g. with a reflector), which is then applied when processing the main radiometry file. Raytracing data is processed analogously via ``process_raytracing_file``. Both datasets are visualized with the corresponding plot functions.
+Once a physical prototype is built, measured radiometry data and independent ray-tracing simulations can be compared with the predictions of the geometric model. The radiometric scans are not calibrated in absolute units: :func:`~analysis.process_radiometry_data.calculate_correction_factor` scales a reference scan (here UV3 with reflectors) so that its integral equals the radiant flux emitted by all LEDs according to the datasheet, and the same factor is applied to all scans of the group. This assumes that the entire emitted flux reaches the scanned area; :func:`analysis.uncertainty.radiometry_corrections` estimates the share that actually reaches it (Supporting Information Section S10). Ray-tracing data is processed analogously with :func:`~analysis.process_raytracing_data.process_raytracing_file`. Both datasets are visualized with the corresponding plot functions.
 
 .. code-block:: python
 
     import os
 
-    from utils.process_radiometry_data import (
+    from analysis.process_radiometry_data import (
         calculate_correction_factor, process_radiometry_file, plot_irradiance_radiometry
     )
-    from utils.process_raytracing_data import process_raytracing_file, plot_irradiance_raytracing
+    from analysis.process_raytracing_data import process_raytracing_file, plot_irradiance_raytracing
 
     N_led = 16  # number of LEDs in the module
     radiometry_file = f"./results/radiometry/{led.name}/UV3_no_reflector.csv"
     reference_file  = f"./results/radiometry/{led.name}/UV3_reflector.csv"
-    expected_value  = N_led * led.total_power  # W m⁻²
+    expected_value  = N_led * led.total_power  # emitted radiant flux of all LEDs in W
 
     correction_factor = calculate_correction_factor(reference_file, expected_value)
     irr, mean_irradiance, homogeneity = process_radiometry_file(radiometry_file, correction_factor)
@@ -178,3 +178,20 @@ Once a physical prototype is built, measured radiometry data and independent ray
     plot_irradiance_raytracing(ax=ax, data=data)
     plt.show()
     plt.close(fig)
+
+
+Comparing the Methods and Reproducing the Publication
+-----------------------------------------------------
+
+:mod:`analysis.compare_methods` compares the geometric model, ray tracing and radiometry point by
+point on a common 0.5 cm grid and reports the bias, the root mean square error and the largest local
+deviation of every pair of methods (Supporting Information Section S6). The further analyses of the
+Supporting Information and all figures and tables of the publication are generated by
+``create_manuscript_plots_tables.py``; :doc:`reproduce` lists the outputs and the functions behind them.
+
+.. code-block:: python
+
+    from analysis.compare_methods import compare_all
+
+    residuals, statistics = compare_all("results/")
+    print(statistics[["LED", "configuration", "comparison", "RMSE / %"]].round(1))

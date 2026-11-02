@@ -13,6 +13,7 @@ Simulation Workflow
 -------------------
 
 All ray tracing simulations followed an identical, fully reproducible workflow.
+All ray-tracing simulations followed an identical, fully reproducible workflow.
 
 The three-dimensional geometry of the irradiation module—including LED emitting
 surfaces and reflector components where applicable — was created directly within
@@ -50,8 +51,6 @@ Material Definition
 The surrounding environment was modeled as air with a refractive index of 1.0.
 Reflector surfaces were defined as purely reflective materials with mixed
 Lambertian–specular behavior that varies with the incident angle.
-
-
 
 The angle-dependent reflection characteristics were implemented following the
 optical properties reported by Janecek and Moses [1]_ (see :numref:`fig-speos-material` and :numref:`fig-speos-teflon`).
@@ -113,8 +112,6 @@ Separate surface source definitions were used for the UV and green LEDs (see :nu
 Sensor Definition
 -----------------
 
-
-
 Irradiance was quantified using a planar radiance sensor with dimensions
 **33 cm × 34 cm**, positioned at several LED-to-sensor distances depending on the
 investigated configuration (see :numref:`fig-speos-sensor`).
@@ -136,8 +133,6 @@ incidence.
 Simulation Settings
 -------------------
 
-
-
 Ray propagation from the LED sources to the sensor was simulated using a
 **Direct Simulation** approach (see :numref:`fig-speos-direct`). Double precision was enabled for the ray tracer
 to improve numerical accuracy.
@@ -145,8 +140,10 @@ to improve numerical accuracy.
 The maximum number of interactions per ray was set to 100, allowing individual
 rays to undergo multiple reflections and scattering events before termination.
 The stopping criterion for all simulations was defined as a total of
-**1.6 × 10⁷ rays**, based on a ray number sensitivity analysis described in the
-Supporting Information.
+**1.6 × 10⁷ rays**, based on the ray independence study described in
+Supporting Information Section S3. The effect of the remaining Monte-Carlo noise
+on the mean irradiance and the homogeneity is estimated in Supporting Information
+Section S10 (:func:`analysis.uncertainty.ray_tracing_noise`).
 
 .. _fig-speos-direct:
 .. figure:: images/speos_direct_simulation.png
@@ -162,7 +159,9 @@ Results Visualization
 The resulting irradiance distributions were visualized directly within the
 Speos post-processing environment using the sensor output (see :numref:`fig-speos-results`). Spatial irradiance
 maps served as the basis for calculating mean irradiance and homogeneity metrics
-and for comparison with geometric modelling and experimental radiometry.
+and for comparison with the geometric model and the radiometric measurements.
+The exported sensor data are stored in ``results/raytracing/`` and evaluated with
+:mod:`analysis.process_raytracing_data`.
 
 .. _fig-speos-results:
 .. figure:: images/speos_sensor_results.png
@@ -173,5 +172,8 @@ and for comparison with geometric modelling and experimental radiometry.
    Visualization of irradiance distributions on the sensor plane in Ansys Speos.
 
 
-.. [1] M. Janecek, W. W. Moses, IEEE Trans. Nucl. Sci. 2008, 55, 2443–2449.
+References
+----------
+
+.. [1] M. Janecek, W. W. Moses, Measuring Light Reflectance of BGO Crystal Surfaces, *IEEE Trans. Nucl. Sci.* **2008**, 55, 2443–2449, DOI: `10.1109/TNS.2008.2003253 <https://doi.org/10.1109/TNS.2008.2003253>`_.
 

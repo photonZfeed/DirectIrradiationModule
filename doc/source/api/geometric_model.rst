@@ -33,7 +33,8 @@ Example Usage
         model.plot_irradiance(ax, irr)
         plt.show()
 
-        # simulate batch of configurations
-        configs, z = model.read_configurations("results\\examples\\example_MonteCarlo_1-16_leds_5-15_cm_10000_samples.npz") # load configurations and heights from file
+        # simulate a batch of configurations (in a script, guard this by if __name__ == "__main__":,
+        # because the worker processes are started with spawn)
+        configs, z = model.read_configurations("results/examples/example_MonteCarlo_1-16_leds_5-15_cm_10000_samples.npz") # load configurations and heights from file
         sim_results = model.simulate_batch(configurations=configs, z=z, batch_size=500)
         save_results(sim_results, model, "results/examples/example_MonteCarlo_simulation_results.npz")

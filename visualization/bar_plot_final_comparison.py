@@ -4,10 +4,11 @@ from math import nan
 from ICIW_Plots import make_square_subplots, cm2inch
 import ICIW_Plots.colors as ICIWcolors
 import os
-from utils.process_radiometry_data import process_radiometry_file, calculate_correction_factor
-from utils.process_radiometry_indirect import process_radiometry_data as process_radiometry_indirect_data
+from visualization.style import finish, use_publication_style
+from analysis.process_radiometry_data import process_radiometry_file, calculate_correction_factor
+from analysis.process_radiometry_indirect import process_radiometry_data as process_radiometry_indirect_data
 
-def create_bar_plot_final_comparison():
+def create_bar_plot_final_comparison(show: bool = True):
     r"""
     Generates and displays a comparative bar plot of mean irradiance and homogeneity index for two LED types (365 nm and 530 nm) under three different module configurations: indirect irradiation, manual optimization, and model-based optimization. The function reads radiometry data from CSV files, processes and normalizes the results, and visualizes the comparison in a two-panel figure. The resulting plot is saved as an SVG file and shown interactively.
 
@@ -16,7 +17,8 @@ def create_bar_plot_final_comparison():
         - Calculates mean irradiance (W m\ :sup:`-2`) and homogeneity index (unitless) for each case.
         - Plots grouped bar charts for both metrics, annotates values, and saves the figure.
 
-    :param None: This function takes no arguments.
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
 
     :returns: None
         This function does not return any value. It produces a side effect by saving and displaying a plot.
@@ -44,8 +46,7 @@ def create_bar_plot_final_comparison():
     This will generate and display the comparison plot, saving it as an SVG file.
     """
     # Set plot style
-    plt.style.use("ICIWstyle")
-    plt.style.use("visualization/publication_style.mplstyle")
+    use_publication_style()
 
     # number of LEDs of the three compared irradiation concepts. The concepts use different numbers
     # of LEDs, which is why the mean irradiance is additionally reported per LED below.
@@ -149,7 +150,7 @@ def create_bar_plot_final_comparison():
 
     plt.tight_layout()
     fig.savefig(os.path.join("figures", "bar_plot_final_comparison.svg"), dpi=300, bbox_inches='tight')
-    plt.show()
+    finish(fig, show)
 
     # print the values including the normalization per LED
     for led_name, entries in bar_data.items():

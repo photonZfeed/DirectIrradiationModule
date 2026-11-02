@@ -3,12 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from geometric_model import GeometricModel
-from systematic_sampler import Sampler
+from utils.systematic_sampler import Sampler
 from utils.grid import Grid
 from utils.led import LST1_01G01_UV01_00, LST1_01F06_GRN1_00
-from utils.process_radiometry_indirect import process_radiometry_data
+from analysis.process_radiometry_indirect import process_radiometry_data
 from ICIW_Plots import make_square_subplots, cm2inch
 from optimizer import Optimizer, read_optimization_results, save_optimization_results
+from visualization.style import finish, use_publication_style
 
 def process_led(ax: Axes, led, optimizer, grid, t_values, results_path, sim_filename, title, load_previous: bool = False, find_raytracing_candidates: bool = False, plot_near_optimal_configs: bool = False):
     """
@@ -178,14 +179,14 @@ def process_led(ax: Axes, led, optimizer, grid, t_values, results_path, sim_file
     ax = optimizer.plot_pareto_front(ax, pareto_ratios, pareto_homogeneities, other_points=other_points, title=title)
     return ax
 
-def create_pareto_1_16_leds_5_15cm():
+def create_pareto_1_16_leds_5_15cm(show: bool = True):
     """
     Generates and visualizes the Pareto front for LED arrays ranging from 1 to 16 LEDs positioned at heights between 5 cm and 15 cm.
 
     This function sets up the simulation grid, optimizer, and LED types, then loads or computes the Pareto front for each LED type using precomputed simulation results. The resulting Pareto plots display the trade-off between mean irradiance ratio and homogeneity index for each configuration. Insets show selected LED arrangements. The function creates a single figure with two subplots (one for each LED type) and displays the result.
 
-    :param None:
-        This function does not take any arguments.
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
 
     :returns: None
         The function creates and displays a matplotlib figure but does not return any value.
@@ -221,6 +222,9 @@ def create_pareto_1_16_leds_5_15cm():
         create_pareto_1_16_leds_5_15cm()
 
     """
+    # the style is also applied when optimizer.py is imported; set it explicitly so that the figure
+    # does not depend on the import order
+    use_publication_style()
     grid = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
     optimizer = Optimizer(irradiance_bound=150.0)
     leds  = [
@@ -251,16 +255,16 @@ def create_pareto_1_16_leds_5_15cm():
     handles, labels = axs[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', ncol=4, bbox_to_anchor=(0.5, 0.94))
     plt.savefig(os.path.join(figure_path, "pareto_plots_1_16_leds_5_15cm.svg"))
-    plt.show()
+    finish(fig, show)
 
-def create_pareto_8_leds_13cm():
+def create_pareto_8_leds_13cm(show: bool = True):
     """
     Generates and visualizes the Pareto front for an array of 8 LEDs positioned at a height of 13 cm.
 
     This function sets up the simulation grid, optimizer, and LED types, then loads or computes the Pareto front for each LED type using precomputed simulation results. The resulting Pareto plots display the trade-off between mean irradiance ratio and homogeneity index for each configuration. Insets show selected LED arrangements. The function creates a single figure with two subplots (one for each LED type) and displays the result.
 
-    :param None:
-        This function does not take any arguments.
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
 
     :returns: None
         The function creates and displays a matplotlib figure but does not return any value.
@@ -296,6 +300,9 @@ def create_pareto_8_leds_13cm():
         create_pareto_8_leds_13cm()
 
     """
+    # the style is also applied when optimizer.py is imported; set it explicitly so that the figure
+    # does not depend on the import order
+    use_publication_style()
     grid: Grid = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)
     optimizer: Optimizer = Optimizer(irradiance_bound=150.0)
     leds: list = [
@@ -326,4 +333,4 @@ def create_pareto_8_leds_13cm():
     handles, labels = axs[0, 0].get_legend_handles_labels()
     fig.legend(handles, labels, loc='upper center', ncol=4, bbox_to_anchor=(0.5, 0.94))
     plt.savefig(os.path.join(figure_path, "pareto_plots_8_leds_13cm.svg"))
-    plt.show()
+    finish(fig, show)

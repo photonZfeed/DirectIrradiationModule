@@ -4,12 +4,13 @@ from optimizer import Optimizer
 from utils.led import LST1_01G01_UV01_00, LST1_01F06_GRN1_00
 from ICIW_Plots import make_square_subplots, cm2inch
 import os
-from utils.process_raytracing_data import process_raytracing_file, calc_metrics, plot_irradiance_raytracing
-from utils.process_radiometry_data import process_radiometry_file, calculate_correction_factor, plot_irradiance_radiometry
+from analysis.process_raytracing_data import process_raytracing_file, calc_metrics, plot_irradiance_raytracing
+from analysis.process_radiometry_data import process_radiometry_file, calculate_correction_factor, plot_irradiance_radiometry
 from utils.grid import Grid
 import numpy as np
+from visualization.style import finish, use_publication_style
 
-def create_plots_validation():
+def create_plots_validation(show: bool = True):
     r"""
     Generates and displays a comparative plots of irradiance, mean irradiance, and homogeneity index for two LED types (365 nm and 530 nm) for the best manual configuration obtained by three different methods: geometric model, raytracing, and radiometry. The plot is saved as an SVG file in the 'figures' directory.
 
@@ -21,7 +22,8 @@ def create_plots_validation():
         - Create three irradiance plots for geometric model, raytracing, and radiometry for each LED.
         - Plots grouped bar charts for both metrics, annotates values, and saves the figure.
 
-    :param None: This function takes no arguments.
+    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.
+    :type show: bool, optional
 
     :returns: None
         This function does not return any value. It produces a side effect by saving and displaying a plot.
@@ -49,8 +51,7 @@ def create_plots_validation():
     This will generate and display the comparison plot, saving it as an SVG file.
     """
     # Set plot style
-    plt.style.use("ICIWstyle")
-    plt.style.use("visualization/publication_style.mplstyle")
+    use_publication_style()
 
     # read data for final validation bar plot
     data = {}
@@ -106,7 +107,7 @@ def create_plots_validation():
         # increase space between subplots
         plt.subplots_adjust(wspace=0.8)
         fig.savefig(os.path.join("figures", f"validation_best_manual_{led.name}.svg"), dpi=300, bbox_inches='tight')
-        plt.show()
+        finish(fig, show)
 
 
 
@@ -166,4 +167,4 @@ def create_plots_validation():
 
     plt.tight_layout()
     fig.savefig(os.path.join("figures", "bar_plot_validation.svg"), dpi=300, bbox_inches='tight')
-    plt.show()
+    finish(fig, show)

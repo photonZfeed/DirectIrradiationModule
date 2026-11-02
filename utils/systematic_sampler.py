@@ -1,12 +1,18 @@
 import numpy as np
 from itertools import combinations
 import concurrent.futures
+import multiprocessing
 import os
 from typing import List, Tuple
 from utils.grid import Grid
 import json
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
+from visualization.style import use_publication_style
+
+# worker processes are started with "spawn" on every operating system: forking a process in which numba's
+# OpenMP threads (geometric model) already run aborts on Linux, and Windows and macOS use "spawn" anyway
+_SPAWN = multiprocessing.get_context("spawn")
 
 class Sampler:
     """
@@ -438,14 +444,13 @@ class Sampler:
         
         all_configs = []
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=_SPAWN) as executor:
             futures = [executor.submit(self._process_axis_chunk, chunk) for chunk in chunks]
             
-            completed = 0
-            for future in concurrent.futures.as_completed(futures):
-                chunk_configs = future.result()
-                all_configs.extend(chunk_configs)
-                completed += 1
+            # the results are collected in the order of the chunks, so the order of the configurations does
+            # not depend on which worker finishes first
+            for completed, future in enumerate(futures, start=1):
+                all_configs.extend(future.result())
                 if len(chunks) > 1 and self.verbose:
                     print(f"Axis case progress: {completed}/{len(chunks)} chunks")
         
@@ -528,14 +533,13 @@ class Sampler:
         
         all_configs = []
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=_SPAWN) as executor:
             futures = [executor.submit(self._process_no_axis_chunk, chunk, q2_combinations) for chunk in chunks]
             
-            completed = 0
-            for future in concurrent.futures.as_completed(futures):
-                chunk_configs = future.result()
-                all_configs.extend(chunk_configs)
-                completed += 1
+            # the results are collected in the order of the chunks, so the order of the configurations does
+            # not depend on which worker finishes first
+            for completed, future in enumerate(futures, start=1):
+                all_configs.extend(future.result())
                 if len(chunks) > 1 and self.verbose:
                     print(f"No-axis case progress: {completed}/{len(chunks)} chunks")
         
@@ -635,15 +639,14 @@ class Sampler:
         
         all_configs = []
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers, mp_context=_SPAWN) as executor:
             futures = [executor.submit(self._process_mixed_chunk, chunk, q2_combinations, axis_combinations) 
                       for chunk in q1_chunks]
             
-            completed = 0
-            for future in concurrent.futures.as_completed(futures):
-                chunk_configs = future.result()
-                all_configs.extend(chunk_configs)
-                completed += 1
+            # the results are collected in the order of the chunks, so the order of the configurations does
+            # not depend on which worker finishes first
+            for completed, future in enumerate(futures, start=1):
+                all_configs.extend(future.result())
                 if len(q1_chunks) > 1 and self.verbose:
                     print(f"Mixed case progress: {completed}/{len(q1_chunks)} chunks")
         
@@ -761,8 +764,7 @@ class Sampler:
         """
 
         # set style
-        plt.style.use("ICIWstyle")
-        plt.style.use("visualization/publication_style.mplstyle")
+        use_publication_style()
 
         x_coords, y_coords = zip(*configuration)
         # convert to float for plotting
@@ -814,8 +816,7 @@ class Sampler:
             - The plot does not display axis labels or tick labels, and the grid is shown behind the points.
         """
 
-        plt.style.use("ICIWstyle")
-        plt.style.use("visualization/publication_style.mplstyle")
+        use_publication_style()
 
         x_coords, y_coords = zip(*configuration)
         # convert to float for plotting
