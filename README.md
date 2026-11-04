@@ -5,13 +5,13 @@
 ![Geometric Model Overview](doc/source/images/geometric_model_overview.png)
 
 
-This project belongs to the article "Rapid Design of Homogeneous Direct-LED Irradiation Modules Using a Geometric Radiation Field Model", *ACS Engineering Au*, DOI: [10.1021/acsengineeringau.6c00051](https://doi.org/10.1021/acsengineeringau.6c00051). An earlier version of the manuscript is available as a preprint on Zenodo under the title "Making Photocatalyst Screening Photo-Efficient – Geometric Radiation Field Model Assisted Design of a Direct Irradiation Module for the Multi-Batch Screening Reactor", DOI: [10.5281/zenodo.17867874](https://doi.org/10.5281/zenodo.17867874). The repository contains the Python code used for the simulations and optimizations described in the article as well as the corresponding radiometry and ray-tracing data. The full dataset, including the radiometry raw data and the electronic lab notebook entries of the simulations, is available on Zenodo, DOI: [10.5281/zenodo.18610996](https://doi.org/10.5281/zenodo.18610996).
+This project belongs to the article "Rapid Design of Homogeneous Direct-LED Irradiation Modules Using a Geometric Radiation Field Model", *ACS Engineering Au*, DOI: [10.1021/acsengineeringau.6c00051](https://doi.org/10.1021/acsengineeringau.6c00051). The repository contains the Python code used for the simulations and optimizations described in the article as well as the corresponding radiometry and ray tracing data. The full dataset, including the radiometry raw data and the electronic lab notebook entries of the simulations, is available on Zenodo, DOI: [10.5281/zenodo.18610996](https://doi.org/10.5281/zenodo.18610996).
 
 ## Features
 - Systematic sampler and Monte-Carlo sampler that generate candidate LED arrangements for the optimization of the direct irradiation module
 - Geometric radiation field model
 - Optimization routines that find the best trade-offs between mean irradiance and homogeneity
-- Evaluation of ray-tracing and radiometry data
+- Evaluation of ray tracing and radiometry data
 - Point-by-point comparison of geometric model, ray tracing and radiometry (residual maps and error statistics)
 - Analyses of the Supporting Information: point-source assumption, uncertainties of ray tracing and radiometry, influence of the irradiance bound and convergence of the Monte-Carlo optimization
 - Data analysis and visualization: one script generates all figures and tables of the publication
@@ -23,9 +23,9 @@ This project belongs to the article "Rapid Design of Homogeneous Direct-LED Irra
 | `geometric_model.py` | Geometric radiation field model |
 | `optimizer.py` | Pareto analysis and selection of the best configuration |
 | `utils/` | Grid, LED, systematic sampler and Monte-Carlo sampler |
-| `analysis/` | Evaluation of the radiometry and ray-tracing data and the analyses of the Supporting Information |
+| `analysis/` | Evaluation of the radiometry and ray tracing data and the analyses of the Supporting Information |
 | `visualization/` | Figures of the publication |
-| `results/` | Radiometry, ray-tracing and simulation data |
+| `results/` | Radiometry, ray tracing and simulation data |
 | `tests/` | Tests of the fast evaluation and of the published Monte-Carlo sample |
 | `doc/` | Source of the documentation |
 | `usage_example.py` | Example of the complete workflow |
@@ -90,7 +90,7 @@ Refer to the [documentation](https://photonzfeed.github.io/DirectIrradiationModu
 
 ## Documentation
 
-The documentation is available at [https://photonzfeed.github.io/DirectIrradiationModule](https://photonzfeed.github.io/DirectIrradiationModule). It describes how to build the direct irradiation module, how to perform the radiometric measurements and the ray-tracing simulations, how to use the optimization code and how to reproduce the figures and tables of the publication, and it gives a detailed overview of the API.
+The documentation is available at [https://photonzfeed.github.io/DirectIrradiationModule](https://photonzfeed.github.io/DirectIrradiationModule). It describes how to build the direct irradiation module, how to perform the radiometric measurements and the ray tracing simulations, how to use the optimization code and how to reproduce the figures and tables of the publication, and it gives a detailed overview of the API.
 
 ## AI Assistance Disclosure
 
