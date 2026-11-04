@@ -25,7 +25,7 @@ This documentation provides guides and API references for designing and optimizi
 * the reproduction of all figures and tables of the publication and its Supporting Information,
 * the API documentation of the sampling algorithms, the geometric model and the optimization routine used for the module design, of the evaluation of the radiometry and ray-tracing data and of the analyses and figures of the publication.
 
-The Python code, the radiometry data and the ray-tracing simulations are available on `GitHub <https://github.com/photonZfeed/DirectIrradiationModule>`_; the full dataset, including the radiometry raw data and the electronic lab notebook entries of the simulations, is available on Zenodo (DOI: `10.5281/zenodo.18610997 <https://doi.org/10.5281/zenodo.18610997>`_).
+The Python code, the radiometry data and the ray-tracing simulations are available on `GitHub <https://github.com/photonZfeed/DirectIrradiationModule>`_; the full dataset, including the radiometry raw data and the electronic lab notebook entries of the simulations, is available on Zenodo (DOI: `10.5281/zenodo.18610996 <https://doi.org/10.5281/zenodo.18610996>`_).
 
 .. toctree::
    :maxdepth: 1

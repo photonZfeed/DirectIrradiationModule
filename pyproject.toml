@@ -58,7 +58,7 @@ test = [
 [project.urls]
 Repository = "https://github.com/photonZfeed/DirectIrradiationModule"
 Documentation = "https://photonzfeed.github.io/DirectIrradiationModule"
-Dataset = "https://zenodo.org/records/18610997"
+Dataset = "https://doi.org/10.5281/zenodo.18610996"
 
 [tool.setuptools]
 py-modules = [

@@ -19,7 +19,7 @@ Data
 
 The measurement and simulation data used by most steps are part of this repository
 (``results/``). Three groups of files are too large for git and are part of the
-`Zenodo dataset <https://zenodo.org/records/18610997>`_; steps whose data are missing are skipped
+`Zenodo dataset <https://doi.org/10.5281/zenodo.18610996>`_; steps whose data are missing are skipped
 with a message:
 
 * Figure 5: ``results/geometric/<LED>/optimization_results_MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz``

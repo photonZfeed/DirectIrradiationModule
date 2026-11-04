@@ -84,7 +84,7 @@ or
 python create_manuscript_plots_tables.py
 ```
 
-`create_manuscript_plots_tables.py --list` lists every figure and table it generates; figures are written to `figures/`, tables to `tables/`. Figure 5, Table S5 and the convergence study of the Monte-Carlo optimization (Figures S18 and S19) need data files that are too large for this repository and are part of the [Zenodo dataset](https://doi.org/10.5281/zenodo.18610997); steps whose data are missing are skipped. The documentation page "[Reproducing the Publication](https://photonzfeed.github.io/DirectIrradiationModule/reproduce.html)" lists the outputs, the functions that produce them and the data they need.
+`create_manuscript_plots_tables.py --list` lists every figure and table it generates; figures are written to `figures/`, tables to `tables/`. Figure 5, Table S5 and the convergence study of the Monte-Carlo optimization (Figures S18 and S19) need data files that are too large for this repository and are part of the [Zenodo dataset](https://doi.org/10.5281/zenodo.18610996); steps whose data are missing are skipped. The documentation page "[Reproducing the Publication](https://photonzfeed.github.io/DirectIrradiationModule/reproduce.html)" lists the outputs, the functions that produce them and the data they need.
 
 Refer to the [documentation](https://photonzfeed.github.io/DirectIrradiationModule/) and to `usage_example.py` for detailed usage instructions.
 
