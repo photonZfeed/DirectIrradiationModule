@@ -15,7 +15,8 @@ Overview
 
 
 
-This project belongs to the article "Rapid Design of Homogeneous Direct-LED Irradiation Modules Using a Geometric Radiation Field Model", *ACS Engineering Au* (DOI: `10.1021/acsengineeringau.6c00051 <https://doi.org/10.1021/acsengineeringau.6c00051>`_). An earlier version of the manuscript is available as a preprint on Zenodo under the title "Making Photocatalyst Screening Photo-Efficient – Geometric Radiation Field Model Assisted Design of a Direct Irradiation Module for the Multi-Batch Screening Reactor" (DOI: `10.5281/zenodo.17867874 <https://doi.org/10.5281/zenodo.17867874>`_).
+
+This project belongs to the article "Rapid Design of Homogeneous Direct-LED Irradiation Modules Using a Geometric Radiation Field Model", *ACS Engineering Au* (DOI: `10.1021/acsengineeringau.6c00051 <https://doi.org/10.1021/acsengineeringau.6c00051>`_).
 
 This documentation provides guides and API references for designing and optimizing the presented direct irradiation module. It covers:
 
