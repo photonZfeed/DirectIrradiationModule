@@ -1,0 +1,980 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visualization &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Analysis" href="analysis.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="geometric_model.html">Geometric Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="optimizer.html">Optimizer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/index.html">Utility Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html">Analysis</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Visualization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.style">Plot Style</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.style.PUBLICATION_STYLE"><code class="docutils literal notranslate"><span class="pre">PUBLICATION_STYLE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.style.finish"><code class="docutils literal notranslate"><span class="pre">finish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.style.use_publication_style"><code class="docutils literal notranslate"><span class="pre">use_publication_style()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.cand_plots">Configurations (Figures 1a and 6a)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.cand_plots.plot_cand"><code class="docutils literal notranslate"><span class="pre">plot_cand()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.plots_validation">Validation (Figure 3)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.plots_validation.create_plots_validation"><code class="docutils literal notranslate"><span class="pre">create_plots_validation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.pareto_plots_H_vs_E_ratio">Pareto Fronts (Figures 4 and 5)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.pareto_plots_H_vs_E_ratio.create_pareto_1_16_leds_5_15cm"><code class="docutils literal notranslate"><span class="pre">create_pareto_1_16_leds_5_15cm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.pareto_plots_H_vs_E_ratio.create_pareto_8_leds_13cm"><code class="docutils literal notranslate"><span class="pre">create_pareto_8_leds_13cm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.pareto_plots_H_vs_E_ratio.process_led"><code class="docutils literal notranslate"><span class="pre">process_led()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.bar_plot_screened_cands">Screened Candidates (Figures 7 and S17)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.bar_plot_screened_cands.create_bar_plot_screened_cands"><code class="docutils literal notranslate"><span class="pre">create_bar_plot_screened_cands()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.bar_plot_screened_cands.create_bar_plots"><code class="docutils literal notranslate"><span class="pre">create_bar_plots()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.bar_plot_final_comparison">Final Comparison (Figure 8)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.bar_plot_final_comparison.create_bar_plot_final_comparison"><code class="docutils literal notranslate"><span class="pre">create_bar_plot_final_comparison()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.ray_independence_plots">Ray Independence (Figure S5)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.ray_independence_plots.create_ray_independence_plots_SI"><code class="docutils literal notranslate"><span class="pre">create_ray_independence_plots_SI()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.irradiance_plots_SI">Irradiance Profiles (Figures S6-S13)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.irradiance_plots_SI.create_irradiance_plots_SI"><code class="docutils literal notranslate"><span class="pre">create_irradiance_plots_SI()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.difference_plots">Residual Maps and Statistics (Figures S14-S16)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.difference_plots.COLUMN_TITLES"><code class="docutils literal notranslate"><span class="pre">COLUMN_TITLES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.difference_plots.COMPARISON_LEGEND"><code class="docutils literal notranslate"><span class="pre">COMPARISON_LEGEND</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.difference_plots.create_difference_plots_SI"><code class="docutils literal notranslate"><span class="pre">create_difference_plots_SI()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.difference_plots.create_residual_statistics_plot"><code class="docutils literal notranslate"><span class="pre">create_residual_statistics_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.difference_plots.pd_option_context"><code class="docutils literal notranslate"><span class="pre">pd_option_context()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-visualization.mc_convergence_plots">Monte-Carlo Convergence (Figures S18 and S19)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.mc_convergence_plots.FIG_WIDTH_CM"><code class="docutils literal notranslate"><span class="pre">FIG_WIDTH_CM</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.mc_convergence_plots.PLANE"><code class="docutils literal notranslate"><span class="pre">PLANE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.mc_convergence_plots.SUBCAPTION_Y"><code class="docutils literal notranslate"><span class="pre">SUBCAPTION_Y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.mc_convergence_plots.create_mc_best_configurations_plot"><code class="docutils literal notranslate"><span class="pre">create_mc_best_configurations_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#visualization.mc_convergence_plots.create_mc_convergence_plot"><code class="docutils literal notranslate"><span class="pre">create_mc_convergence_plot()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">API</a></li>
+      <li class="breadcrumb-item active">Visualization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/visualization.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="visualization">
+<h1>Visualization<a class="headerlink" href="#visualization" title="Link to this heading"></a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">visualization</span></code> package draws the figures of the publication. Every public function writes
+its figure as an SVG file to <code class="docutils literal notranslate"><span class="pre">figures/</span></code>; with <code class="docutils literal notranslate"><span class="pre">show=False</span></code> the figure is closed instead of being
+displayed. <a class="reference internal" href="../reproduce.html"><span class="doc">Reproducing the Publication</span></a> lists which function draws which figure.</p>
+<section id="module-visualization.style">
+<span id="plot-style"></span><h2>Plot Style<a class="headerlink" href="#module-visualization.style" title="Link to this heading"></a></h2>
+<p>Plot style shared by all figures of the manuscript.</p>
+<p>The figures use the <code class="docutils literal notranslate"><span class="pre">ICIWstyle</span></code> of the group’s ICIW-Plots package and the repository’s
+<code class="docutils literal notranslate"><span class="pre">visualization/publication_style.mplstyle</span></code>. Both are applied by file path, so the style works on
+every operating system: ICIW-Plots 1.0.42 registers <code class="docutils literal notranslate"><span class="pre">ICIWstyle</span></code> by name only on Windows.</p>
+<p><strong>Usage Example</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">use_publication_style</span><span class="p">,</span> <span class="n">finish</span>
+<span class="n">use_publication_style</span><span class="p">()</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="o">...</span>
+<span class="n">finish</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py data">
+<dt class="sig sig-object py" id="visualization.style.PUBLICATION_STYLE">
+<span class="sig-prename descclassname"><span class="pre">visualization.style.</span></span><span class="sig-name descname"><span class="pre">PUBLICATION_STYLE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">PosixPath('/home/runner/work/DirectIrradiationModule/DirectIrradiationModule/visualization/publication_style.mplstyle')</span></span><a class="headerlink" href="#visualization.style.PUBLICATION_STYLE" title="Link to this definition"></a></dt>
+<dd><p>The repository’s publication style, next to this module.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.style.finish">
+<span class="sig-prename descclassname"><span class="pre">visualization.style.</span></span><span class="sig-name descname"><span class="pre">finish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/visualization/style.html#finish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.style.finish" title="Link to this definition"></a></dt>
+<dd><p>Display a figure, or close it when it is only written to disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fig</strong> (<em>matplotlib.figure.Figure</em><em>, </em><em>optional</em>) – Figure to close; the current figure if None.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure with <code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.show()</span></code> instead of closing it.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.style.use_publication_style">
+<span class="sig-prename descclassname"><span class="pre">visualization.style.</span></span><span class="sig-name descname"><span class="pre">use_publication_style</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/visualization/style.html#use_publication_style"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.style.use_publication_style" title="Link to this definition"></a></dt>
+<dd><p>Apply <code class="docutils literal notranslate"><span class="pre">ICIWstyle</span></code> and the publication style of the repository.</p>
+</dd></dl>
+
+</section>
+<section id="module-visualization.cand_plots">
+<span id="configurations-figures-1a-and-6a"></span><h2>Configurations (Figures 1a and 6a)<a class="headerlink" href="#module-visualization.cand_plots" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.cand_plots.plot_cand">
+<span class="sig-prename descclassname"><span class="pre">visualization.cand_plots.</span></span><span class="sig-name descname"><span class="pre">plot_cand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conf_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/cand_plots.html#plot_cand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.cand_plots.plot_cand" title="Link to this definition"></a></dt>
+<dd><p>Generates and saves a plot visualizing a candidate configuration for a radiation field experiment.</p>
+<p>This function loads a configuration from a JSON file, visualizes it using matplotlib, and saves the resulting figure as an SVG file in the ‘figures’ directory. The configuration file path is determined by the content of <code class="docutils literal notranslate"><span class="pre">conf_name</span></code>. The function is intended for visual inspection and documentation of candidate configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>conf_name</strong> (<em>str</em>) – Name of the candidate configuration (str). Used to determine the configuration file path and output filename. Should contain either ‘UV’, ‘GRN’, or neither, which selects the corresponding configuration directory or a default manual configuration.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If the configuration JSON file does not exist at the resolved path.</p></li>
+<li><p><strong>ValueError</strong> – If the configuration file cannot be parsed or is invalid.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Saves a plot as an SVG file in the ‘figures’ directory with the name <code class="docutils literal notranslate"><span class="pre">&lt;conf_name&gt;.svg</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>The function assumes that the directories ‘results/sampled_configs/’ and ‘figures/’ exist and are writable.</p></li>
+<li><p>The configuration JSON files must be compatible with <code class="docutils literal notranslate"><span class="pre">Sampler.read_configuration_from_json</span></code>.</p></li>
+<li><p>The function does not display the plot; it only saves it to disk.</p></li>
+</ul>
+</div>
+<p><strong>Example usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plot_cand</span><span class="p">(</span><span class="s1">'best_manual'</span><span class="p">)</span>
+<span class="n">plot_cand</span><span class="p">(</span><span class="s1">'UV1'</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-visualization.plots_validation">
+<span id="validation-figure-3"></span><h2>Validation (Figure 3)<a class="headerlink" href="#module-visualization.plots_validation" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.plots_validation.create_plots_validation">
+<span class="sig-prename descclassname"><span class="pre">visualization.plots_validation.</span></span><span class="sig-name descname"><span class="pre">create_plots_validation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/plots_validation.html#create_plots_validation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.plots_validation.create_plots_validation" title="Link to this definition"></a></dt>
+<dd><p>Generates and displays a comparative plots of irradiance, mean irradiance, and homogeneity index for two LED types (365 nm and 530 nm) for the best manual configuration obtained by three different methods: geometric model, raytracing, and radiometry. The plot is saved as an SVG file in the ‘figures’ directory.</p>
+<dl class="simple">
+<dt><strong>High-Level Description</strong></dt><dd><ul class="simple">
+<li><p>Calculates the geometric model results.</p></li>
+<li><p>Processes raytracing data for the best manual configuration.</p></li>
+<li><p>Processes radiometry data for the best manual configuration, applying a correction factor based on reference measurements.</p></li>
+<li><p>Calculates mean irradiance (W m<sup>-2</sup>) and homogeneity index (unitless) for each case.</p></li>
+<li><p>Create three irradiance plots for geometric model, raytracing, and radiometry for each LED.</p></li>
+<li><p>Plots grouped bar charts for both metrics, annotates values, and saves the figure.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None
+This function does not return any value. It produces a side effect by saving and displaying a plot.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If any required CSV data file is missing.</p></li>
+<li><p><strong>ValueError</strong> – If the data in the CSV files is malformed or cannot be processed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Saves figures to <code class="docutils literal notranslate"><span class="pre">figures/</span></code> in the current working directory called <code class="docutils literal notranslate"><span class="pre">validation_best_manual_LST1_01G01_UV01_00</span></code>, <code class="docutils literal notranslate"><span class="pre">validation_best_manual_LST1_01F06_GRN1_00</span></code>, and <cite>bar_plots_validation.svg</cite>.</p></li>
+<li><p>Displays a matplotlib window with the generated plot.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt><strong>Notes</strong></dt><dd><ul class="simple">
+<li><p>Assumes the existence of rdata files in the <code class="docutils literal notranslate"><span class="pre">results/raytracing/{led.name}/</span></code> and <code class="docutils literal notranslate"><span class="pre">results/radiometry/{led.name}/</span></code> directory.</p></li>
+<li><p>Requires custom matplotlib stylesheets: <code class="docutils literal notranslate"><span class="pre">ICIWstyle</span></code> and <code class="docutils literal notranslate"><span class="pre">visualization/publication_style.mplstyle</span></code>.</p></li>
+<li><p>Uses external utility functions for data processing and correction factor calculation.</p></li>
+<li><p>The number of LEDs per configuration is hardcoded (8 for manual, 16 for model-based).</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Usage Example</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">visualization.bar_plots_validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_bar_plot_validation</span>
+<span class="n">create_bar_plot_validation</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will generate and display the comparison plot, saving it as an SVG file.</p>
+</dd></dl>
+
+</section>
+<section id="module-visualization.pareto_plots_H_vs_E_ratio">
+<span id="pareto-fronts-figures-4-and-5"></span><h2>Pareto Fronts (Figures 4 and 5)<a class="headerlink" href="#module-visualization.pareto_plots_H_vs_E_ratio" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.pareto_plots_H_vs_E_ratio.create_pareto_1_16_leds_5_15cm">
+<span class="sig-prename descclassname"><span class="pre">visualization.pareto_plots_H_vs_E_ratio.</span></span><span class="sig-name descname"><span class="pre">create_pareto_1_16_leds_5_15cm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/pareto_plots_H_vs_E_ratio.html#create_pareto_1_16_leds_5_15cm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.pareto_plots_H_vs_E_ratio.create_pareto_1_16_leds_5_15cm" title="Link to this definition"></a></dt>
+<dd><p>Generates and visualizes the Pareto front for LED arrays ranging from 1 to 16 LEDs positioned at heights between 5 cm and 15 cm.</p>
+<p>This function sets up the simulation grid, optimizer, and LED types, then loads or computes the Pareto front for each LED type using precomputed simulation results. The resulting Pareto plots display the trade-off between mean irradiance ratio and homogeneity index for each configuration. Insets show selected LED arrangements. The function creates a single figure with two subplots (one for each LED type) and displays the result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None
+The function creates and displays a matplotlib figure but does not return any value.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>FileNotFoundError</strong> – If required simulation or result files are missing.</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Displays a matplotlib figure window with the Pareto plots and configuration insets.</p></li>
+<li><p>May print status messages to stdout.</p></li>
+<li><p>Optionally saves the figure to disk if the corresponding line is uncommented.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Assumes the existence of simulation and result files in the specified directory structure.</p></li>
+<li><p>Uses precomputed simulation data for efficiency.</p></li>
+<li><p>The function is intended for interactive use or for generating publication-quality figures.</p></li>
+</ul>
+</div>
+<p><strong>Parameters used internally:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">grid</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code>): Defines the spatial simulation domain (width=33 cm, height=34 cm, step=2.5 cm, side_space=1.5 cm, top_bottom_space=2.0 cm).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">optimizer</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>): Optimizer instance with irradiance bound set to 150.0 mW/cm².</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">leds</span></code> (list): List of tuples with LED objects and subplot titles.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">t_values</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>): Array of t values (unitless, shape (100,)) for Pareto front calculation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">results_path</span></code> (str): Path to the directory containing simulation and result files (default: “results/”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sim_filename</span></code> (str): Filename of the simulation results (default: “simulation_results_MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">figure_path</span></code> (str): Path to the directory for saving figures (default: “figures/”).</p></li>
+</ul>
+<p><strong>Usage Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pareto_plots_H_vs_E_ratio</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_pareto_1_16_leds_5_15cm</span>
+<span class="n">create_pareto_1_16_leds_5_15cm</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.pareto_plots_H_vs_E_ratio.create_pareto_8_leds_13cm">
+<span class="sig-prename descclassname"><span class="pre">visualization.pareto_plots_H_vs_E_ratio.</span></span><span class="sig-name descname"><span class="pre">create_pareto_8_leds_13cm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/pareto_plots_H_vs_E_ratio.html#create_pareto_8_leds_13cm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.pareto_plots_H_vs_E_ratio.create_pareto_8_leds_13cm" title="Link to this definition"></a></dt>
+<dd><p>Generates and visualizes the Pareto front for an array of 8 LEDs positioned at a height of 13 cm.</p>
+<p>This function sets up the simulation grid, optimizer, and LED types, then loads or computes the Pareto front for each LED type using precomputed simulation results. The resulting Pareto plots display the trade-off between mean irradiance ratio and homogeneity index for each configuration. Insets show selected LED arrangements. The function creates a single figure with two subplots (one for each LED type) and displays the result.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None
+The function creates and displays a matplotlib figure but does not return any value.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>FileNotFoundError</strong> – If required simulation or result files are missing.</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Displays a matplotlib figure window with the Pareto plots and configuration insets.</p></li>
+<li><p>May print status messages to stdout.</p></li>
+<li><p>Optionally saves the figure to disk if the corresponding line is uncommented.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Assumes the existence of simulation and result files in the specified directory structure.</p></li>
+<li><p>Uses precomputed simulation data for efficiency.</p></li>
+<li><p>The function is intended for interactive use or for generating publication-quality figures.</p></li>
+</ul>
+</div>
+<p><strong>Parameters used internally:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">grid</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code>): Defines the spatial simulation domain (width=33 cm, height=34 cm, step=2.5 cm, side_space=1.5 cm, top_bottom_space=2.0 cm).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">optimizer</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>): Optimizer instance with irradiance bound set to 150.0 mW/cm².</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">leds</span></code> (list): List of tuples with LED objects and subplot titles.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">t_values</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code>): Array of t values (unitless, shape (100,)) for Pareto front calculation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">results_path</span></code> (str): Path to the directory containing simulation and result files (default: “results/”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sim_filename</span></code> (str): Filename of the simulation results (default: “simulation_results_systematic_8_leds_13_cm_482931_samples.npz”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">figure_path</span></code> (str): Path to the directory for saving figures (default: “figures/”).</p></li>
+</ul>
+<p><strong>Usage Example:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pareto_plots_H_vs_E_ratio</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_pareto_8_leds_13cm</span>
+<span class="n">create_pareto_8_leds_13cm</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.pareto_plots_H_vs_E_ratio.process_led">
+<span class="sig-prename descclassname"><span class="pre">visualization.pareto_plots_H_vs_E_ratio.</span></span><span class="sig-name descname"><span class="pre">process_led</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">matplotlib.axes.Axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">led</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">find_raytracing_candidates</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_near_optimal_configs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/pareto_plots_H_vs_E_ratio.html#process_led"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.pareto_plots_H_vs_E_ratio.process_led" title="Link to this definition"></a></dt>
+<dd><p>Generates and visualizes the Pareto front for a specified LED configuration, including optional export and plotting of near-optimal configurations, and overlays additional reference points for comparison.</p>
+<p>This function reads or computes optimization results for a given LED and simulation setup, plots the Pareto front of mean irradiance ratio versus homogeneity index, and optionally exports near-optimal configurations for further raytracing analysis. It also supports plotting insets of selected configurations and overlays reference points such as indirect irradiation and manually optimized configurations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> – Matplotlib axes object on which to plot the Pareto front and configuration insets.
+Type: <code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></p></li>
+<li><p><strong>led</strong> – LED object to be optimized. Must have a <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute for file path construction.
+Type: Any</p></li>
+<li><p><strong>optimizer</strong> – Optimizer instance used for Pareto front calculation and metric evaluation.
+Type: <code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code></p></li>
+<li><p><strong>grid</strong> – Grid object defining the spatial simulation domain.
+Type: <code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code></p></li>
+<li><p><strong>t_values</strong> – Array of t values (unitless, shape (N,)) for Pareto front calculation.
+Type: <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.ndarray</span></code></p></li>
+<li><p><strong>results_path</strong> – Path to the directory containing simulation and result files.
+Type: str</p></li>
+<li><p><strong>sim_filename</strong> – Filename of the simulation results (e.g., <code class="docutils literal notranslate"><span class="pre">simulation_results_...npz</span></code>).
+Type: str</p></li>
+<li><p><strong>title</strong> – Title for the Pareto plot.
+Type: str</p></li>
+<li><p><strong>load_previous</strong> – If True, loads previous optimization results from disk if available; otherwise, computes and saves new results. Default is False.
+Type: bool, optional</p></li>
+<li><p><strong>find_raytracing_candidates</strong> – If True, exports near-optimal configurations (around the best found) as JSON files for raytracing. Default is False.
+Type: bool, optional</p></li>
+<li><p><strong>plot_near_optimal_configs</strong> – If True, plots all near-optimal configurations from exported JSON files as insets; otherwise, plots only start, end, and best configurations. Default is False.
+Type: bool, optional</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The axes object with the Pareto plot and configuration insets.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">matplotlib.axes.Axes</span></code></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If required simulation or radiometry data files are missing.</p></li>
+<li><p><strong>ValueError</strong> – If the LED object does not have a <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute or if configuration files are malformed.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>May write optimization and configuration JSON files to disk if <code class="docutils literal notranslate"><span class="pre">find_raytracing_candidates</span></code> is True or if new optimization results are computed.</p></li>
+<li><p>May print status messages to stdout.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Assumes the existence of a compatible directory structure under <code class="docutils literal notranslate"><span class="pre">results_path</span></code> for reading/writing results and configuration files.</p></li>
+<li><p>The function creates insets on the provided axes for visualizing selected configurations.</p></li>
+<li><p>The optimizer is re-instantiated within the function, which may override the passed-in optimizer.</p></li>
+</ul>
+</div>
+<p><strong>Usage Example</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LST1_01G01_UV01_00</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+<span class="n">grid</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">irradiance_bound</span><span class="o">=</span><span class="mf">150.0</span><span class="p">)</span>
+<span class="n">t_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">process_led</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">t_values</span><span class="p">,</span> <span class="s1">'results/'</span><span class="p">,</span> <span class="s1">'simulation_results.npz'</span><span class="p">,</span> <span class="s1">'365 nm LEDs'</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-visualization.bar_plot_screened_cands">
+<span id="screened-candidates-figures-7-and-s17"></span><h2>Screened Candidates (Figures 7 and S17)<a class="headerlink" href="#module-visualization.bar_plot_screened_cands" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.bar_plot_screened_cands.create_bar_plot_screened_cands">
+<span class="sig-prename descclassname"><span class="pre">visualization.bar_plot_screened_cands.</span></span><span class="sig-name descname"><span class="pre">create_bar_plot_screened_cands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">figure_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'figures/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/bar_plot_screened_cands.html#create_bar_plot_screened_cands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.bar_plot_screened_cands.create_bar_plot_screened_cands" title="Link to this definition"></a></dt>
+<dd><p>Generates comparative bar plots for screened candidate LED module configurations, visualizing results from three different evaluation methods: geometric modeling, raytracing simulation, and radiometric measurement.</p>
+<p>This function processes data for two types of LEDs (UV and green), automatically loading and mapping results from radiometric CSV files, geometric model simulations (from JSON configuration files), and raytracing text files. For each LED type, it creates grouped bar plots showing the mean irradiance (E_mean, in W/m²) and homogeneity (H, dimensionless, 0–1) for each candidate configuration, with and without reflectors. The plots are styled for publication and can be displayed interactively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>figure_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory the figures <code class="docutils literal notranslate"><span class="pre">bar_plots_screened_candidates_&lt;LED&gt;.svg</span></code> are saved to (default: ‘figures/’).
+Figure 7 of the manuscript is the 365 nm version, Figure S17 the 530 nm version.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figures after saving; with False they are closed instead (default: True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The function does not return any value. It displays the generated plots using matplotlib’s interactive window.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If required data files (CSV, JSON, or TXT) are missing in the expected directories.</p></li>
+<li><p><strong>KeyError</strong> – If expected keys are missing in the loaded data dictionaries.</p></li>
+<li><p><strong>Exception</strong> – Propagates exceptions from underlying data processing functions if data is malformed or incompatible.</p></li>
+<li><p><strong>Side Effects</strong> – </p></li>
+<li><p><strong>------------</strong> – </p></li>
+<li><p><strong>- Reads multiple files from disk</strong><strong> (</strong><strong>radiometry</strong><strong>, </strong><strong>raytracing</strong><strong>, </strong><strong>and configuration directories</strong><strong>)</strong><strong>.</strong> – </p></li>
+<li><p><strong>- Displays matplotlib figures interactively</strong><strong> (</strong><strong>unless modified to export</strong><strong>)</strong><strong>.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Assumes the existence of specific directory structures and file naming conventions for radiometry, raytracing, and configuration data.</p></li>
+<li><p>Uses a custom matplotlib style (‘ICIWstyle’ and ‘visualization/publication_style.mplstyle’).</p></li>
+<li><p>The number of LEDs and their properties are hardcoded for each LED type.</p></li>
+<li><p>The function is intended for exploratory analysis and figure generation in the context of LED module optimization.</p></li>
+</ul>
+<section id="usage-example">
+<h3>Usage Example<a class="headerlink" href="#usage-example" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">create_bar_plot_screened_cands</span><span class="p">()</span>
+<span class="go"># Displays comparative bar plots for all screened candidate configurations.</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.bar_plot_screened_cands.create_bar_plots">
+<span class="sig-prename descclassname"><span class="pre">visualization.bar_plot_screened_cands.</span></span><span class="sig-name descname"><span class="pre">create_bar_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keys</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">geometric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raytracing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radiometric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'bar_plots_selected_configurations.svg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'svg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/bar_plot_screened_cands.html#create_bar_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.bar_plot_screened_cands.create_bar_plots" title="Link to this definition"></a></dt>
+<dd><p>Generate comparative grouped bar plots for mean irradiance and homogeneity across multiple evaluation methods.</p>
+<p>This function visualizes and compares the results of three different evaluation methods—geometric modeling, raytracing simulation, and radiometric measurement—by creating grouped bar plots for each candidate configuration. For each method, the mean irradiance (<code class="docutils literal notranslate"><span class="pre">E_mean</span></code>) and homogeneity (<code class="docutils literal notranslate"><span class="pre">H</span></code>) are plotted side by side, allowing for direct visual comparison. The function supports both interactive display and export to file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>keys</strong> (<em>list</em><em> of </em><em>str</em>) – List of configuration names (labels) to be plotted. Each entry corresponds to a candidate configuration, e.g., ‘UV1’, ‘UV1 - Reflector’.</p></li>
+<li><p><strong>geometric</strong> (<em>dict</em>) – Dictionary mapping configuration names to geometric model results. Each value should be a dict with keys:
+- ‘E_mean’ (float): Mean irradiance (W/m²).
+- ‘H’ (float): Homogeneity (dimensionless, 0–1).</p></li>
+<li><p><strong>raytracing</strong> (<em>dict</em>) – Dictionary mapping configuration names to raytracing simulation results. Each value should be a dict with keys:
+- ‘E_mean’ (float): Mean irradiance (W/m²).
+- ‘H’ (float): Homogeneity (dimensionless, 0–1).</p></li>
+<li><p><strong>radiometric</strong> (<em>dict</em>) – Dictionary mapping configuration names to radiometric measurement results. Each value should be a dict with keys:
+- ‘E_mean’ (float): Mean irradiance (W/m²).
+- ‘H’ (float): Homogeneity (dimensionless, 0–1).</p></li>
+<li><p><strong>export_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory path where the plot will be saved. If empty (default), the plot is shown interactively instead of being saved.</p></li>
+<li><p><strong>filename</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the output file (default: ‘bar_plots_selected_configurations.svg’). Only used if <code class="docutils literal notranslate"><span class="pre">export_path</span></code> is provided.</p></li>
+<li><p><strong>export_type</strong> (<em>str</em><em>, </em><em>optional</em>) – File format for export (default: ‘svg’). Passed to <code class="docutils literal notranslate"><span class="pre">matplotlib.pyplot.savefig</span></code>.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Display the plot (True) or close it (False). Default None: display it only if <code class="docutils literal notranslate"><span class="pre">export_path</span></code> is empty.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>This function does not return any value. It either displays the plot interactively or saves it to disk.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>KeyError</strong> – If expected keys are missing in the input dictionaries for any configuration.</p></li>
+<li><p><strong>Exception</strong> – Propagates exceptions from matplotlib or file I/O if saving fails.</p></li>
+<li><p><strong>Side Effects</strong> – </p></li>
+<li><p><strong>------------</strong> – </p></li>
+<li><p><strong>- Displays a matplotlib figure interactively</strong><strong> (</strong><strong>if export_path is not provided</strong><strong>)</strong><strong>.</strong> – </p></li>
+<li><p><strong>- Saves a figure to disk</strong><strong> (</strong><strong>if export_path is provided</strong><strong>)</strong><strong>.</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Assumes that all input dictionaries use the same set of configuration keys as provided in <code class="docutils literal notranslate"><span class="pre">keys</span></code>.</p></li>
+<li><p>Missing data for a method/configuration is represented as NaN and will appear as empty bars.</p></li>
+<li><p>Uses a custom subplot layout and styling for publication-quality figures.</p></li>
+<li><p>The x-axis labels are cleaned to remove ‘ - Reflector’ for clarity.</p></li>
+<li><p>The function expects <code class="docutils literal notranslate"><span class="pre">make_rect_subplots</span></code> and <code class="docutils literal notranslate"><span class="pre">cm2inch</span></code> utilities to be available in the environment.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'UV1'</span><span class="p">,</span> <span class="s1">'UV2'</span><span class="p">,</span> <span class="s1">'UV1 - Reflector'</span><span class="p">]</span>
+<span class="n">geometric</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'UV1'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'E_mean'</span><span class="p">:</span> <span class="mf">20.1</span><span class="p">,</span> <span class="s1">'H'</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">},</span> <span class="o">...</span><span class="p">}</span>
+<span class="n">raytracing</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'UV1'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'E_mean'</span><span class="p">:</span> <span class="mf">19.8</span><span class="p">,</span> <span class="s1">'H'</span><span class="p">:</span> <span class="mf">0.93</span><span class="p">},</span> <span class="o">...</span><span class="p">}</span>
+<span class="n">radiometric</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'UV1'</span><span class="p">:</span> <span class="p">{</span><span class="s1">'E_mean'</span><span class="p">:</span> <span class="mf">18.5</span><span class="p">,</span> <span class="s1">'H'</span><span class="p">:</span> <span class="mf">0.91</span><span class="p">},</span> <span class="o">...</span><span class="p">}</span>
+<span class="n">create_bar_plots</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">geometric</span><span class="p">,</span> <span class="n">raytracing</span><span class="p">,</span> <span class="n">radiometric</span><span class="p">,</span> <span class="n">export_path</span><span class="o">=</span><span class="s1">'./figures'</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s1">'comparison'</span><span class="p">,</span> <span class="n">export_type</span><span class="o">=</span><span class="s1">'png'</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-visualization.bar_plot_final_comparison">
+<span id="final-comparison-figure-8"></span><h2>Final Comparison (Figure 8)<a class="headerlink" href="#module-visualization.bar_plot_final_comparison" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.bar_plot_final_comparison.create_bar_plot_final_comparison">
+<span class="sig-prename descclassname"><span class="pre">visualization.bar_plot_final_comparison.</span></span><span class="sig-name descname"><span class="pre">create_bar_plot_final_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/bar_plot_final_comparison.html#create_bar_plot_final_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.bar_plot_final_comparison.create_bar_plot_final_comparison" title="Link to this definition"></a></dt>
+<dd><p>Generates and displays a comparative bar plot of mean irradiance and homogeneity index for two LED types (365 nm and 530 nm) under three different module configurations: indirect irradiation, manual optimization, and model-based optimization. The function reads radiometry data from CSV files, processes and normalizes the results, and visualizes the comparison in a two-panel figure. The resulting plot is saved as an SVG file and shown interactively.</p>
+<dl class="simple">
+<dt><strong>High-Level Description</strong></dt><dd><ul class="simple">
+<li><p>Reads and processes radiometry data for two LED types and three configurations per type.</p></li>
+<li><p>Calculates mean irradiance (W m<sup>-2</sup>) and homogeneity index (unitless) for each case.</p></li>
+<li><p>Plots grouped bar charts for both metrics, annotates values, and saves the figure.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None
+This function does not return any value. It produces a side effect by saving and displaying a plot.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If any required CSV data file is missing.</p></li>
+<li><p><strong>ValueError</strong> – If the data in the CSV files is malformed or cannot be processed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Saves a figure to <code class="docutils literal notranslate"><span class="pre">figures/bar_plot_final_comparison.svg</span></code> in the current working directory.</p></li>
+<li><p>Displays a matplotlib window with the generated plot.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt><strong>Notes</strong></dt><dd><ul class="simple">
+<li><p>Assumes the existence of radiometry data files in the <code class="docutils literal notranslate"><span class="pre">results/radiometry/{led.name}/</span></code> directory structure.</p></li>
+<li><p>Requires custom matplotlib stylesheets: <code class="docutils literal notranslate"><span class="pre">ICIWstyle</span></code> and <code class="docutils literal notranslate"><span class="pre">visualization/publication_style.mplstyle</span></code>.</p></li>
+<li><p>Uses external utility functions for data processing and correction factor calculation.</p></li>
+<li><p>The number of LEDs per configuration is hardcoded (8 for manual, 16 for model-based).</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Usage Example</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">visualization.bar_plot_final_comparison</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_bar_plot_final_comparison</span>
+<span class="n">create_bar_plot_final_comparison</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will generate and display the comparison plot, saving it as an SVG file.</p>
+</dd></dl>
+
+</section>
+<section id="module-visualization.ray_independence_plots">
+<span id="ray-independence-figure-s5"></span><h2>Ray Independence (Figure S5)<a class="headerlink" href="#module-visualization.ray_independence_plots" title="Link to this heading"></a></h2>
+<p>Ray-count independence plots for raytracing simulations.</p>
+<p>This module provides <a class="reference internal" href="#visualization.ray_independence_plots.create_ray_independence_plots_SI" title="visualization.ray_independence_plots.create_ray_independence_plots_SI"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_ray_independence_plots_SI()</span></code></a>, which generates
+a 2 × 2 figure assessing how the standard deviation of irradiance and the
+computation time change with the number of rays used in Speos raytracing
+simulations (365 nm and 530 nm, with and without diffuse reflectors). The
+figure is saved as an SVG file in the <code class="docutils literal notranslate"><span class="pre">figures/</span></code> directory.</p>
+<p>Typical usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">visualization.ray_independence_plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_ray_independence_plots_SI</span>
+<span class="n">create_ray_independence_plots_SI</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.ray_independence_plots.create_ray_independence_plots_SI">
+<span class="sig-prename descclassname"><span class="pre">visualization.ray_independence_plots.</span></span><span class="sig-name descname"><span class="pre">create_ray_independence_plots_SI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/ray_independence_plots.html#create_ray_independence_plots_SI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.ray_independence_plots.create_ray_independence_plots_SI" title="Link to this definition"></a></dt>
+<dd><p>Generates and saves a set of 2x2 subplots visualizing the dependence of raytracing simulation results on the number of rays used. The function compares the standard deviation of irradiance and computation time for two wavelengths (365 nm and 530 nm), each with and without reflectors, as a function of the number of rays. Data is read from an Excel file, and the resulting figure is saved as an SVG file.</p>
+<p>The function is intended to help assess the statistical independence and convergence of raytracing results with increasing ray count, and to visualize the computational cost associated with higher ray numbers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If the Excel data file is not found at the specified path.</p></li>
+<li><p><strong>KeyError</strong> – If the expected sheet or data ranges are missing in the Excel file.</p></li>
+<li><p><strong>ValueError</strong> – If the data cannot be converted to float as expected.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>Reads data from ‘data/raytracing/ray_independence_test.xlsx’.</p></li>
+<li><p>Saves a figure to ‘figures/ray_independence_plots.svg’.</p></li>
+<li><p>Displays the generated plots using matplotlib’s interactive window.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Assumes the Excel file contains a sheet named ‘Planilha1’ with data in specific cell ranges.</p></li>
+<li><p>Requires the custom plotting style ‘ICIWstyle’ and ‘visualization/publication_style.mplstyle’ to be available.</p></li>
+<li><p>Uses custom utility functions <code class="docutils literal notranslate"><span class="pre">cm2inch</span></code> and <code class="docutils literal notranslate"><span class="pre">make_square_subplots</span></code> from the <code class="docutils literal notranslate"><span class="pre">ICIW_Plots</span></code> module.</p></li>
+<li><p>The function does not accept any parameters and is intended to be run as a script or called from another script.</p></li>
+</ul>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Example<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">create_ray_independence_plots_SI</span><span class="p">()</span>
+<span class="go"># Generates and displays the ray independence plots, and saves them as an SVG file.</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-visualization.irradiance_plots_SI">
+<span id="irradiance-profiles-figures-s6-s13"></span><h2>Irradiance Profiles (Figures S6-S13)<a class="headerlink" href="#module-visualization.irradiance_plots_SI" title="Link to this heading"></a></h2>
+<p>Irradiance comparison plots for the direct irradiation module (SI units).</p>
+<p>This module provides <a class="reference internal" href="#visualization.irradiance_plots_SI.create_irradiance_plots_SI" title="visualization.irradiance_plots_SI.create_irradiance_plots_SI"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_irradiance_plots_SI()</span></code></a>, which generates
+publication-quality figures comparing the geometric model, raytracing
+simulation, and radiometry measurements for each validated LED configuration.
+Figures are saved as SVG files in the <code class="docutils literal notranslate"><span class="pre">figures/</span></code> directory.</p>
+<p>Typical usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">visualization.irradiance_plots_SI</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_irradiance_plots_SI</span>
+<span class="n">create_irradiance_plots_SI</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.irradiance_plots_SI.create_irradiance_plots_SI">
+<span class="sig-prename descclassname"><span class="pre">visualization.irradiance_plots_SI.</span></span><span class="sig-name descname"><span class="pre">create_irradiance_plots_SI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/irradiance_plots_SI.html#create_irradiance_plots_SI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.irradiance_plots_SI.create_irradiance_plots_SI" title="Link to this definition"></a></dt>
+<dd><p>Generates and saves irradiance comparison plots for multiple LED configurations using both radiometry and raytracing data in SI units (W/m²).</p>
+<p>For each LED configuration (UV1-3, GRN1-3, and best manual for each type), this function creates a figure with six subplots arranged in a 2x3 grid:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>(0, 0): Geometric model (no reflector)</p></li>
+<li><p>(0, 1): Raytracing (no reflector)</p></li>
+<li><p>(0, 2): Radiometry (no reflector)</p></li>
+<li><p>(1, 1): Raytracing (with reflector)</p></li>
+<li><p>(1, 2): Radiometry (with reflector)</p></li>
+<li><p>(1, 0): Empty (for layout)</p></li>
+</ul>
+</div></blockquote>
+<p>Each subplot visualizes the irradiance distribution on the target plane. All subplots share a unified colorbar for direct comparison.</p>
+<p>The function reads input data from specific directories, applies correction factors to radiometry data, and simulates the geometric model for each configuration. Figures are saved as SVG files in the ‘figures’ directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>FileNotFoundError</strong> – If required data files or configuration JSONs are missing.</p></li>
+<li><p><strong>ValueError</strong> – If data files are malformed or contain unexpected values.</p></li>
+<li><p><strong>Exception</strong> – For errors during plotting or file saving.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>Creates and saves SVG figures in the ‘figures’ directory.</p></li>
+<li><p>May create the ‘figures’ directory if it does not exist.</p></li>
+<li><p>Displays figures using matplotlib’s interactive window.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Assumes the presence of radiometry and raytracing data in the ‘results/radiometry’ and ‘results/raytracing’ directories, respectively.</p></li>
+<li><p>Assumes LED configuration JSONs are present in ‘results/sampled_configs/near_optimal_configs/&lt;led_name&gt;/&lt;label&gt;.json’.</p></li>
+<li><p>Uses external utility functions for data processing and plotting.</p></li>
+<li><p>The function does not return any value; it is intended for side effects (plotting and saving figures).</p></li>
+</ul>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Example<span class="colon">:</span></dt>
+<dd class="field-odd"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">create_irradiance_plots_SI</span><span class="p">()</span>
+<span class="go"># Generates and saves irradiance comparison plots for all defined LED configurations.</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-visualization.difference_plots">
+<span id="residual-maps-and-statistics-figures-s14-s16"></span><h2>Residual Maps and Statistics (Figures S14-S16)<a class="headerlink" href="#module-visualization.difference_plots" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="visualization.difference_plots.COLUMN_TITLES">
+<span class="sig-prename descclassname"><span class="pre">visualization.difference_plots.</span></span><span class="sig-name descname"><span class="pre">COLUMN_TITLES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['geometric</span> <span class="pre">model\n$-$</span> <span class="pre">ray</span> <span class="pre">tracing',</span> <span class="pre">'geometric</span> <span class="pre">model\n$-$</span> <span class="pre">radiometry',</span> <span class="pre">'ray</span> <span class="pre">tracing\n$-$</span> <span class="pre">radiometry']</span></span><a class="headerlink" href="#visualization.difference_plots.COLUMN_TITLES" title="Link to this definition"></a></dt>
+<dd><p>Column titles of the three pairwise comparisons.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="visualization.difference_plots.COMPARISON_LEGEND">
+<span class="sig-prename descclassname"><span class="pre">visualization.difference_plots.</span></span><span class="sig-name descname"><span class="pre">COMPARISON_LEGEND</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[('model</span> <span class="pre">$-$</span> <span class="pre">ray</span> <span class="pre">tracing',</span> <span class="pre">1.0),</span> <span class="pre">('model</span> <span class="pre">$-$</span> <span class="pre">radiometry',</span> <span class="pre">0.67),</span> <span class="pre">('ray</span> <span class="pre">tracing</span> <span class="pre">$-$</span> <span class="pre">radiometry',</span> <span class="pre">0.33)]</span></span><a class="headerlink" href="#visualization.difference_plots.COMPARISON_LEGEND" title="Link to this definition"></a></dt>
+<dd><p>Legend entries of the three pairwise comparisons, together with the transparency used for them
+in the bar charts. The same shading scheme as in the other bar charts of the manuscript is used.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.difference_plots.create_difference_plots_SI">
+<span class="sig-prename descclassname"><span class="pre">visualization.difference_plots.</span></span><span class="sig-name descname"><span class="pre">create_difference_plots_SI</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">results_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'results/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'figures/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/difference_plots.html#create_difference_plots_SI"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.difference_plots.create_difference_plots_SI" title="Link to this definition"></a></dt>
+<dd><p>Create the residual maps and the residual statistics of all compared configurations.</p>
+<p>One composite figure per LED type is generated, with one row per configuration (best manual
+arrangement and the three near-Pareto-optimal configurations) and one column per pairwise
+comparison between geometric model, ray tracing and radiometry. Because the irradiance level
+differs between the configurations, each row carries its own colour bar. In addition, the
+statistics of all residual fields are written as a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>results_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Path of the results directory.</p></li>
+<li><p><strong>figure_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory the figures are written to.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p></li>
+<li><p><strong>table_path</strong> (<em>str</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Directory <code class="docutils literal notranslate"><span class="pre">difference_summary.csv</span></code> is written to. Default None: <code class="docutils literal notranslate"><span class="pre">&lt;results_path&gt;/difference_maps/</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>FileNotFoundError</strong> – If a required radiometry, ray tracing or configuration file is
+missing.</p>
+</dd>
+<dt class="field-even">Side effects<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p>Saves <code class="docutils literal notranslate"><span class="pre">difference_maps_&lt;365nm|530nm&gt;.svg</span></code> to <code class="docutils literal notranslate"><span class="pre">figure_path</span></code>.</p></li>
+<li><p>Saves <code class="docutils literal notranslate"><span class="pre">difference_summary.csv</span></code> to <code class="docutils literal notranslate"><span class="pre">table_path</span></code> (default <code class="docutils literal notranslate"><span class="pre">&lt;results_path&gt;/difference_maps/</span></code>).</p></li>
+<li><p>Displays the figures with <code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.show()</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The ray tracing fields are block-averaged onto the common evaluation grid instead of being
+interpolated. Without this averaging, the Monte-Carlo noise of the 1 mm mesh dominates the
+residual maps.</p>
+</div>
+<p><strong>Usage Example</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">visualization.difference_plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_difference_plots_SI</span>
+<span class="n">create_difference_plots_SI</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.difference_plots.create_residual_statistics_plot">
+<span class="sig-prename descclassname"><span class="pre">visualization.difference_plots.</span></span><span class="sig-name descname"><span class="pre">create_residual_statistics_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">statistics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'figures/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/difference_plots.html#create_residual_statistics_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.difference_plots.create_residual_statistics_plot" title="Link to this definition"></a></dt>
+<dd><p>Plot the root mean square error of the pairwise residuals as a grouped bar chart.</p>
+<p>Mean irradiance and homogeneity, which are compared in the manuscript, characterize each
+irradiance field on its own and are insensitive to deviations that cancel in the spatial
+average: two fields can share both values and still disagree at every position. The RMSE of the
+residual measures this local agreement between two methods and is therefore reported here in
+addition. The mean offset between two methods is not shown separately, because it is identical
+to the difference of the mean irradiances already reported in the manuscript.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>statistics</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>) – Table of residual statistics as returned by
+<a class="reference internal" href="analysis.html#analysis.compare_methods.compare_all" title="analysis.compare_methods.compare_all"><code class="xref py py-func docutils literal notranslate"><span class="pre">analysis.compare_methods.compare_all()</span></code></a>.</p></li>
+<li><p><strong>figure_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory the figure is written to.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure(s) after saving; with False they are closed instead. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Side effects<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p>Saves <code class="docutils literal notranslate"><span class="pre">difference_statistics.svg</span></code> to <code class="docutils literal notranslate"><span class="pre">figure_path</span></code>.</p></li>
+<li><p>Displays the figure with <code class="xref py py-func docutils literal notranslate"><span class="pre">matplotlib.pyplot.show()</span></code>.</p></li>
+<li><p>Prints the largest absolute residual of each LED type, which is quoted in the text of the
+supporting information.</p></li>
+</ul>
+</dd>
+</dl>
+<p><strong>Usage Example</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">analysis.compare_methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">compare_all</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">visualization.difference_plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_residual_statistics_plot</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">statistics</span> <span class="o">=</span> <span class="n">compare_all</span><span class="p">()</span>
+<span class="n">create_residual_statistics_plot</span><span class="p">(</span><span class="n">statistics</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.difference_plots.pd_option_context">
+<span class="sig-prename descclassname"><span class="pre">visualization.difference_plots.</span></span><span class="sig-name descname"><span class="pre">pd_option_context</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/visualization/difference_plots.html#pd_option_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.difference_plots.pd_option_context" title="Link to this definition"></a></dt>
+<dd><p>Return a pandas option context with a wide console output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Context manager that widens the console output for the summary tables.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>pandas.option_context</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-visualization.mc_convergence_plots">
+<span id="monte-carlo-convergence-figures-s18-and-s19"></span><h2>Monte-Carlo Convergence (Figures S18 and S19)<a class="headerlink" href="#module-visualization.mc_convergence_plots" title="Link to this heading"></a></h2>
+<p>Figures S18 and S19: convergence of the Monte-Carlo optimization.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#visualization.mc_convergence_plots.create_mc_convergence_plot" title="visualization.mc_convergence_plots.create_mc_convergence_plot"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_mc_convergence_plot()</span></code></a> (Figure S18): (a, b) non-dominated configurations of the first
+5 million candidates of every seed; (c, d) highest H E_mean / E_bound versus the number of
+candidates.</p></li>
+<li><p><a class="reference internal" href="#visualization.mc_convergence_plots.create_mc_best_configurations_plot" title="visualization.mc_convergence_plots.create_mc_best_configurations_plot"><code class="xref py py-func docutils literal notranslate"><span class="pre">create_mc_best_configurations_plot()</span></code></a> (Figure S19): the configuration with the highest
+H E_mean / E_bound of every seed at 5 million candidates, for both LED types.</p></li>
+</ul>
+<p>The figures are drawn from the tables of <a class="reference internal" href="analysis.html#analysis.mc_convergence.convergence_tables" title="analysis.mc_convergence.convergence_tables"><code class="xref py py-func docutils literal notranslate"><span class="pre">analysis.mc_convergence.convergence_tables()</span></code></a> in the
+style of Figures 1a, 4 and 5 of the manuscript: square axes, sub-captions below the panels, dotted
+lines between the markers and a red cross for UV3 / GRN3.</p>
+<p><strong>Usage Example</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">analysis.mc_convergence</span><span class="w"> </span><span class="kn">import</span> <span class="n">convergence_tables</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">visualization.mc_convergence_plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_mc_convergence_plot</span><span class="p">,</span> <span class="n">create_mc_best_configurations_plot</span>
+<span class="n">best</span><span class="p">,</span> <span class="n">fronts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">convergence_tables</span><span class="p">()</span>
+<span class="n">create_mc_convergence_plot</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="n">fronts</span><span class="p">)</span>
+<span class="n">create_mc_best_configurations_plot</span><span class="p">(</span><span class="n">best</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py data">
+<dt class="sig sig-object py" id="visualization.mc_convergence_plots.FIG_WIDTH_CM">
+<span class="sig-prename descclassname"><span class="pre">visualization.mc_convergence_plots.</span></span><span class="sig-name descname"><span class="pre">FIG_WIDTH_CM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">19.0</span></span><a class="headerlink" href="#visualization.mc_convergence_plots.FIG_WIDTH_CM" title="Link to this definition"></a></dt>
+<dd><p>Figure width in cm, as Figures 4 and 5 of the manuscript.</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="visualization.mc_convergence_plots.PLANE">
+<span class="sig-prename descclassname"><span class="pre">visualization.mc_convergence_plots.</span></span><span class="sig-name descname"><span class="pre">PLANE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(33.0,</span> <span class="pre">34.0)</span></span><a class="headerlink" href="#visualization.mc_convergence_plots.PLANE" title="Link to this definition"></a></dt>
+<dd><p>Detection plane width x height in cm (the module footprint).</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="visualization.mc_convergence_plots.SUBCAPTION_Y">
+<span class="sig-prename descclassname"><span class="pre">visualization.mc_convergence_plots.</span></span><span class="sig-name descname"><span class="pre">SUBCAPTION_Y</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">-0.255</span></span><a class="headerlink" href="#visualization.mc_convergence_plots.SUBCAPTION_Y" title="Link to this definition"></a></dt>
+<dd><p>Position of the sub-captions below the axes (axes fraction).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.mc_convergence_plots.create_mc_best_configurations_plot">
+<span class="sig-prename descclassname"><span class="pre">visualization.mc_convergence_plots.</span></span><span class="sig-name descname"><span class="pre">create_mc_best_configurations_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">best</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'figures/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/visualization/mc_convergence_plots.html#create_mc_best_configurations_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.mc_convergence_plots.create_mc_best_configurations_plot" title="Link to this definition"></a></dt>
+<dd><p>Draw Figure S19 and save it as <code class="docutils literal notranslate"><span class="pre">mc_best_configurations.svg</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>best</strong> (<em>pandas.DataFrame</em>) – Best configurations per LED type, seed and sample size
+(<a class="reference internal" href="analysis.html#analysis.mc_convergence.convergence_tables" title="analysis.mc_convergence.convergence_tables"><code class="xref py py-func docutils literal notranslate"><span class="pre">analysis.mc_convergence.convergence_tables()</span></code></a>).</p></li>
+<li><p><strong>figure_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory the figure is written to.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure instead of closing it after saving.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path of the figure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="visualization.mc_convergence_plots.create_mc_convergence_plot">
+<span class="sig-prename descclassname"><span class="pre">visualization.mc_convergence_plots.</span></span><span class="sig-name descname"><span class="pre">create_mc_convergence_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">best</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fronts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">pandas.DataFrame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'figures/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/visualization/mc_convergence_plots.html#create_mc_convergence_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#visualization.mc_convergence_plots.create_mc_convergence_plot" title="Link to this definition"></a></dt>
+<dd><p>Draw Figure S18 and save it as <code class="docutils literal notranslate"><span class="pre">mc_convergence.svg</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>best</strong> (<em>pandas.DataFrame</em>) – Best configurations per LED type, seed and sample size
+(<a class="reference internal" href="analysis.html#analysis.mc_convergence.convergence_tables" title="analysis.mc_convergence.convergence_tables"><code class="xref py py-func docutils literal notranslate"><span class="pre">analysis.mc_convergence.convergence_tables()</span></code></a>).</p></li>
+<li><p><strong>fronts</strong> (<em>pandas.DataFrame</em>) – Fronts at 5 million candidates in long format (same function).</p></li>
+<li><p><strong>figure_path</strong> (<em>str</em><em>, </em><em>optional</em>) – Directory the figure is written to.</p></li>
+<li><p><strong>show</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display the figure instead of closing it after saving.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Path of the figure.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="analysis.html" class="btn btn-neutral float-left" title="Analysis" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,242 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>analysis.source_model &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">analysis.source_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for analysis.source_model</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Sensitivity of the geometric model to the point-source assumption (Supporting Information S9).</span>
+
+<span class="sd">The geometric model treats every LED as a point source (Eq. (9) of the manuscript). Here every</span>
+<span class="sd">LED is replaced by a uniformly emitting planar disk of diameter ``d`` whose surface elements all</span>
+<span class="sd">radiate with the radiant-intensity profile of Eq. (6), weighted by their share of the disk area.</span>
+<span class="sd">The contribution of an LED is therefore the point-source contribution averaged over the disk</span>
+<span class="sd">(Eq. (S10) of the Supporting Information)::</span>
+
+<span class="sd">    E_i,disk(x, y) = 4 / (pi d^2) * int_0^{2 pi} int_0^{d/2} E_i(x - rho cos phi, y - rho sin phi) rho drho dphi</span>
+
+<span class="sd">It is evaluated with 12 Gauss-Legendre nodes in (2 rho / d)^2 (area-uniform) and 24 equidistant</span>
+<span class="sd">nodes in phi. ``d`` is the lens diameter given in the datasheets: 2.6 mm for the 365 nm LED</span>
+<span class="sd">(Luminus SST-10-UV, lens radius R1.30) and 2.15 mm for the 530 nm LED (OSRAM GT CSSPM1.13).</span>
+
+<span class="sd">Evaluated are all investigated configurations at their heights (best manual configuration for both</span>
+<span class="sd">LED types, UV1-UV3, GRN1-GRN3) and UV3 and GRN3 at 5 cm, the smallest height of the optimization.</span>
+<span class="sd">The result is Table S3 of the Supporting Information.</span>
+
+<span class="sd">**Usage Example**::</span>
+
+<span class="sd">    from analysis.source_model import point_source_table</span>
+<span class="sd">    table = point_source_table()</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.compare_methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_configuration</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.fast_evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRID_KW</span><span class="p">,</span> <span class="n">LEDS</span><span class="p">,</span> <span class="n">RESOLUTION</span><span class="p">,</span> <span class="n">configuration_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+
+<span class="c1">#: Lens diameters from the datasheets in mm (also the source diameters of the ray tracing).</span>
+<span class="n">LENS_DIAMETER_MM</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"UV"</span><span class="p">:</span> <span class="mf">2.6</span><span class="p">,</span> <span class="s2">"GRN"</span><span class="p">:</span> <span class="mf">2.15</span><span class="p">}</span>
+<span class="c1">#: Configurations of Table S3: (LED type, name, height override in cm or None for the design height).</span>
+<span class="n">CONFIGURATIONS</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"UV"</span><span class="p">,</span> <span class="s2">"GRN"</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">z</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">"best manual"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">3"</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)]]</span>
+
+
+<div class="viewcode-block" id="disk_nodes">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.source_model.disk_nodes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">disk_nodes</span><span class="p">(</span><span class="n">d_cm</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">n_r</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span> <span class="n">n_phi</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Quadrature nodes on a disk: Gauss-Legendre in the area coordinate, uniform in the azimuth.</span>
+
+<span class="sd">    :param d_cm: Disk diameter in cm; 0 returns the centre only (point source).</span>
+<span class="sd">    :type d_cm: float</span>
+<span class="sd">    :param n_r: Number of radial nodes.</span>
+<span class="sd">    :type n_r: int, optional</span>
+<span class="sd">    :param n_phi: Number of azimuthal nodes.</span>
+<span class="sd">    :type n_phi: int, optional</span>
+<span class="sd">    :returns: x and y offsets of the nodes in cm and their weights (summing to 1).</span>
+<span class="sd">    :rtype: tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">d_cm</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">d_cm</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">xg</span><span class="p">,</span> <span class="n">wg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polynomial</span><span class="o">.</span><span class="n">legendre</span><span class="o">.</span><span class="n">leggauss</span><span class="p">(</span><span class="n">n_r</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">xg</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>                   <span class="c1"># area-uniform mapping</span>
+    <span class="n">wr</span> <span class="o">=</span> <span class="n">wg</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_phi</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">n_phi</span>
+    <span class="n">R</span><span class="p">,</span> <span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s2">"ij"</span><span class="p">)</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">wr</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">n_phi</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_phi</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">R</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">P</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="p">(</span><span class="n">R</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">P</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">W</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="disk_field">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.source_model.disk_field">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">disk_field</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">angle_deg</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+               <span class="n">intensity</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">d_cm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Irradiance of LEDs modelled as uniformly emitting disks (Eq. (S10)).</span>
+
+<span class="sd">    With ``d_cm = 0`` the result equals :meth:`geometric_model.GeometricModel.simulate`.</span>
+
+<span class="sd">    :param X: x coordinates of the evaluation grid in cm.</span>
+<span class="sd">    :param Y: y coordinates of the evaluation grid in cm.</span>
+<span class="sd">    :param positions: LED positions (x, y) in cm.</span>
+<span class="sd">    :param z: Height of the LEDs above the detection plane in cm.</span>
+<span class="sd">    :param angle_deg: Angles of the radiant-intensity profile in degrees.</span>
+<span class="sd">    :param intensity: Radiant intensity in W sr-1 (after :meth:`utils.led.LED.calc_radiant_intensity`).</span>
+<span class="sd">    :param d_cm: Disk diameter in cm.</span>
+<span class="sd">    :returns: Irradiance in W m-2.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    """</span>
+    <span class="n">ex</span><span class="p">,</span> <span class="n">ey</span><span class="p">,</span> <span class="n">ew</span> <span class="o">=</span> <span class="n">disk_nodes</span><span class="p">(</span><span class="n">d_cm</span><span class="p">)</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">px</span><span class="p">,</span> <span class="n">py</span><span class="p">)</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">ey</span><span class="p">,</span> <span class="n">ew</span><span class="p">):</span>
+            <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="p">(</span><span class="n">px</span> <span class="o">+</span> <span class="n">dx</span><span class="p">),</span> <span class="n">Y</span> <span class="o">-</span> <span class="p">(</span><span class="n">py</span> <span class="o">+</span> <span class="n">dy</span><span class="p">)</span>
+            <span class="n">rho2</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">ys</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rho2</span><span class="p">)</span> <span class="o">/</span> <span class="n">z</span><span class="p">)</span>
+            <span class="n">radiant_intensity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">angle_deg</span><span class="p">,</span> <span class="n">intensity</span><span class="p">)</span>
+            <span class="n">E</span> <span class="o">+=</span> <span class="n">w</span> <span class="o">*</span> <span class="n">z</span> <span class="o">/</span> <span class="p">(</span><span class="n">rho2</span> <span class="o">+</span> <span class="n">z</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="n">radiant_intensity</span>
+    <span class="k">return</span> <span class="n">E</span> <span class="o">*</span> <span class="mf">1e4</span></div>
+
+
+
+<div class="viewcode-block" id="point_source_table">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.source_model.point_source_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">point_source_table</span><span class="p">(</span><span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compute Table S3: point source versus disk with the datasheet lens diameter.</span>
+
+<span class="sd">    :param results_path: Path of the results directory (configuration files).</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :returns: One row per configuration with E_mean and H of the point-source model, their changes</span>
+<span class="sd">        for the disk source and the largest and root-mean-square change of the local irradiance in</span>
+<span class="sd">        percent of the mean irradiance.</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    :raises AssertionError: If the point-source evaluation differs from the repository model.</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">z_override</span> <span class="ow">in</span> <span class="n">CONFIGURATIONS</span><span class="p">:</span>
+        <span class="n">led</span> <span class="o">=</span> <span class="n">LEDS</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">Grid</span><span class="p">(</span><span class="o">**</span><span class="n">GRID_KW</span><span class="p">),</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="n">RESOLUTION</span><span class="p">)</span>
+        <span class="n">positions</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">read_configuration</span><span class="p">(</span><span class="n">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">results_path</span><span class="p">))</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z_override</span> <span class="ow">or</span> <span class="n">z</span>
+        <span class="n">E0</span> <span class="o">=</span> <span class="n">disk_field</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">angle_data</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">intensity_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">E0</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">"point-source baseline differs from the repository model"</span><span class="p">)</span>
+        <span class="n">d_mm</span> <span class="o">=</span> <span class="n">LENS_DIAMETER_MM</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">E1</span> <span class="o">=</span> <span class="n">disk_field</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">angle_data</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">intensity_data</span><span class="p">,</span> <span class="n">d_cm</span><span class="o">=</span><span class="n">d_mm</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="n">m0</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">E0</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">E1</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">h0</span><span class="p">,</span> <span class="n">h1</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">E0</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">m0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">E1</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">m1</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">n_leds</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="n">z_cm</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">d_mm</span><span class="o">=</span><span class="n">d_mm</span><span class="p">,</span>
+                         <span class="n">E_mean_point</span><span class="o">=</span><span class="n">m0</span><span class="p">,</span> <span class="n">H_point</span><span class="o">=</span><span class="n">h0</span><span class="p">,</span> <span class="n">E_mean_disk</span><span class="o">=</span><span class="n">m1</span><span class="p">,</span> <span class="n">H_disk</span><span class="o">=</span><span class="n">h1</span><span class="p">,</span>
+                         <span class="n">dE_mean_rel_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">m1</span> <span class="o">-</span> <span class="n">m0</span><span class="p">)</span> <span class="o">/</span> <span class="n">m0</span><span class="p">,</span> <span class="n">dH_abs</span><span class="o">=</span><span class="n">h1</span> <span class="o">-</span> <span class="n">h0</span><span class="p">,</span>
+                         <span class="n">max_local_dev_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">E1</span> <span class="o">-</span> <span class="n">E0</span><span class="p">))</span> <span class="o">/</span> <span class="n">m0</span><span class="p">,</span>
+                         <span class="n">rms_local_dev_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">E1</span> <span class="o">-</span> <span class="n">E0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="n">m0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

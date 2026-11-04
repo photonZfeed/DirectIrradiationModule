@@ -1,0 +1,280 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>visualization.plots_validation &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">visualization.plots_validation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for visualization.plots_validation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="n">LST1_01F06_GRN1_00</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ICIW_Plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_square_subplots</span><span class="p">,</span> <span class="n">cm2inch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.process_raytracing_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">process_raytracing_file</span><span class="p">,</span> <span class="n">calc_metrics</span><span class="p">,</span> <span class="n">plot_irradiance_raytracing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.process_radiometry_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">process_radiometry_file</span><span class="p">,</span> <span class="n">calculate_correction_factor</span><span class="p">,</span> <span class="n">plot_irradiance_radiometry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">finish</span><span class="p">,</span> <span class="n">use_publication_style</span>
+
+<div class="viewcode-block" id="create_plots_validation">
+<a class="viewcode-back" href="../../api/visualization.html#visualization.plots_validation.create_plots_validation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_plots_validation</span><span class="p">(</span><span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
+<span class="sd">    Generates and displays a comparative plots of irradiance, mean irradiance, and homogeneity index for two LED types (365 nm and 530 nm) for the best manual configuration obtained by three different methods: geometric model, raytracing, and radiometry. The plot is saved as an SVG file in the 'figures' directory.</span>
+
+<span class="sd">    **High-Level Description**</span>
+<span class="sd">        - Calculates the geometric model results.</span>
+<span class="sd">        - Processes raytracing data for the best manual configuration.</span>
+<span class="sd">        - Processes radiometry data for the best manual configuration, applying a correction factor based on reference measurements.</span>
+<span class="sd">        - Calculates mean irradiance (W m\ :sup:`-2`) and homogeneity index (unitless) for each case.</span>
+<span class="sd">        - Create three irradiance plots for geometric model, raytracing, and radiometry for each LED.</span>
+<span class="sd">        - Plots grouped bar charts for both metrics, annotates values, and saves the figure.</span>
+
+<span class="sd">    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.</span>
+<span class="sd">    :type show: bool, optional</span>
+
+<span class="sd">    :returns: None</span>
+<span class="sd">        This function does not return any value. It produces a side effect by saving and displaying a plot.</span>
+
+<span class="sd">    :raises FileNotFoundError: If any required CSV data file is missing.</span>
+<span class="sd">    :raises ValueError: If the data in the CSV files is malformed or cannot be processed.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        - Saves figures to ``figures/`` in the current working directory called ``validation_best_manual_LST1_01G01_UV01_00``, ``validation_best_manual_LST1_01F06_GRN1_00``, and `bar_plots_validation.svg`.</span>
+<span class="sd">        - Displays a matplotlib window with the generated plot.</span>
+
+<span class="sd">    **Notes**</span>
+<span class="sd">        - Assumes the existence of rdata files in the ``results/raytracing/{led.name}/`` and ``results/radiometry/{led.name}/`` directory.</span>
+<span class="sd">        - Requires custom matplotlib stylesheets: ``ICIWstyle`` and ``visualization/publication_style.mplstyle``.</span>
+<span class="sd">        - Uses external utility functions for data processing and correction factor calculation.</span>
+<span class="sd">        - The number of LEDs per configuration is hardcoded (8 for manual, 16 for model-based).</span>
+
+<span class="sd">    **Usage Example**</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from visualization.bar_plots_validation import create_bar_plot_validation</span>
+<span class="sd">        create_bar_plot_validation()</span>
+
+<span class="sd">    This will generate and display the comparison plot, saving it as an SVG file.</span>
+<span class="sd">    """</span>
+    <span class="c1"># Set plot style</span>
+    <span class="n">use_publication_style</span><span class="p">()</span>
+
+    <span class="c1"># read data for final validation bar plot</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">led</span> <span class="ow">in</span> <span class="p">[</span><span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="n">LST1_01F06_GRN1_00</span><span class="p">]:</span>
+        
+        <span class="c1"># Geometric model</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">irradiance_bound</span><span class="o">=</span><span class="mf">150.0</span><span class="p">)</span>
+        <span class="n">best_manual_config</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">7.5</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mf">7.5</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">12.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mf">12.5</span><span class="p">)]</span>
+        <span class="n">irr_geom</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">best_manual_config</span><span class="p">,</span> <span class="mf">13.0</span><span class="p">)</span>
+        <span class="n">E_mean_geom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">irr_geom</span><span class="p">)</span>
+        <span class="n">std_geom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">irr_geom</span><span class="p">)</span>
+        <span class="n">H_geom</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">std_geom</span> <span class="o">/</span> <span class="n">E_mean_geom</span>
+
+        <span class="c1"># Raytracing</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"results/raytracing/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/"</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s2">"best_manual_no_reflector.txt"</span>
+        <span class="n">irr_ray</span> <span class="o">=</span> <span class="n">process_raytracing_file</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">E_mean_ray</span><span class="p">,</span> <span class="n">H_ray</span> <span class="o">=</span> <span class="n">calc_metrics</span><span class="p">(</span><span class="n">irr_ray</span><span class="p">[</span><span class="s2">"Irradiance"</span><span class="p">])</span>
+
+        <span class="c1"># Radiometry</span>
+        <span class="n">N_LEDs</span> <span class="o">=</span> <span class="mi">8</span> <span class="c1"># number of in the module</span>
+        <span class="n">expected_value</span> <span class="o">=</span> <span class="n">N_LEDs</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span>  <span class="c1"># W m⁻²</span>
+        <span class="n">filepath_rad</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"results/radiometry/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/best_manual_no_reflector.csv"</span>
+        <span class="n">filepath_rad_ref</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"results/radiometry/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/best_manual_no_reflector.csv"</span>
+        <span class="n">correction_factor</span> <span class="o">=</span> <span class="n">calculate_correction_factor</span><span class="p">(</span><span class="n">filepath_rad_ref</span><span class="p">,</span> <span class="n">expected_value</span><span class="p">)</span>
+        <span class="n">irr_rad</span><span class="p">,</span> <span class="n">E_mean_rad</span><span class="p">,</span> <span class="n">H_rad</span> <span class="o">=</span> <span class="n">process_radiometry_file</span><span class="p">(</span><span class="n">filepath_rad</span><span class="p">,</span> <span class="n">correction_factor</span><span class="p">)</span>
+        
+        <span class="c1"># Store results in data dictionary for bar plot</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"geometric"</span><span class="p">:</span> <span class="p">(</span><span class="n">E_mean_geom</span><span class="p">,</span> <span class="n">H_geom</span><span class="p">),</span>
+            <span class="s2">"raytracing"</span><span class="p">:</span> <span class="p">(</span><span class="n">E_mean_ray</span><span class="p">,</span> <span class="n">H_ray</span><span class="p">),</span>
+            <span class="s2">"radiometry"</span><span class="p">:</span> <span class="p">(</span><span class="n">E_mean_rad</span><span class="p">,</span> <span class="n">H_rad</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Create 3 subplots for irradiance distribution for geometric model, raytracing, and radiometry for each LED</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">19</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">led</span> <span class="o">==</span> <span class="n">LST1_01G01_UV01_00</span><span class="p">:</span>
+            <span class="n">v_max</span> <span class="o">=</span> <span class="mi">70</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">v_max</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="n">y_title</span> <span class="o">=</span> <span class="o">-</span> <span class="mf">0.6</span>
+        <span class="n">shrink_cbar</span> <span class="o">=</span> <span class="mf">0.32</span>
+        <span class="n">extent</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">irr_ray</span><span class="p">[</span><span class="s1">'x'</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">irr_ray</span><span class="p">[</span><span class="s1">'x'</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+            <span class="n">irr_ray</span><span class="p">[</span><span class="s1">'y'</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">irr_ray</span><span class="p">[</span><span class="s1">'y'</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">plot_irradiance</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">irr_geom</span><span class="p">,</span> <span class="n">v_max</span><span class="o">=</span><span class="n">v_max</span><span class="p">,</span> <span class="n">shrink_cbar</span><span class="o">=</span><span class="n">shrink_cbar</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">)</span>
+        <span class="n">plot_irradiance_raytracing</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">irr_ray</span><span class="p">,</span> <span class="n">v_max</span><span class="o">=</span><span class="n">v_max</span><span class="p">,</span> <span class="n">y_title</span><span class="o">=</span><span class="n">y_title</span><span class="p">,</span> <span class="n">shrink_cbar</span><span class="o">=</span><span class="n">shrink_cbar</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">)</span>
+        <span class="n">plot_irradiance_radiometry</span><span class="p">(</span><span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">irr_rad</span><span class="p">,</span> <span class="n">v_max</span><span class="o">=</span><span class="n">v_max</span><span class="p">,</span> <span class="n">y_title</span><span class="o">=</span><span class="n">y_title</span><span class="p">,</span> <span class="n">shrink_cbar</span><span class="o">=</span><span class="n">shrink_cbar</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="c1"># increase space between subplots</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">wspace</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"figures"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"validation_best_manual_</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.svg"</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">'tight'</span><span class="p">)</span>
+        <span class="n">finish</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span>
+
+
+
+    <span class="c1"># Combine all data into groups for each wavelength and case</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'365 nm LEDs'</span><span class="p">,</span> <span class="s1">'530 nm LEDs'</span><span class="p">]</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">19</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">))</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="mf">0.25</span>
+
+    <span class="c1"># Bar positions for each group</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">[</span><span class="n">p</span> <span class="o">-</span> <span class="n">width</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">x</span><span class="p">],</span>  <span class="c1"># Geometric Model</span>
+    <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">x</span><span class="p">],</span>  <span class="c1"># Raytracing</span>
+    <span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="n">width</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">x</span><span class="p">],</span>  <span class="c1"># Radiometry</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Mean Irradiance Bar Plot</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01G01-UV01-00"</span><span class="p">][</span><span class="s2">"geometric"</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">][</span><span class="s2">"geometric"</span><span class="p">][</span><span class="mi">0</span><span class="p">]],</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Geometric Model'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01G01-UV01-00"</span><span class="p">][</span><span class="s2">"raytracing"</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">][</span><span class="s2">"raytracing"</span><span class="p">][</span><span class="mi">0</span><span class="p">]],</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Raytracing'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">.67</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01G01-UV01-00"</span><span class="p">][</span><span class="s2">"radiometry"</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">][</span><span class="s2">"radiometry"</span><span class="p">][</span><span class="mi">0</span><span class="p">]],</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Radiometry'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">.33</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Mean Irradiance / W m$^{-2}$'</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+
+    <span class="c1"># Homogeneity Index Bar Plot</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01G01-UV01-00"</span><span class="p">][</span><span class="s2">"geometric"</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">][</span><span class="s2">"geometric"</span><span class="p">][</span><span class="mi">1</span><span class="p">]],</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Geometric Model'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01G01-UV01-00"</span><span class="p">][</span><span class="s2">"raytracing"</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">][</span><span class="s2">"raytracing"</span><span class="p">][</span><span class="mi">1</span><span class="p">]],</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Raytracing'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.67</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01G01-UV01-00"</span><span class="p">][</span><span class="s2">"radiometry"</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s2">"LST1-01F06-GRN1-00"</span><span class="p">][</span><span class="s2">"radiometry"</span><span class="p">][</span><span class="mi">1</span><span class="p">]],</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Radiometry'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">"C0"</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.33</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Homogeneity / 1'</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+
+    <span class="c1"># show values on top of bars</span>
+    <span class="k">for</span> <span class="n">rects</span> <span class="ow">in</span> <span class="n">ax1</span><span class="o">.</span><span class="n">patches</span><span class="p">:</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">rects</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">height</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+                    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">rects</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">rects</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span>
+                    <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>  <span class="c1"># 2 points vertical offset</span>
+                    <span class="n">textcoords</span><span class="o">=</span><span class="s2">"offset points"</span><span class="p">,</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s1">'center'</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">'bottom'</span><span class="p">)</span>
+        
+    <span class="k">for</span> <span class="n">rects</span> <span class="ow">in</span> <span class="n">ax2</span><span class="o">.</span><span class="n">patches</span><span class="p">:</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">rects</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">height</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+                    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">rects</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span> <span class="o">+</span> <span class="n">rects</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span>
+                    <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>  <span class="c1"># 2 points vertical offset</span>
+                    <span class="n">textcoords</span><span class="o">=</span><span class="s2">"offset points"</span><span class="p">,</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s1">'center'</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">'bottom'</span><span class="p">)</span>
+
+
+    <span class="n">handles</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">'upper center'</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.08</span><span class="p">))</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"figures"</span><span class="p">,</span> <span class="s2">"bar_plot_validation.svg"</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">'tight'</span><span class="p">)</span>
+    <span class="n">finish</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

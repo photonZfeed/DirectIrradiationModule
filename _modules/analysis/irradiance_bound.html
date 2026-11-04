@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>analysis.irradiance_bound &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">analysis.irradiance_bound</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for analysis.irradiance_bound</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Influence of the irradiance bound E_bound on the configuration selection (Supporting Information S11).</span>
+
+<span class="sd">In :class:`optimizer.Optimizer` the bound plays two roles: it normalises the mean irradiance in the</span>
+<span class="sd">objective (E_mean / E_bound) and it excludes configurations whose maximum local irradiance exceeds</span>
+<span class="sd">it. The normalisation changes neither the Pareto-optimal set nor the configuration with the highest</span>
+<span class="sd">H E_mean / E_bound, so only the exclusion can change the selection. This module repeats the</span>
+<span class="sd">selection of the manuscript for a range of bounds and reports the highest local irradiance of the</span>
+<span class="sd">investigated configurations.</span>
+
+<span class="sd">The 5 million Monte-Carlo candidates of the manuscript are the first 5 million distinct</span>
+<span class="sd">configurations of seed 42 in ``results/geometric/monte_carlo_convergence/``</span>
+<span class="sd">(see :mod:`analysis.mc_sampling`; checked row by row against the published sample in</span>
+<span class="sd">``tests/test_seed42_published.py``).</span>
+
+<span class="sd">**Usage Example**::</span>
+
+<span class="sd">    from analysis.irradiance_bound import irradiance_bound_table, max_irradiance_8_leds</span>
+<span class="sd">    table_s5 = irradiance_bound_table()</span>
+<span class="sd">    maxima = max_irradiance_8_leds()</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.compare_methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_configuration</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.fast_evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span><span class="n">E_BOUND</span><span class="p">,</span> <span class="n">GRID_KW</span><span class="p">,</span> <span class="n">LEDS</span><span class="p">,</span> <span class="n">PREFIX</span><span class="p">,</span> <span class="n">RESOLUTION</span><span class="p">,</span> <span class="n">FieldBank</span><span class="p">,</span> <span class="n">configs_from_object_array</span><span class="p">,</span>
+                                      <span class="n">configuration_file</span><span class="p">,</span> <span class="n">position_index</span><span class="p">,</span> <span class="n">select_configurations</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.mc_sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">CONVERGENCE_PATH</span><span class="p">,</span> <span class="n">load_run</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+
+<span class="c1">#: Irradiance bounds of Table S5 in W m-2 (``numpy.inf``: no bound).</span>
+<span class="n">BOUNDS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">135</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">175</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">250</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span>
+<span class="c1">#: Number of candidates of the manuscript.</span>
+<span class="n">N_CANDIDATES</span> <span class="o">=</span> <span class="mi">5_000_000</span>
+<span class="c1">#: Seed of the published sample.</span>
+<span class="n">SEED</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="c1">#: Systematic 8-LED sample at 13 cm (Figure 4 of the manuscript).</span>
+<span class="n">SYSTEMATIC_SAMPLES</span> <span class="o">=</span> <span class="s2">"sampled_configs/systematic_8_leds_13_cm_482931_samples.npz"</span>
+
+
+<div class="viewcode-block" id="find_configuration">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.irradiance_bound.find_configuration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_configuration</span><span class="p">(</span><span class="n">pos</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Row of a configuration in a sample.</span>
+
+<span class="sd">    :param pos: Position indices of the sample, shape (n, 16), padded with -1.</span>
+<span class="sd">    :param z: Heights of the sample in cm.</span>
+<span class="sd">    :param positions: LED positions (x, y) in cm of the configuration to find.</span>
+<span class="sd">    :param height: Height in cm of the configuration to find.</span>
+<span class="sd">    :returns: Row index, or -1 if the configuration is not in the sample.</span>
+<span class="sd">    :rtype: int</span>
+<span class="sd">    """</span>
+    <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">position_index</span><span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span>
+    <span class="n">cand</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">((</span><span class="n">z</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">height</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">((</span><span class="n">pos</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cand</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">pos</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="max_irradiance_8_leds">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.irradiance_bound.max_irradiance_8_leds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">max_irradiance_8_leds</span><span class="p">(</span><span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Highest local irradiance of all 482,931 symmetric 8-LED configurations at 13 cm.</span>
+
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :returns: One row per LED type with the largest local irradiance of all configurations and the</span>
+<span class="sd">        number of configurations above the bound of the manuscript.</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    """</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="n">SYSTEMATIC_SAMPLES</span><span class="p">),</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"height"</span><span class="p">])</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">configs_from_object_array</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"configurations"</span><span class="p">])</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">),</span> <span class="n">height</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">led</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">mean</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">mx</span> <span class="o">=</span> <span class="n">FieldBank</span><span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">heights</span><span class="o">=</span><span class="p">(</span><span class="n">height</span><span class="p">,))</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanargmax</span><span class="p">(</span><span class="n">mx</span><span class="p">))</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">n_configs</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">),</span> <span class="n">n_leds</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">"led_count"</span><span class="p">]),</span> <span class="n">z_cm</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+                         <span class="n">E_max_all_configs</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mx</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">E_mean_of_that_config</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mean</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                         <span class="n">n_above_bound</span><span class="o">=</span><span class="nb">int</span><span class="p">((</span><span class="n">mx</span> <span class="o">&gt;</span> <span class="n">E_BOUND</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="max_irradiance_selected">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.irradiance_bound.max_irradiance_selected">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">max_irradiance_selected</span><span class="p">(</span><span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Mean and highest local irradiance of UV1-UV3 and GRN1-GRN3 according to the geometric model.</span>
+
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">led</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">Grid</span><span class="p">(</span><span class="o">**</span><span class="n">GRID_KW</span><span class="p">),</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="n">RESOLUTION</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PREFIX</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">positions</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">read_configuration</span><span class="p">(</span><span class="n">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">results_path</span><span class="p">))</span>
+            <span class="n">E</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">n_leds</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="n">z_cm</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">E_mean</span><span class="o">=</span><span class="n">E</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+                             <span class="n">H</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">E</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">E</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">E_max</span><span class="o">=</span><span class="n">E</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="irradiance_bound_table">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.irradiance_bound.irradiance_bound_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">irradiance_bound_table</span><span class="p">(</span><span class="n">convergence_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CONVERGENCE_PATH</span><span class="p">,</span> <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compute Table S5: the selection of the manuscript repeated for different irradiance bounds.</span>
+
+<span class="sd">    :param convergence_path: Folder with the Monte-Carlo samples and metrics of</span>
+<span class="sd">        :mod:`analysis.mc_sampling` (seed 42).</span>
+<span class="sd">    :type convergence_path: str, optional</span>
+<span class="sd">    :param results_path: Path of the results directory (configuration files).</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :returns: One row per LED type and bound with the best configuration (number of LEDs, height,</span>
+<span class="sd">        E_mean, H, maximum local irradiance), whether it is one of UV1-UV3 / GRN1-GRN3, and the</span>
+<span class="sd">        three configurations selected for ray tracing.</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    :raises FileNotFoundError: If the Monte-Carlo files of seed 42 are missing.</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="p">:</span>
+        <span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">mx</span> <span class="o">=</span> <span class="n">load_run</span><span class="p">(</span><span class="n">convergence_path</span><span class="p">,</span> <span class="n">SEED</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">N_CANDIDATES</span><span class="p">)</span>
+        <span class="n">n_leds</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">published</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PREFIX</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">published</span><span class="p">[</span><span class="n">find_configuration</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="o">*</span><span class="n">read_configuration</span><span class="p">(</span><span class="n">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">results_path</span><span class="p">)))]</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">published</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">bound</span> <span class="ow">in</span> <span class="n">BOUNDS</span><span class="p">:</span>
+            <span class="n">best</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">select_configurations</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">mx</span><span class="p">,</span> <span class="n">bound</span><span class="p">)</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">std</span> <span class="o">/</span> <span class="n">mean</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">E_bound</span><span class="o">=</span><span class="n">bound</span><span class="p">,</span> <span class="n">best_N</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">n_leds</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span> <span class="n">best_z_cm</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span>
+                             <span class="n">best_E_mean</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mean</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span> <span class="n">best_H</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span> <span class="n">best_E_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mx</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span>
+                             <span class="n">best_is</span><span class="o">=</span><span class="n">published</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">best</span><span class="p">,</span> <span class="s2">"other"</span><span class="p">),</span>
+                             <span class="n">selected</span><span class="o">=</span><span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">published</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"N</span><span class="si">{</span><span class="n">n_leds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2"> z</span><span class="si">{</span><span class="n">z</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2"> E</span><span class="si">{</span><span class="n">mean</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2"> H</span><span class="si">{</span><span class="n">h</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                                                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">selected</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,410 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>analysis.fast_evaluation &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">analysis.fast_evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for analysis.fast_evaluation</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Fast and exact evaluation of many LED configurations with the geometric model.</span>
+
+<span class="sd">The Monte-Carlo studies of the Supporting Information (Sections S11 and S12) evaluate up to</span>
+<span class="sd">10 million configurations per random seed. Simulating each configuration with</span>
+<span class="sd">:meth:`geometric_model.GeometricModel.simulate` would take days, so this module uses the linearity</span>
+<span class="sd">of the model instead.</span>
+
+<span class="sd">For a fixed height ``z`` the irradiance field of a configuration is the superposition of the</span>
+<span class="sd">fields of its LEDs (Eq. (10) of the manuscript), ``E = m^T F_z``, where ``m`` is the 0/1 indicator</span>
+<span class="sd">vector over the 169 mounting positions and ``F_z`` (169 x number of grid points) holds the</span>
+<span class="sd">single-LED fields computed with :meth:`GeometricModel.simulate`. Hence</span>
+
+<span class="sd">* ``E_mean = m^T mu_z`` with ``mu_z`` the mean of every single-LED field,</span>
+<span class="sd">* ``sum(E^2) = m^T G_z m`` with the Gram matrix ``G_z = F_z F_z^T``,</span>
+<span class="sd">* ``std(E) = sqrt(sum(E^2) / n - E_mean^2)`` (population standard deviation, as :func:`numpy.std`),</span>
+<span class="sd">* ``max(E)`` needs the field itself; it is evaluated by a matrix product on one half of the grid.</span>
+<span class="sd">  This is exact because every sampled configuration is point-symmetric about the module centre and</span>
+<span class="sd">  the evaluation grid is symmetric about it with an even number of rows (both are checked).</span>
+
+<span class="sd">``tests/test_fast_evaluation.py`` checks that the result equals the stored results of the</span>
+<span class="sd">systematic 8-LED study (relative deviations below 1e-6; the maximum is evaluated in single</span>
+<span class="sd">precision).</span>
+
+<span class="sd">The module also holds the selection procedure of the manuscript on precomputed metrics</span>
+<span class="sd">(:func:`select_configurations`) and the non-dominated filter used for the Pareto fronts.</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LST1_01F06_GRN1_00</span><span class="p">,</span> <span class="n">LST1_01G01_UV01_00</span>
+
+<span class="c1">#: Grid of the direct irradiation module (33 cm x 34 cm detection plane, 13 x 13 mounting</span>
+<span class="c1">#: positions with 2.5 cm pitch), as in all figures of the manuscript.</span>
+<span class="n">GRID_KW</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="c1">#: Resolution of the evaluation grid of the geometric model in cm.</span>
+<span class="n">RESOLUTION</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="c1">#: Heights of the Monte-Carlo optimization in cm (5-15 cm in 1 cm steps).</span>
+<span class="n">HEIGHTS</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">16</span><span class="p">))</span>
+<span class="c1">#: Pitch of the mounting grid in cm.</span>
+<span class="n">STEP</span> <span class="o">=</span> <span class="mf">2.5</span>
+<span class="c1">#: Half width of the mounting grid in pitches (positions run from -6 to +6).</span>
+<span class="n">HALF</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="c1">#: Number of mounting positions of the 13 x 13 mounting grid.</span>
+<span class="n">N_POSITIONS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">HALF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+<span class="c1">#: Irradiance bound of the manuscript in W m-2.</span>
+<span class="n">E_BOUND</span> <span class="o">=</span> <span class="mf">150.0</span>
+<span class="c1">#: Weighting factors t of the Pareto analysis of the manuscript (Eq. (5)).</span>
+<span class="n">T_VALUES</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="c1">#: LED objects by short key.</span>
+<span class="n">LEDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"UV"</span><span class="p">:</span> <span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="s2">"GRN"</span><span class="p">:</span> <span class="n">LST1_01F06_GRN1_00</span><span class="p">}</span>
+<span class="c1">#: Prefix of the configuration names (UV1-UV3, GRN1-GRN3) by short key.</span>
+<span class="n">PREFIX</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"UV"</span><span class="p">:</span> <span class="s2">"UV"</span><span class="p">,</span> <span class="s2">"GRN"</span><span class="p">:</span> <span class="s2">"GRN"</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="configuration_file">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.configuration_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Path of the JSON file of an investigated configuration.</span>
+
+<span class="sd">    :param key: LED type, ``"UV"`` or ``"GRN"``.</span>
+<span class="sd">    :type key: str</span>
+<span class="sd">    :param name: ``"best manual"`` or one of UV1-UV3 / GRN1-GRN3.</span>
+<span class="sd">    :type name: str</span>
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :returns: Path of the configuration file.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"best manual"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"sampled_configs"</span><span class="p">,</span> <span class="s2">"best_manual.json"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"sampled_configs"</span><span class="p">,</span> <span class="s2">"near_optimal_configs"</span><span class="p">,</span> <span class="n">LEDS</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.json"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="position_index">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.position_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">position_index</span><span class="p">(</span><span class="n">x_cm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">y_cm</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Map mounting coordinates to the index 0 ... 168 of the 13 x 13 mounting grid.</span>
+
+<span class="sd">    :param x_cm: x coordinates of the LEDs in cm (multiples of 2.5 cm).</span>
+<span class="sd">    :type x_cm: numpy.ndarray</span>
+<span class="sd">    :param y_cm: y coordinates of the LEDs in cm (multiples of 2.5 cm).</span>
+<span class="sd">    :type y_cm: numpy.ndarray</span>
+<span class="sd">    :returns: Position indices, row-major in x, then y.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    :raises ValueError: If a position lies outside the mounting grid.</span>
+<span class="sd">    """</span>
+    <span class="n">ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x_cm</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">STEP</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">+</span> <span class="n">HALF</span>
+    <span class="n">iy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_cm</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">STEP</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span> <span class="o">+</span> <span class="n">HALF</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">((</span><span class="n">ix</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">ix</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">HALF</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">iy</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">iy</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">HALF</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"position outside the 13 x 13 mounting grid"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ix</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">HALF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">iy</span></div>
+
+
+
+<div class="viewcode-block" id="index_to_xy">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.index_to_xy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">index_to_xy</span><span class="p">(</span><span class="n">idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Map position indices 0 ... 168 back to mounting coordinates in cm.</span>
+
+<span class="sd">    :param idx: Position indices.</span>
+<span class="sd">    :type idx: numpy.ndarray</span>
+<span class="sd">    :returns: x and y coordinates in cm.</span>
+<span class="sd">    :rtype: tuple[numpy.ndarray, numpy.ndarray]</span>
+<span class="sd">    """</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">idx</span> <span class="o">//</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">HALF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">HALF</span><span class="p">)</span> <span class="o">*</span> <span class="n">STEP</span><span class="p">,</span> <span class="p">(</span><span class="n">idx</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">HALF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">HALF</span><span class="p">)</span> <span class="o">*</span> <span class="n">STEP</span></div>
+
+
+
+<div class="viewcode-block" id="configs_from_object_array">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.configs_from_object_array">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configs_from_object_array</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Convert configurations stored as lists of (x, y) positions in cm to padded index arrays.</span>
+
+<span class="sd">    :param configs: Sequence of configurations, each a sequence of (x, y) tuples in cm (as stored in</span>
+<span class="sd">        the ``.npz`` files of the samplers and the geometric model).</span>
+<span class="sd">    :returns: Integer array of shape (n, 16) with the position indices, padded with -1.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">configs</span><span class="p">),</span> <span class="mi">16</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">configs</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="n">position_index</span><span class="p">(</span><span class="n">c</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">c</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+
+<div class="viewcode-block" id="FieldBank">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.FieldBank">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FieldBank</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Single-LED fields, their means and Gram matrices for one LED type and a set of heights.</span>
+
+<span class="sd">    :param led: LED object, e.g. :data:`utils.led.LST1_01G01_UV01_00`.</span>
+<span class="sd">    :type led: utils.led.LED</span>
+<span class="sd">    :param heights: Heights in cm for which the fields are precomputed.</span>
+<span class="sd">    :type heights: tuple[int, ...], optional</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">heights</span><span class="o">=</span><span class="n">HEIGHTS</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">led</span> <span class="o">=</span> <span class="n">led</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">Grid</span><span class="p">(</span><span class="o">**</span><span class="n">GRID_KW</span><span class="p">),</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="n">RESOLUTION</span><span class="p">)</span>
+        <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="n">ny</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the half-grid evaluation of the maximum needs an even number of grid rows"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_grid</span> <span class="o">=</span> <span class="n">nx</span> <span class="o">*</span> <span class="n">ny</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">half_rows</span> <span class="o">=</span> <span class="n">ny</span> <span class="o">//</span> <span class="mi">2</span>              <span class="c1"># rows 0 ... ny/2 - 1 form one half of the symmetric grid</span>
+        <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="o">=</span> <span class="n">index_to_xy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N_POSITIONS</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gram</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">half</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">heights</span><span class="p">:</span>
+            <span class="n">F</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)],</span> <span class="nb">float</span><span class="p">(</span><span class="n">h</span><span class="p">))</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">)])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">F</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gram</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">F</span> <span class="o">@</span> <span class="n">F</span><span class="o">.</span><span class="n">T</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">half</span><span class="p">[</span><span class="n">h</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span>
+                <span class="n">F</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">)[:,</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">half_rows</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+
+<div class="viewcode-block" id="FieldBank.evaluate">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.FieldBank.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">with_max</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">chunk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20000</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Mean, standard deviation and maximum of the irradiance of many configurations.</span>
+
+<span class="sd">        :param pos: Position indices of shape (n, 16), padded with -1. Every configuration must be</span>
+<span class="sd">            point-symmetric about the module centre if ``with_max`` is True.</span>
+<span class="sd">        :type pos: numpy.ndarray</span>
+<span class="sd">        :param z: Heights in cm, shape (n,).</span>
+<span class="sd">        :type z: numpy.ndarray</span>
+<span class="sd">        :param with_max: Also compute the maximum local irradiance.</span>
+<span class="sd">        :type with_max: bool, optional</span>
+<span class="sd">        :param chunk: Number of configurations evaluated at once (memory use).</span>
+<span class="sd">        :type chunk: int, optional</span>
+<span class="sd">        :returns: Mean, standard deviation and maximum in W m-2 (the maximum is NaN if</span>
+<span class="sd">            ``with_max`` is False).</span>
+<span class="sd">        :rtype: tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]</span>
+<span class="sd">        :raises ValueError: If ``with_max`` is True and a configuration is not point-symmetric.</span>
+<span class="sd">        """</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">valid</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">with_max</span><span class="p">:</span>
+            <span class="n">mirrored</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">valid</span><span class="p">,</span> <span class="n">N_POSITIONS</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">pos</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">mirrored</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the half-grid maximum is only exact for point-symmetric configurations"</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">mx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+            <span class="n">sel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">z</span> <span class="o">==</span> <span class="n">h</span><span class="p">)</span>
+            <span class="n">mu</span><span class="p">,</span> <span class="n">G</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">)],</span> <span class="bp">self</span><span class="o">.</span><span class="n">gram</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sel</span><span class="p">),</span> <span class="n">chunk</span><span class="p">):</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">sel</span><span class="p">[</span><span class="n">s</span><span class="p">:</span><span class="n">s</span> <span class="o">+</span> <span class="n">chunk</span><span class="p">]</span>
+                <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[</span><span class="n">rows</span><span class="p">],</span> <span class="n">valid</span><span class="p">[</span><span class="n">rows</span><span class="p">]</span>
+                <span class="n">pp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">mean</span><span class="p">[</span><span class="n">rows</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">mu</span><span class="p">[</span><span class="n">pp</span><span class="p">],</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">gsum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">v</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">v</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="n">G</span><span class="p">[</span><span class="n">pp</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">pp</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">:]],</span> <span class="mf">0.0</span><span class="p">)</span>
+                <span class="n">e2</span> <span class="o">=</span> <span class="n">gsum</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_grid</span>
+                <span class="n">std</span><span class="p">[</span><span class="n">rows</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">e2</span> <span class="o">-</span> <span class="n">mean</span><span class="p">[</span><span class="n">rows</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">with_max</span><span class="p">:</span>
+                    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">half</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">)]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+                    <span class="n">r_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)),</span> <span class="n">v</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                    <span class="n">M</span><span class="p">[</span><span class="n">r_idx</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="n">v</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                    <span class="n">mx</span><span class="p">[</span><span class="n">rows</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">M</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">half</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">)])</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">mx</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="pareto_mask">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.pareto_mask">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pareto_mask</span><span class="p">(</span><span class="n">e</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Non-dominated set of points when both coordinates are maximised.</span>
+
+<span class="sd">    :param e: First objective, e.g. E_mean / E_bound.</span>
+<span class="sd">    :type e: numpy.ndarray</span>
+<span class="sd">    :param h: Second objective, e.g. the homogeneity H.</span>
+<span class="sd">    :type h: numpy.ndarray</span>
+<span class="sd">    :returns: Boolean mask of the non-dominated points (of identical points, one is kept).</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    """</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">lexsort</span><span class="p">((</span><span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">-</span><span class="n">e</span><span class="p">))</span>          <span class="c1"># e descending, then h descending</span>
+    <span class="n">hs</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+    <span class="n">prev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">hs</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">mask</span><span class="p">[</span><span class="n">order</span><span class="p">[</span><span class="n">hs</span> <span class="o">&gt;</span> <span class="n">prev</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+
+<div class="viewcode-block" id="nondominated_front">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.nondominated_front">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nondominated_front</span><span class="p">(</span><span class="n">mean</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">std</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                       <span class="n">bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">E_BOUND</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Non-dominated feasible configurations in the plane (E_mean / E_bound, H).</span>
+
+<span class="sd">    Configurations whose maximum local irradiance exceeds ``bound`` are excluded, as in</span>
+<span class="sd">    :class:`optimizer.Optimizer`.</span>
+
+<span class="sd">    :returns: E_mean / E_bound and H of the front, sorted by increasing E_mean / E_bound.</span>
+<span class="sd">    :rtype: tuple[numpy.ndarray, numpy.ndarray]</span>
+<span class="sd">    """</span>
+    <span class="n">feas</span> <span class="o">=</span> <span class="n">mx</span> <span class="o">&lt;=</span> <span class="n">bound</span>
+    <span class="n">e</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">mean</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span> <span class="o">/</span> <span class="n">bound</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">std</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span> <span class="o">/</span> <span class="n">mean</span><span class="p">[</span><span class="n">feas</span><span class="p">]</span>
+    <span class="n">nd</span> <span class="o">=</span> <span class="n">pareto_mask</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">h</span><span class="p">)</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="n">nd</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">e</span><span class="p">[</span><span class="n">nd</span><span class="p">][</span><span class="n">order</span><span class="p">],</span> <span class="n">h</span><span class="p">[</span><span class="n">nd</span><span class="p">][</span><span class="n">order</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="select_configurations">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.fast_evaluation.select_configurations">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">select_configurations</span><span class="p">(</span><span class="n">mean</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">std</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">mx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+                          <span class="n">bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">E_BOUND</span><span class="p">,</span> <span class="n">t_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">T_VALUES</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Selection procedure of the manuscript on precomputed metrics.</span>
+
+<span class="sd">    Reproduces :meth:`optimizer.Optimizer.create_pareto_front`,</span>
+<span class="sd">    :meth:`optimizer.Optimizer.find_best_configuration` and the export of the configurations for</span>
+<span class="sd">    ray tracing in :func:`visualization.pareto_plots_H_vs_E_ratio.process_led`: every weighting</span>
+<span class="sd">    factor t contributes the configuration that maximises ``t E_mean/E_bound + (1 - t) H``</span>
+<span class="sd">    (Eq. (5)); configurations whose local irradiance exceeds the bound score zero. The best</span>
+<span class="sd">    configuration maximises ``H E_mean / E_bound``, and the configurations exported for ray tracing</span>
+<span class="sd">    are the best one and the two front points preceding it.</span>
+
+<span class="sd">    :param bound: Irradiance bound in W m-2; ``numpy.inf`` disables the bound (the mean</span>
+<span class="sd">        irradiance is then normalised by :data:`E_BOUND`).</span>
+<span class="sd">    :returns: Index of the best configuration, indices of the exported configurations (ordered by</span>
+<span class="sd">        increasing E_mean), the normalised mean irradiance and the homogeneity (both zero for</span>
+<span class="sd">        infeasible configurations).</span>
+<span class="sd">    :rtype: tuple[int, list[int], numpy.ndarray, numpy.ndarray]</span>
+<span class="sd">    """</span>
+    <span class="n">feas</span> <span class="o">=</span> <span class="n">mx</span> <span class="o">&lt;=</span> <span class="n">bound</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">bound</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">bound</span><span class="p">)</span> <span class="k">else</span> <span class="n">E_BOUND</span>
+    <span class="n">ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">feas</span><span class="p">,</span> <span class="n">mean</span> <span class="o">/</span> <span class="n">norm</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">hf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">feas</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">std</span> <span class="o">/</span> <span class="n">mean</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">front</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">t_values</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">ratio</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">hf</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">front</span><span class="p">:</span>
+            <span class="n">front</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ratio</span> <span class="o">*</span> <span class="n">hf</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">best</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">front</span><span class="p">:</span>
+        <span class="c1"># the product optimum is not reached by any of the t values; insert it at its place</span>
+        <span class="c1"># along the front, which is ordered by increasing E_mean</span>
+        <span class="n">front</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">front</span> <span class="o">+</span> <span class="p">[</span><span class="n">best</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">ratio</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">front</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">best</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best</span><span class="p">,</span> <span class="n">front</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="mi">2</span><span class="p">):</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">ratio</span><span class="p">,</span> <span class="n">hf</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,335 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>analysis.mc_sampling &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">analysis.mc_sampling</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for analysis.mc_sampling</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Monte-Carlo samples of the convergence study (Supporting Information S12) and their evaluation.</span>
+
+<span class="sd">The study draws 10 million distinct configurations (1-16 LEDs, heights 5-15 cm in 1 cm steps) for</span>
+<span class="sd">each of the seeds 42, 1, 2 and 3 with the repository's :class:`utils.monte_carlo_sampler.MonteCarloSampler`</span>
+<span class="sd">(uniform LED-count sampling, sequential mode, duplicates removed in the order of the first draw, as</span>
+<span class="sd">in :meth:`MonteCarloSampler.generate_unique_samples`). With seed 42 the first 5 million</span>
+<span class="sd">configurations are the published sample of the manuscript, row by row</span>
+<span class="sd">(``tests/test_seed42_published.py``). The first n configurations of a run are exactly the sample</span>
+<span class="sd">that drawing until n distinct configurations would give, so the prefixes of one run serve as the</span>
+<span class="sd">smaller sample sizes.</span>
+
+<span class="sd">Every configuration is evaluated for both LED types with :class:`analysis.fast_evaluation.FieldBank`.</span>
+<span class="sd">The files are written to ``results/geometric/monte_carlo_convergence/`` (about 2.1 GB for four</span>
+<span class="sd">seeds; also available from the Zenodo dataset):</span>
+
+<span class="sd">* ``mc_seed&lt;seed&gt;_10000000_configs.npz``: ``pos`` (position indices, int16, padded with -1),</span>
+<span class="sd">  ``z`` (height in cm), ``n_leds``, ``seed``, ``n_drawn``;</span>
+<span class="sd">* ``mc_seed&lt;seed&gt;_10000000_metrics_&lt;UV|GRN&gt;.npz``: ``mean``, ``std`` and ``max`` of the irradiance</span>
+<span class="sd">  in W m-2.</span>
+
+<span class="sd">Sampling all four seeds takes about two hours on two cores; a sampler needs about 2 GB of memory at</span>
+<span class="sd">the end of a run. Finished files are not recomputed, so an interrupted run can be restarted.</span>
+
+<span class="sd">**Usage Example** (from the repository root)::</span>
+
+<span class="sd">    python -m analysis.mc_sampling --seeds 42 1 2 3</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.fast_evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRID_KW</span><span class="p">,</span> <span class="n">HALF</span><span class="p">,</span> <span class="n">LEDS</span><span class="p">,</span> <span class="n">FieldBank</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.monte_carlo_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">MonteCarloSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+
+<span class="c1">#: Folder of the samples and metrics of the convergence study.</span>
+<span class="n">CONVERGENCE_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"results"</span><span class="p">,</span> <span class="s2">"geometric"</span><span class="p">,</span> <span class="s2">"monte_carlo_convergence"</span><span class="p">)</span>
+<span class="c1">#: Seeds of the convergence study; 42 is the seed of the published sample.</span>
+<span class="n">SEEDS</span> <span class="o">=</span> <span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="c1">#: Number of distinct configurations per seed.</span>
+<span class="n">N_PER_SEED</span> <span class="o">=</span> <span class="mi">10_000_000</span>
+
+
+<div class="viewcode-block" id="configs_file">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.configs_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configs_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">N_PER_SEED</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Path of the configuration file of a run."""</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"mc_seed</span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">_configs.npz"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="metrics_file">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.metrics_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">metrics_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">N_PER_SEED</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Path of the metrics file of a run for the LED type ``key`` (``"UV"`` or ``"GRN"``)."""</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"mc_seed</span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">_metrics_</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">.npz"</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="config_keys">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.config_keys">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">config_keys</span><span class="p">(</span><span class="n">pos</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    One sortable key per configuration: the 169-bit position mask (3 x uint64) and the height.</span>
+
+<span class="sd">    :param pos: Position indices of shape (n, 16), padded with -1.</span>
+<span class="sd">    :param z: Heights in cm.</span>
+<span class="sd">    :returns: Structured array with the fields ``w0``, ``w1``, ``w2`` and ``z``.</span>
+<span class="sd">    :rtype: numpy.ndarray</span>
+<span class="sd">    """</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">pos</span><span class="p">[:,</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">p</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divmod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">64</span><span class="p">)</span>
+        <span class="n">bit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">left_shift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">b</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+            <span class="n">words</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">|=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">w</span> <span class="o">==</span> <span class="n">k</span><span class="p">,</span> <span class="n">bit</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="p">[(</span><span class="s2">"w0"</span><span class="p">,</span> <span class="s2">"u8"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"w1"</span><span class="p">,</span> <span class="s2">"u8"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"w2"</span><span class="p">,</span> <span class="s2">"u8"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"z"</span><span class="p">,</span> <span class="s2">"i2"</span><span class="p">)])</span>
+    <span class="n">keys</span><span class="p">[</span><span class="s2">"w0"</span><span class="p">],</span> <span class="n">keys</span><span class="p">[</span><span class="s2">"w1"</span><span class="p">],</span> <span class="n">keys</span><span class="p">[</span><span class="s2">"w2"</span><span class="p">],</span> <span class="n">keys</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span> <span class="o">=</span> <span class="n">words</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">words</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">words</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">z</span>
+    <span class="k">return</span> <span class="n">keys</span></div>
+
+
+
+<div class="viewcode-block" id="sample">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.sample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">N_PER_SEED</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CONVERGENCE_PATH</span><span class="p">,</span> <span class="n">chunk</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500_000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Draw configurations with :class:`MonteCarloSampler` until ``n`` distinct ones exist.</span>
+
+<span class="sd">    The configurations are kept in the order of their first draw. Drawing in chunks does not change</span>
+<span class="sd">    the random stream.</span>
+
+<span class="sd">    :param seed: Random seed of the sampler.</span>
+<span class="sd">    :param n: Number of distinct configurations.</span>
+<span class="sd">    :param path: Output folder.</span>
+<span class="sd">    :param chunk: Number of configurations drawn at once.</span>
+<span class="sd">    :returns: Path of the configuration file (an existing file is kept).</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    """</span>
+    <span class="n">dst</span> <span class="o">=</span> <span class="n">configs_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dst</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"exists: </span><span class="si">{</span><span class="n">dst</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dst</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sampler</span> <span class="o">=</span> <span class="n">MonteCarloSampler</span><span class="p">(</span><span class="n">Grid</span><span class="p">(</span><span class="o">**</span><span class="n">GRID_KW</span><span class="p">),</span> <span class="n">led_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">led_max</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">height_min</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">height_max</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+                                <span class="n">height_step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">sampling_mode</span><span class="o">=</span><span class="s2">"uniform"</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">pos_parts</span><span class="p">,</span> <span class="n">z_parts</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">[(</span><span class="s2">"w0"</span><span class="p">,</span> <span class="s2">"u8"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"w1"</span><span class="p">,</span> <span class="s2">"u8"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"w2"</span><span class="p">,</span> <span class="s2">"u8"</span><span class="p">),</span> <span class="p">(</span><span class="s2">"z"</span><span class="p">,</span> <span class="s2">"i2"</span><span class="p">)])</span>
+    <span class="n">n_unique</span><span class="p">,</span> <span class="n">n_drawn</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">n_unique</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">redirect_stdout</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()):</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">generate_samples</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">use_parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">!=</span> <span class="n">chunk</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"sampler returned fewer configurations than requested"</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">chunk</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="s2">"configuration"</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>      <span class="c1"># integer grid units</span>
+            <span class="n">pos</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">HALF</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">HALF</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">c</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">HALF</span><span class="p">)</span>
+            <span class="n">z</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">"height"</span><span class="p">]</span>
+        <span class="n">n_drawn</span> <span class="o">+=</span> <span class="n">chunk</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">config_keys</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">first</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>            <span class="c1"># first occurrence within the chunk</span>
+        <span class="n">first</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="n">first</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="n">first</span><span class="p">],</span> <span class="n">seen</span><span class="p">)]</span>                   <span class="c1"># drop keys seen in earlier chunks</span>
+        <span class="n">pos_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">new</span><span class="p">])</span>
+        <span class="n">z_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">new</span><span class="p">])</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">seen</span><span class="p">,</span> <span class="n">keys</span><span class="p">[</span><span class="n">new</span><span class="p">]]))</span>
+        <span class="n">n_unique</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seed </span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">n_drawn</span><span class="si">}</span><span class="s2"> drawn, </span><span class="si">{</span><span class="n">n_unique</span><span class="si">}</span><span class="s2"> distinct (</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> s)"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">pos_parts</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">z_parts</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span>
+    <span class="n">n_leds</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">n_leds</span><span class="o">=</span><span class="n">n_leds</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">n_drawn</span><span class="o">=</span><span class="n">n_drawn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dst</span></div>
+
+
+
+<div class="viewcode-block" id="evaluate">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.evaluate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">N_PER_SEED</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CONVERGENCE_PATH</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Mean, standard deviation and maximum irradiance of every configuration of a run, both LED types.</span>
+
+<span class="sd">    :returns: Paths of the metrics files (existing files are kept).</span>
+<span class="sd">    :rtype: list[str]</span>
+<span class="sd">    """</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">configs_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+    <span class="n">pos</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">"pos"</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s2">"z"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">written</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">led</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">metrics_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dst</span><span class="p">):</span>
+            <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">mx</span> <span class="o">=</span> <span class="n">FieldBank</span><span class="p">(</span><span class="n">led</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">savez_compressed</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">mx</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"seed </span><span class="si">{</span><span class="n">seed</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span><span class="si">}</span><span class="s2"> configurations evaluated in </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> s"</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">written</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">written</span></div>
+
+
+
+<div class="viewcode-block" id="run">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.run">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">seeds</span><span class="o">=</span><span class="n">SEEDS</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">N_PER_SEED</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CONVERGENCE_PATH</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Sample and evaluate all runs of the convergence study (finished files are skipped)."""</span>
+    <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">:</span>
+        <span class="n">sample</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">evaluate</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="available">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.available">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">available</span><span class="p">(</span><span class="n">seeds</span><span class="o">=</span><span class="n">SEEDS</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CONVERGENCE_PATH</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">N_PER_SEED</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""True if the configuration and metrics files of all runs exist."""</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">configs_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">metrics_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seeds</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_run">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.load_run">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_run</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Read the first ``n`` configurations of a run and their metrics for one LED type.</span>
+
+<span class="sd">    :param path: Folder of the run files.</span>
+<span class="sd">    :param seed: Seed of the run.</span>
+<span class="sd">    :param key: LED type, ``"UV"`` or ``"GRN"``.</span>
+<span class="sd">    :param n: Number of configurations to read (all if None).</span>
+<span class="sd">    :returns: Position indices, heights, mean, standard deviation and maximum irradiance.</span>
+<span class="sd">    :rtype: tuple[numpy.ndarray, ...]</span>
+<span class="sd">    :raises FileNotFoundError: If a file of the run is missing.</span>
+<span class="sd">    """</span>
+    <span class="n">sl</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">configs_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seed</span><span class="p">))</span> <span class="k">as</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">pos</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="s2">"pos"</span><span class="p">][</span><span class="n">sl</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s2">"z"</span><span class="p">][</span><span class="n">sl</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">metrics_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span> <span class="k">as</span> <span class="n">m</span><span class="p">:</span>
+        <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">mx</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">sl</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"mean"</span><span class="p">,</span> <span class="s2">"std"</span><span class="p">,</span> <span class="s2">"max"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">mx</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_sampling.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Command line interface: sample and evaluate the given seeds."""</span>
+    <span class="n">ap</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Monte-Carlo runs of the convergence study (SI Section S12)."</span><span class="p">)</span>
+    <span class="n">ap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--seeds"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s2">"+"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">SEEDS</span><span class="p">))</span>
+    <span class="n">ap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--n"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">N_PER_SEED</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"distinct configurations per seed"</span><span class="p">)</span>
+    <span class="n">ap</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--path"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">CONVERGENCE_PATH</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"output folder"</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+    <span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">seeds</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

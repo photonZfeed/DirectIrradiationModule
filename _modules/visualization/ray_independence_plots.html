@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>visualization.ray_independence_plots &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">visualization.ray_independence_plots</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for visualization.ray_independence_plots</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Ray-count independence plots for raytracing simulations.</span>
+
+<span class="sd">This module provides :func:`create_ray_independence_plots_SI`, which generates</span>
+<span class="sd">a 2 × 2 figure assessing how the standard deviation of irradiance and the</span>
+<span class="sd">computation time change with the number of rays used in Speos raytracing</span>
+<span class="sd">simulations (365 nm and 530 nm, with and without diffuse reflectors). The</span>
+<span class="sd">figure is saved as an SVG file in the ``figures/`` directory.</span>
+
+<span class="sd">Typical usage::</span>
+
+<span class="sd">    from visualization.ray_independence_plots import create_ray_independence_plots_SI</span>
+<span class="sd">    create_ray_independence_plots_SI()</span>
+<span class="sd">"""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ICIW_Plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">cm2inch</span><span class="p">,</span> <span class="n">make_square_subplots</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">finish</span><span class="p">,</span> <span class="n">use_publication_style</span>
+
+<div class="viewcode-block" id="create_ray_independence_plots_SI">
+<a class="viewcode-back" href="../../api/visualization.html#visualization.ray_independence_plots.create_ray_independence_plots_SI">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_ray_independence_plots_SI</span><span class="p">(</span><span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generates and saves a set of 2x2 subplots visualizing the dependence of raytracing simulation results on the number of rays used. The function compares the standard deviation of irradiance and computation time for two wavelengths (365 nm and 530 nm), each with and without reflectors, as a function of the number of rays. Data is read from an Excel file, and the resulting figure is saved as an SVG file.</span>
+
+<span class="sd">    The function is intended to help assess the statistical independence and convergence of raytracing results with increasing ray count, and to visualize the computational cost associated with higher ray numbers.</span>
+
+<span class="sd">    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.</span>
+<span class="sd">    :type show: bool, optional</span>
+
+<span class="sd">    :raises FileNotFoundError: If the Excel data file is not found at the specified path.</span>
+<span class="sd">    :raises KeyError: If the expected sheet or data ranges are missing in the Excel file.</span>
+<span class="sd">    :raises ValueError: If the data cannot be converted to float as expected.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        - Reads data from 'data/raytracing/ray_independence_test.xlsx'.</span>
+<span class="sd">        - Saves a figure to 'figures/ray_independence_plots.svg'.</span>
+<span class="sd">        - Displays the generated plots using matplotlib's interactive window.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Assumes the Excel file contains a sheet named 'Planilha1' with data in specific cell ranges.</span>
+<span class="sd">        - Requires the custom plotting style 'ICIWstyle' and 'visualization/publication_style.mplstyle' to be available.</span>
+<span class="sd">        - Uses custom utility functions ``cm2inch`` and ``make_square_subplots`` from the ``ICIW_Plots`` module.</span>
+<span class="sd">        - The function does not accept any parameters and is intended to be run as a script or called from another script.</span>
+
+<span class="sd">    :example:</span>
+
+<span class="sd">        &gt;&gt;&gt; create_ray_independence_plots_SI()</span>
+<span class="sd">        # Generates and displays the ray independence plots, and saves them as an SVG file.</span>
+
+<span class="sd">    """</span>
+    
+    <span class="c1"># Set plot style</span>
+    <span class="n">use_publication_style</span><span class="p">()</span>
+
+    <span class="c1"># read results/raytracing/ray_indepence_test.xlsx</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="s2">"results/raytracing/ray_independence_test.xlsx"</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># extract data for 365 nm with and without reflectors</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'a) 365 nm with reflectors'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'Planilha1'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'b) 365 nm without reflectors'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'Planilha1'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="c1"># extract data for 530 nm with and without reflectors</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'c) 530 nm with reflectors'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'Planilha1'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">14</span><span class="p">:</span><span class="mi">22</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">'d) 530 nm without reflectors'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'Planilha1'</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">14</span><span class="p">:</span><span class="mi">22</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="c1"># create 2x2 subplots with data[label[1]] on left and data[label[2]] on right</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">,</span> <span class="mi">18</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">))</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="n">make_square_subplots</span><span class="p">(</span>
+        <span class="n">fig</span><span class="p">,</span>
+        <span class="n">ax_layout</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">ax_width</span><span class="o">=</span><span class="mi">6</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">v_sep</span><span class="o">=</span><span class="mf">2.8</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">h_sep</span><span class="o">=</span><span class="mf">3.5</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">xlabel</span><span class="o">=</span><span class="s1">'number of rays / 1'</span><span class="p">,</span>
+        <span class="n">ylabel</span><span class="o">=</span><span class="s1">'standard deviation / W m$^{-2}$'</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">legend_labels</span><span class="p">,</span> <span class="n">legend_handles</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="o">.</span><span class="n">flat</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]][:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]][:,</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">'o'</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'-'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"standard deviation / W m$^{-2}$"</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'C0'</span><span class="p">)</span>
+        <span class="c1"># plot vertical line at x=1.6e7</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mf">1.6e7</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'k'</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">':'</span><span class="p">)</span>
+        <span class="c1"># plot time on twin axis</span>
+        <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">]][:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">'d'</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'C3'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"time / s"</span><span class="p">)</span>
+        <span class="n">ax2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'time / s'</span><span class="p">)</span>
+        <span class="c1"># ax2.tick_params(axis='y', labelcolor='C3')</span>
+        <span class="c1"># set log scale for x axis</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_xscale</span><span class="p">(</span><span class="s1">'log'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">y</span><span class="o">=-</span><span class="mf">0.37</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ax</span> <span class="o">==</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]:</span>
+            <span class="n">legend_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">ax</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">ax2</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">legend_handles</span> <span class="o">=</span> <span class="p">[</span><span class="n">ax</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ax2</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">legend_handles</span><span class="p">,</span> <span class="n">legend_labels</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">'upper center'</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">'figures/ray_independence_plots.svg'</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">'tight'</span><span class="p">)</span>
+    <span class="n">finish</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span></div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

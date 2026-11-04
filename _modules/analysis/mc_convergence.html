@@ -1,0 +1,213 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>analysis.mc_convergence &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">analysis.mc_convergence</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for analysis.mc_convergence</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Convergence of the Monte-Carlo optimization (Supporting Information S12, Figures S18 and S19).</span>
+
+<span class="sd">For every LED type, seed (42, 1, 2, 3) and sample size n (the first 0.5, 1, 2.5, 5 and 10 million</span>
+<span class="sd">distinct configurations of a run of :mod:`analysis.mc_sampling`) the optimization of the manuscript</span>
+<span class="sd">is evaluated with E_bound = 150 W m-2:</span>
+
+<span class="sd">* :func:`best_configurations`: the configuration with the highest H E_mean / E_bound, its LED</span>
+<span class="sd">  positions and whether it is UV3 / GRN3 (Figure S18c, d and Figure S19);</span>
+<span class="sd">* :func:`fronts`: the non-dominated configurations of the first 5 million candidates of every seed</span>
+<span class="sd">  (Figure S18a, b);</span>
+<span class="sd">* :func:`front_deviation`: how closely the fronts of the seeds agree. ``dH(E)`` is the spread</span>
+<span class="sd">  (maximum minus minimum over the seeds) of the homogeneity that each front reaches at the same mean</span>
+<span class="sd">  irradiance E, i.e. the highest H of a front point with E_mean &gt;= E. It is evaluated on 4000</span>
+<span class="sd">  equidistant values of E over the range covered by all fronts, only where every front has</span>
+<span class="sd">  H &gt;= 0.5. This cut removes the steep end of the 530 nm front, where H drops from 0.5 to below 0</span>
+<span class="sd">  within a few hundredths of a W m-2.</span>
+
+<span class="sd">**Usage Example**::</span>
+
+<span class="sd">    from analysis.mc_convergence import convergence_tables</span>
+<span class="sd">    best, fronts_5m, deviation = convergence_tables()</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.compare_methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_configuration</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.fast_evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">E_BOUND</span><span class="p">,</span> <span class="n">LEDS</span><span class="p">,</span> <span class="n">PREFIX</span><span class="p">,</span> <span class="n">configuration_file</span><span class="p">,</span> <span class="n">index_to_xy</span><span class="p">,</span> <span class="n">nondominated_front</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.irradiance_bound</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_configuration</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.mc_sampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">CONVERGENCE_PATH</span><span class="p">,</span> <span class="n">SEEDS</span><span class="p">,</span> <span class="n">load_run</span>
+
+<span class="c1">#: Sample sizes of the study.</span>
+<span class="n">SIZES</span> <span class="o">=</span> <span class="p">(</span><span class="mi">500_000</span><span class="p">,</span> <span class="mi">1_000_000</span><span class="p">,</span> <span class="mi">2_500_000</span><span class="p">,</span> <span class="mi">5_000_000</span><span class="p">,</span> <span class="mi">10_000_000</span><span class="p">)</span>
+<span class="c1">#: Sample size of the fronts of Figure S18a, b.</span>
+<span class="n">SIZE_FRONT</span> <span class="o">=</span> <span class="mi">5_000_000</span>
+<span class="c1">#: Only front segments where every front has at least this homogeneity are compared.</span>
+<span class="n">H_MIN</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="c1">#: Number of mean-irradiance values at which the fronts are compared.</span>
+<span class="n">N_COMPARE</span> <span class="o">=</span> <span class="mi">4000</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_h_at</span><span class="p">(</span><span class="n">front</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">e_query</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Highest H of a front point with E_mean / E_bound &gt;= e_query (front sorted by increasing E)."""</span>
+    <span class="n">e</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">front</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">e_query</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">"left"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">e_query</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">ok</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="n">out</span><span class="p">[</span><span class="n">ok</span><span class="p">]</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="n">ok</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="convergence_tables">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.mc_convergence.convergence_tables">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">convergence_tables</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">CONVERGENCE_PATH</span><span class="p">,</span> <span class="n">seeds</span><span class="o">=</span><span class="n">SEEDS</span><span class="p">,</span> <span class="n">sizes</span><span class="o">=</span><span class="n">SIZES</span><span class="p">,</span>
+                       <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Evaluate all runs: best configurations, fronts at 5 million candidates and front agreement.</span>
+
+<span class="sd">    :param path: Folder with the samples and metrics of :mod:`analysis.mc_sampling`.</span>
+<span class="sd">    :param seeds: Seeds of the runs.</span>
+<span class="sd">    :param sizes: Sample sizes (nested prefixes of every run).</span>
+<span class="sd">    :param results_path: Path of the results directory (configuration files of UV3 / GRN3).</span>
+<span class="sd">    :returns: Table of the best configurations per LED type, seed and sample size; the fronts at</span>
+<span class="sd">        5 million candidates in long format (``led``, ``seed``, ``E_ratio``, ``H``); the agreement</span>
+<span class="sd">        of the fronts per LED type and sample size.</span>
+<span class="sd">    :rtype: tuple[pandas.DataFrame, pandas.DataFrame, pandas.DataFrame]</span>
+<span class="sd">    :raises FileNotFoundError: If a file of a run is missing.</span>
+<span class="sd">    """</span>
+    <span class="n">best_rows</span><span class="p">,</span> <span class="n">front_rows</span><span class="p">,</span> <span class="n">dev_rows</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PREFIX</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">3"</span>
+        <span class="n">selected</span> <span class="o">=</span> <span class="n">read_configuration</span><span class="p">(</span><span class="n">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">results_path</span><span class="p">))</span>
+        <span class="n">all_fronts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">seed</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">:</span>
+            <span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">,</span> <span class="n">mx</span> <span class="o">=</span> <span class="n">load_run</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">sizes</span><span class="p">))</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">std</span> <span class="o">/</span> <span class="n">mean</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mx</span> <span class="o">&lt;=</span> <span class="n">E_BOUND</span><span class="p">,</span> <span class="n">h</span> <span class="o">*</span> <span class="n">mean</span> <span class="o">/</span> <span class="n">E_BOUND</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">selected_row</span> <span class="o">=</span> <span class="n">find_configuration</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="o">*</span><span class="n">selected</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sizes</span><span class="p">:</span>
+                <span class="n">best</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">score</span><span class="p">[:</span><span class="n">n</span><span class="p">]))</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="n">best</span><span class="p">][</span><span class="n">pos</span><span class="p">[</span><span class="n">best</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">index_to_xy</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+                <span class="n">best_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">z_cm</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span>
+                                      <span class="n">E_mean</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mean</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span> <span class="n">H</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span> <span class="n">max_irradiance</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">mx</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span>
+                                      <span class="n">score</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">score</span><span class="p">[</span><span class="n">best</span><span class="p">]),</span> <span class="n">is_published</span><span class="o">=</span><span class="n">name</span> <span class="k">if</span> <span class="n">best</span> <span class="o">==</span> <span class="n">selected_row</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+                                      <span class="n">sample_index</span><span class="o">=</span><span class="n">best</span><span class="p">,</span> <span class="n">position_indices</span><span class="o">=</span><span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">p</span><span class="p">),</span>
+                                      <span class="n">positions_cm</span><span class="o">=</span><span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">a</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">b</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))))</span>
+                <span class="n">all_fronts</span><span class="p">[(</span><span class="n">seed</span><span class="p">,</span> <span class="n">n</span><span class="p">)]</span> <span class="o">=</span> <span class="n">nondominated_front</span><span class="p">(</span><span class="n">mean</span><span class="p">[:</span><span class="n">n</span><span class="p">],</span> <span class="n">std</span><span class="p">[:</span><span class="n">n</span><span class="p">],</span> <span class="n">mx</span><span class="p">[:</span><span class="n">n</span><span class="p">])</span>
+            <span class="n">e</span><span class="p">,</span> <span class="n">hh</span> <span class="o">=</span> <span class="n">all_fronts</span><span class="p">[(</span><span class="n">seed</span><span class="p">,</span> <span class="n">SIZE_FRONT</span><span class="p">)]</span>
+            <span class="n">front_rows</span> <span class="o">+=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">,</span> <span class="n">E_ratio</span><span class="o">=</span><span class="n">a</span><span class="p">,</span> <span class="n">H</span><span class="o">=</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">hh</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">sizes</span><span class="p">:</span>
+            <span class="n">fr</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_fronts</span><span class="p">[(</span><span class="n">s</span><span class="p">,</span> <span class="n">n</span><span class="p">)]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">]</span>
+            <span class="n">e_lo</span><span class="p">,</span> <span class="n">e_hi</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fr</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fr</span><span class="p">)</span>
+            <span class="n">eq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">e_lo</span><span class="p">,</span> <span class="n">e_hi</span><span class="p">,</span> <span class="n">N_COMPARE</span><span class="p">)</span>
+            <span class="n">hq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">_h_at</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">eq</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fr</span><span class="p">])</span>
+            <span class="n">dh</span> <span class="o">=</span> <span class="n">hq</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">hq</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">use</span> <span class="o">=</span> <span class="n">hq</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">H_MIN</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">use</span><span class="p">,</span> <span class="n">dh</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)))</span>
+            <span class="n">dev_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">front_points</span><span class="o">=</span><span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fr</span><span class="p">),</span>
+                                 <span class="n">E_mean_min</span><span class="o">=</span><span class="n">e_lo</span> <span class="o">*</span> <span class="n">E_BOUND</span><span class="p">,</span> <span class="n">E_mean_max</span><span class="o">=</span><span class="n">e_hi</span> <span class="o">*</span> <span class="n">E_BOUND</span><span class="p">,</span>
+                                 <span class="n">dH_median</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">dh</span><span class="p">[</span><span class="n">use</span><span class="p">])),</span> <span class="n">dH_p90</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">dh</span><span class="p">[</span><span class="n">use</span><span class="p">],</span> <span class="mi">90</span><span class="p">)),</span>
+                                 <span class="n">dH_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">dh</span><span class="p">[</span><span class="n">k</span><span class="p">]),</span> <span class="n">E_mean_at_dH_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">eq</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">E_BOUND</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">best_rows</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">front_rows</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dev_rows</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,452 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>visualization.pareto_plots_H_vs_E_ratio &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">visualization.pareto_plots_H_vs_E_ratio</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for visualization.pareto_plots_H_vs_E_ratio</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib.axes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Axes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.systematic_sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.led</span><span class="w"> </span><span class="kn">import</span> <span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="n">LST1_01F06_GRN1_00</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.process_radiometry_indirect</span><span class="w"> </span><span class="kn">import</span> <span class="n">process_radiometry_data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ICIW_Plots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_square_subplots</span><span class="p">,</span> <span class="n">cm2inch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">optimizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">read_optimization_results</span><span class="p">,</span> <span class="n">save_optimization_results</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">visualization.style</span><span class="w"> </span><span class="kn">import</span> <span class="n">finish</span><span class="p">,</span> <span class="n">use_publication_style</span>
+
+<div class="viewcode-block" id="process_led">
+<a class="viewcode-back" href="../../api/visualization.html#visualization.pareto_plots_H_vs_E_ratio.process_led">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_led</span><span class="p">(</span><span class="n">ax</span><span class="p">:</span> <span class="n">Axes</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">t_values</span><span class="p">,</span> <span class="n">results_path</span><span class="p">,</span> <span class="n">sim_filename</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">load_previous</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">find_raytracing_candidates</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">plot_near_optimal_configs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generates and visualizes the Pareto front for a specified LED configuration, including optional export and plotting of near-optimal configurations, and overlays additional reference points for comparison.</span>
+
+<span class="sd">    This function reads or computes optimization results for a given LED and simulation setup, plots the Pareto front of mean irradiance ratio versus homogeneity index, and optionally exports near-optimal configurations for further raytracing analysis. It also supports plotting insets of selected configurations and overlays reference points such as indirect irradiation and manually optimized configurations.</span>
+
+<span class="sd">    :param ax: Matplotlib axes object on which to plot the Pareto front and configuration insets.</span>
+<span class="sd">        Type: :class:`matplotlib.axes.Axes`</span>
+<span class="sd">    :param led: LED object to be optimized. Must have a ``name`` attribute for file path construction.</span>
+<span class="sd">        Type: Any</span>
+<span class="sd">    :param optimizer: Optimizer instance used for Pareto front calculation and metric evaluation.</span>
+<span class="sd">        Type: :class:`Optimizer`</span>
+<span class="sd">    :param grid: Grid object defining the spatial simulation domain.</span>
+<span class="sd">        Type: :class:`Grid`</span>
+<span class="sd">    :param t_values: Array of t values (unitless, shape (N,)) for Pareto front calculation.</span>
+<span class="sd">        Type: :class:`numpy.ndarray`</span>
+<span class="sd">    :param results_path: Path to the directory containing simulation and result files.</span>
+<span class="sd">        Type: str</span>
+<span class="sd">    :param sim_filename: Filename of the simulation results (e.g., ``simulation_results_...npz``).</span>
+<span class="sd">        Type: str</span>
+<span class="sd">    :param title: Title for the Pareto plot.</span>
+<span class="sd">        Type: str</span>
+<span class="sd">    :param load_previous: If True, loads previous optimization results from disk if available; otherwise, computes and saves new results. Default is False.</span>
+<span class="sd">        Type: bool, optional</span>
+<span class="sd">    :param find_raytracing_candidates: If True, exports near-optimal configurations (around the best found) as JSON files for raytracing. Default is False.</span>
+<span class="sd">        Type: bool, optional</span>
+<span class="sd">    :param plot_near_optimal_configs: If True, plots all near-optimal configurations from exported JSON files as insets; otherwise, plots only start, end, and best configurations. Default is False.</span>
+<span class="sd">        Type: bool, optional</span>
+
+<span class="sd">    :returns: The axes object with the Pareto plot and configuration insets.</span>
+<span class="sd">    :rtype: :class:`matplotlib.axes.Axes`</span>
+
+<span class="sd">    :raises FileNotFoundError: If required simulation or radiometry data files are missing.</span>
+<span class="sd">    :raises ValueError: If the LED object does not have a ``name`` attribute or if configuration files are malformed.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        - May write optimization and configuration JSON files to disk if ``find_raytracing_candidates`` is True or if new optimization results are computed.</span>
+<span class="sd">        - May print status messages to stdout.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Assumes the existence of a compatible directory structure under ``results_path`` for reading/writing results and configuration files.</span>
+<span class="sd">        - The function creates insets on the provided axes for visualizing selected configurations.</span>
+<span class="sd">        - The optimizer is re-instantiated within the function, which may override the passed-in optimizer.</span>
+
+<span class="sd">    **Usage Example**::</span>
+
+<span class="sd">        import matplotlib.pyplot as plt</span>
+<span class="sd">        from utils.led import LST1_01G01_UV01_00</span>
+<span class="sd">        from optimizer import Optimizer</span>
+<span class="sd">        from utils.grid import Grid</span>
+<span class="sd">        fig, ax = plt.subplots()</span>
+<span class="sd">        grid = Grid(width=33, height=34, step=2.5, side_space=1.5, top_bottom_space=2.)</span>
+<span class="sd">        optimizer = Optimizer(irradiance_bound=150.0)</span>
+<span class="sd">        t_values = np.linspace(0, 1, 100)</span>
+<span class="sd">        process_led(ax, LST1_01G01_UV01_00, optimizer, grid, t_values, 'results/', 'simulation_results.npz', '365 nm LEDs')</span>
+
+<span class="sd">    """</span>
+    <span class="c1"># Create geometric model instance and optimizer</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">irradiance_bound</span><span class="o">=</span><span class="mf">150.0</span><span class="p">)</span>
+
+    <span class="c1"># Prepare file paths</span>
+    <span class="n">opt_resultsfile</span> <span class="o">=</span> <span class="n">sim_filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"simulation_results"</span><span class="p">,</span> <span class="s2">"optimization_results"</span><span class="p">)</span>
+    <span class="n">opt_resultpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"geometric/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">opt_resultsfile</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">sim_resultpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"geometric/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sim_filename</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="c1"># Helper to read or compute optimization results</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_optimization_results</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Read or compute optimization results for the given simulation.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            Tuple containing Pareto configs, z, ratios, homogeneities, scores, best config, best z, best ratio, best homogeneity, best score.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">load_previous</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">opt_resultpath</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">read_optimization_results</span><span class="p">(</span><span class="n">opt_resultpath</span><span class="p">)</span>
+        <span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">maxs</span><span class="p">,</span> <span class="n">stds</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">read_simulations</span><span class="p">(</span><span class="n">sim_resultpath</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Read </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span><span class="si">}</span><span class="s2"> configurations for LED </span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">create_pareto_front</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">maxs</span><span class="p">,</span> <span class="n">stds</span><span class="p">,</span> <span class="n">t_values</span><span class="p">)</span>
+        <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">find_best_configuration</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">maxs</span><span class="p">,</span> <span class="n">stds</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">load_previous</span><span class="p">:</span>
+            <span class="n">save_optimization_results</span><span class="p">(</span>
+                <span class="n">opt_resultpath</span><span class="p">,</span>
+                <span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span><span class="p">,</span>
+                <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span><span class="p">,</span>
+                <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span><span class="p">)</span>
+
+    <span class="p">(</span>
+        <span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">pareto_scores</span><span class="p">,</span>
+        <span class="n">best_config</span><span class="p">,</span> <span class="n">best_z</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">,</span> <span class="n">best_score</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">get_optimization_results</span><span class="p">()</span>
+
+    <span class="c1"># Export near-optimal configs for raytracing if requested</span>
+    <span class="k">if</span> <span class="n">find_raytracing_candidates</span><span class="p">:</span>
+        <span class="n">best_index_in_pareto</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">pcfg</span><span class="p">,</span> <span class="n">pz</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">pareto_configs</span><span class="p">,</span> <span class="n">pareto_z</span><span class="p">))</span>
+                                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">pcfg</span><span class="p">,</span> <span class="n">best_config</span><span class="p">)</span> <span class="ow">and</span> <span class="n">pz</span> <span class="o">==</span> <span class="n">best_z</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">best_index_in_pareto</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">export_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"sampled_configs/near_optimal_configs"</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">export_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">sampler</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">best_index_in_pareto</span><span class="o">-</span><span class="mi">2</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pareto_configs</span><span class="p">),</span> <span class="n">best_index_in_pareto</span><span class="o">+</span><span class="mi">1</span><span class="p">)):</span>
+                <span class="n">configuration</span> <span class="o">=</span> <span class="n">pareto_configs</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">height</span> <span class="o">=</span> <span class="n">pareto_z</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">new_idx</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">-</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">best_index_in_pareto</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># 1,2,3</span>
+                <span class="n">suffix</span> <span class="o">=</span> <span class="s2">"UV"</span> <span class="k">if</span> <span class="n">led</span> <span class="o">==</span> <span class="n">LST1_01G01_UV01_00</span> <span class="k">else</span> <span class="s2">"GRN"</span>
+                <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">export_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">suffix</span><span class="si">}{</span><span class="n">new_idx</span><span class="si">}</span><span class="s2">.json"</span><span class="p">)</span>
+                <span class="n">sampler</span><span class="o">.</span><span class="n">save_configuration_to_json</span><span class="p">(</span>
+                    <span class="n">configuration</span><span class="o">=</span><span class="n">configuration</span><span class="p">,</span>
+                    <span class="n">height</span><span class="o">=</span><span class="n">height</span><span class="p">,</span>
+                    <span class="n">filename</span><span class="o">=</span><span class="n">filepath</span><span class="p">,</span>
+                    <span class="n">save_fig_type</span><span class="o">=</span><span class="s1">'svg'</span>
+                <span class="p">)</span>
+
+    <span class="c1"># Prepare insets for configuration plots</span>
+    <span class="n">Sampler1</span> <span class="o">=</span> <span class="n">Sampler</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+    <span class="n">inset_positions</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span>  <span class="c1"># upper left</span>
+        <span class="p">(</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span>   <span class="c1"># center</span>
+        <span class="p">(</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span>   <span class="c1"># lower right</span>
+    <span class="p">]</span>
+    <span class="n">inset_axes_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">ax</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">inset_positions</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">plot_near_optimal_configs</span><span class="p">:</span>
+        <span class="c1"># Plot all near-optimal configs from JSON</span>
+        <span class="n">configs_to_plot</span><span class="p">,</span> <span class="n">heights_to_plot</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">near_optimal_configs_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"sampled_configs/near_optimal_configs"</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">near_optimal_configs_path</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".json"</span><span class="p">):</span>
+                <span class="n">config</span><span class="p">,</span> <span class="n">height</span> <span class="o">=</span> <span class="n">Sampler1</span><span class="o">.</span><span class="n">read_configuration_from_json</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">near_optimal_configs_path</span><span class="p">,</span> <span class="n">file</span><span class="p">))</span>
+                <span class="n">configs_to_plot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+                <span class="n">heights_to_plot</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">height</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">iax</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">height</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inset_axes_list</span><span class="p">,</span> <span class="n">configs_to_plot</span><span class="p">,</span> <span class="n">heights_to_plot</span><span class="p">):</span>
+            <span class="n">Sampler1</span><span class="o">.</span><span class="n">plot_configuration_small</span><span class="p">(</span><span class="n">iax</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+            <span class="n">iax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="si">}</span><span class="s2"> LEDs, </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">height</span><span class="p">)</span><span class="si">}</span><span class="s2"> cm"</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">y</span><span class="o">=-</span><span class="mf">0.35</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Plot only start, end, and best configuration</span>
+        <span class="n">configs_to_plot</span> <span class="o">=</span> <span class="p">[</span><span class="n">pareto_configs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pareto_configs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">best_config</span><span class="p">]</span>
+        <span class="n">heights_to_plot</span> <span class="o">=</span> <span class="p">[</span><span class="n">pareto_z</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pareto_z</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">best_z</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">iax</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">height</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">inset_axes_list</span><span class="p">,</span> <span class="n">configs_to_plot</span><span class="p">,</span> <span class="n">heights_to_plot</span><span class="p">):</span>
+            <span class="n">Sampler1</span><span class="o">.</span><span class="n">plot_configuration_small</span><span class="p">(</span><span class="n">iax</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Calculate metrics for manual config</span>
+    <span class="n">best_manual_config</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="mf">7.5</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mf">7.5</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">12.5</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mf">12.5</span><span class="p">)]</span>
+    <span class="n">best_manual_irr</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">best_manual_config</span><span class="p">,</span> <span class="mf">13.0</span><span class="p">)</span>
+    <span class="n">best_manual_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">best_manual_irr</span><span class="p">)</span>
+    <span class="n">best_manual_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">best_manual_irr</span><span class="p">)</span>
+    <span class="n">best_manual_ratio</span><span class="p">,</span> <span class="n">best_manual_homogeneity</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">calc_metrics</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">best_manual_mean</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">best_manual_irr</span><span class="p">)]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">best_manual_std</span><span class="p">])</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Read indirect irradiation data</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">E_mean_indirect</span><span class="p">,</span> <span class="n">H_indirect</span> <span class="o">=</span> <span class="n">process_radiometry_data</span><span class="p">(</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"radiometry/</span><span class="si">{</span><span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/indirect_irradiation.csv"</span><span class="p">))</span>
+
+    <span class="c1"># Prepare other points for Pareto plot</span>
+    <span class="n">other_points</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"Indirect Irradiation"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"d"</span><span class="p">,</span> <span class="n">E_mean_indirect</span><span class="o">/</span><span class="n">optimizer</span><span class="o">.</span><span class="n">irradiance_bound</span><span class="p">,</span> <span class="n">H_indirect</span><span class="p">),</span>
+        <span class="s2">"Manually Optimized Configuration"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"s"</span><span class="p">,</span> <span class="n">best_manual_ratio</span><span class="p">,</span> <span class="n">best_manual_homogeneity</span><span class="p">),</span>
+        <span class="s2">"Best Configuration"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"X"</span><span class="p">,</span> <span class="n">best_ratio</span><span class="p">,</span> <span class="n">best_homogeneity</span><span class="p">),</span>
+    <span class="p">}</span>
+
+    <span class="n">ax</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">plot_pareto_front</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">pareto_ratios</span><span class="p">,</span> <span class="n">pareto_homogeneities</span><span class="p">,</span> <span class="n">other_points</span><span class="o">=</span><span class="n">other_points</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span></div>
+
+
+<div class="viewcode-block" id="create_pareto_1_16_leds_5_15cm">
+<a class="viewcode-back" href="../../api/visualization.html#visualization.pareto_plots_H_vs_E_ratio.create_pareto_1_16_leds_5_15cm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_pareto_1_16_leds_5_15cm</span><span class="p">(</span><span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generates and visualizes the Pareto front for LED arrays ranging from 1 to 16 LEDs positioned at heights between 5 cm and 15 cm.</span>
+
+<span class="sd">    This function sets up the simulation grid, optimizer, and LED types, then loads or computes the Pareto front for each LED type using precomputed simulation results. The resulting Pareto plots display the trade-off between mean irradiance ratio and homogeneity index for each configuration. Insets show selected LED arrangements. The function creates a single figure with two subplots (one for each LED type) and displays the result.</span>
+
+<span class="sd">    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.</span>
+<span class="sd">    :type show: bool, optional</span>
+
+<span class="sd">    :returns: None</span>
+<span class="sd">        The function creates and displays a matplotlib figure but does not return any value.</span>
+
+<span class="sd">    :raises FileNotFoundError:</span>
+<span class="sd">        If required simulation or result files are missing.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        - Displays a matplotlib figure window with the Pareto plots and configuration insets.</span>
+<span class="sd">        - May print status messages to stdout.</span>
+<span class="sd">        - Optionally saves the figure to disk if the corresponding line is uncommented.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Assumes the existence of simulation and result files in the specified directory structure.</span>
+<span class="sd">        - Uses precomputed simulation data for efficiency.</span>
+<span class="sd">        - The function is intended for interactive use or for generating publication-quality figures.</span>
+
+<span class="sd">    **Parameters used internally:**</span>
+
+<span class="sd">    - ``grid`` (:class:`Grid`): Defines the spatial simulation domain (width=33 cm, height=34 cm, step=2.5 cm, side_space=1.5 cm, top_bottom_space=2.0 cm).</span>
+<span class="sd">    - ``optimizer`` (:class:`Optimizer`): Optimizer instance with irradiance bound set to 150.0 mW/cm².</span>
+<span class="sd">    - ``leds`` (list): List of tuples with LED objects and subplot titles.</span>
+<span class="sd">    - ``t_values`` (:class:`numpy.ndarray`): Array of t values (unitless, shape (100,)) for Pareto front calculation.</span>
+<span class="sd">    - ``results_path`` (str): Path to the directory containing simulation and result files (default: "results/").</span>
+<span class="sd">    - ``sim_filename`` (str): Filename of the simulation results (default: "simulation_results_MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz").</span>
+<span class="sd">    - ``figure_path`` (str): Path to the directory for saving figures (default: "figures/").</span>
+
+<span class="sd">    **Usage Example:**</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from pareto_plots_H_vs_E_ratio import create_pareto_1_16_leds_5_15cm</span>
+<span class="sd">        create_pareto_1_16_leds_5_15cm()</span>
+
+<span class="sd">    """</span>
+    <span class="c1"># the style is also applied when optimizer.py is imported; set it explicitly so that the figure</span>
+    <span class="c1"># does not depend on the import order</span>
+    <span class="n">use_publication_style</span><span class="p">()</span>
+    <span class="n">grid</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">irradiance_bound</span><span class="o">=</span><span class="mf">150.0</span><span class="p">)</span>
+    <span class="n">leds</span>  <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="s2">"a) 365 nm LEDs"</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">LST1_01F06_GRN1_00</span><span class="p">,</span> <span class="s2">"b) 530 nm LEDs"</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">t_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">results_path</span> <span class="o">=</span> <span class="s2">"results/"</span>
+    <span class="n">sim_filename</span> <span class="o">=</span> <span class="s2">"simulation_results_MonteCarlo_1-16_leds_5-15_cm_5000000_samples.npz"</span>
+    <span class="n">figure_path</span> <span class="o">=</span> <span class="s2">"figures/"</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">19</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">,</span> <span class="mi">12</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">))</span>
+    <span class="n">axs</span> <span class="o">=</span> <span class="n">make_square_subplots</span><span class="p">(</span>
+        <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span>
+        <span class="n">ax_width</span><span class="o">=</span><span class="mi">8</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">ax_layout</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">h_sep</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">v_sep</span><span class="o">=</span><span class="mi">0</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sharelabel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">xlabel</span><span class="o">=</span><span class="s2">"$E_</span><span class="se">\\</span><span class="s2">mathrm</span><span class="si">{mean}</span><span class="se">\\</span><span class="s2">,/</span><span class="se">\\</span><span class="s2">,E_</span><span class="se">\\</span><span class="s2">mathrm</span><span class="si">{bound}</span><span class="s2">$ / 1"</span><span class="p">,</span>
+        <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Homogeneity Index / 1"</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">leds</span><span class="p">):</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">process_led</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">t_values</span><span class="p">,</span> <span class="n">results_path</span><span class="p">,</span> <span class="n">sim_filename</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">load_previous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_near_optimal_configs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Single legend for all subplots</span>
+    <span class="n">handles</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">'upper center'</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.94</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">figure_path</span><span class="p">,</span> <span class="s2">"pareto_plots_1_16_leds_5_15cm.svg"</span><span class="p">))</span>
+    <span class="n">finish</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_pareto_8_leds_13cm">
+<a class="viewcode-back" href="../../api/visualization.html#visualization.pareto_plots_H_vs_E_ratio.create_pareto_8_leds_13cm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_pareto_8_leds_13cm</span><span class="p">(</span><span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Generates and visualizes the Pareto front for an array of 8 LEDs positioned at a height of 13 cm.</span>
+
+<span class="sd">    This function sets up the simulation grid, optimizer, and LED types, then loads or computes the Pareto front for each LED type using precomputed simulation results. The resulting Pareto plots display the trade-off between mean irradiance ratio and homogeneity index for each configuration. Insets show selected LED arrangements. The function creates a single figure with two subplots (one for each LED type) and displays the result.</span>
+
+<span class="sd">    :param show: Display the figure(s) after saving; with False they are closed instead. Default is True.</span>
+<span class="sd">    :type show: bool, optional</span>
+
+<span class="sd">    :returns: None</span>
+<span class="sd">        The function creates and displays a matplotlib figure but does not return any value.</span>
+
+<span class="sd">    :raises FileNotFoundError:</span>
+<span class="sd">        If required simulation or result files are missing.</span>
+
+<span class="sd">    :side effects:</span>
+<span class="sd">        - Displays a matplotlib figure window with the Pareto plots and configuration insets.</span>
+<span class="sd">        - May print status messages to stdout.</span>
+<span class="sd">        - Optionally saves the figure to disk if the corresponding line is uncommented.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        - Assumes the existence of simulation and result files in the specified directory structure.</span>
+<span class="sd">        - Uses precomputed simulation data for efficiency.</span>
+<span class="sd">        - The function is intended for interactive use or for generating publication-quality figures.</span>
+
+<span class="sd">    **Parameters used internally:**</span>
+
+<span class="sd">    - ``grid`` (:class:`Grid`): Defines the spatial simulation domain (width=33 cm, height=34 cm, step=2.5 cm, side_space=1.5 cm, top_bottom_space=2.0 cm).</span>
+<span class="sd">    - ``optimizer`` (:class:`Optimizer`): Optimizer instance with irradiance bound set to 150.0 mW/cm².</span>
+<span class="sd">    - ``leds`` (list): List of tuples with LED objects and subplot titles.</span>
+<span class="sd">    - ``t_values`` (:class:`numpy.ndarray`): Array of t values (unitless, shape (100,)) for Pareto front calculation.</span>
+<span class="sd">    - ``results_path`` (str): Path to the directory containing simulation and result files (default: "results/").</span>
+<span class="sd">    - ``sim_filename`` (str): Filename of the simulation results (default: "simulation_results_systematic_8_leds_13_cm_482931_samples.npz").</span>
+<span class="sd">    - ``figure_path`` (str): Path to the directory for saving figures (default: "figures/").</span>
+
+<span class="sd">    **Usage Example:**</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        from pareto_plots_H_vs_E_ratio import create_pareto_8_leds_13cm</span>
+<span class="sd">        create_pareto_8_leds_13cm()</span>
+
+<span class="sd">    """</span>
+    <span class="c1"># the style is also applied when optimizer.py is imported; set it explicitly so that the figure</span>
+    <span class="c1"># does not depend on the import order</span>
+    <span class="n">use_publication_style</span><span class="p">()</span>
+    <span class="n">grid</span><span class="p">:</span> <span class="n">Grid</span> <span class="o">=</span> <span class="n">Grid</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">33</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">34</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">side_space</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">top_bottom_space</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span> <span class="o">=</span> <span class="n">Optimizer</span><span class="p">(</span><span class="n">irradiance_bound</span><span class="o">=</span><span class="mf">150.0</span><span class="p">)</span>
+    <span class="n">leds</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">LST1_01G01_UV01_00</span><span class="p">,</span> <span class="s2">"a) 365 nm LEDs"</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">LST1_01F06_GRN1_00</span><span class="p">,</span> <span class="s2">"b) 530 nm LEDs"</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">t_values</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span>
+    <span class="n">sim_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"simulation_results_systematic_8_leds_13_cm_482931_samples.npz"</span>
+    <span class="n">figure_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"figures/"</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">19</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">,</span> <span class="mi">12</span><span class="o">*</span><span class="n">cm2inch</span><span class="p">))</span>
+    <span class="n">axs</span> <span class="o">=</span> <span class="n">make_square_subplots</span><span class="p">(</span>
+        <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span>
+        <span class="n">ax_width</span><span class="o">=</span><span class="mi">8</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">ax_layout</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">h_sep</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">v_sep</span><span class="o">=</span><span class="mi">0</span> <span class="o">*</span> <span class="n">cm2inch</span><span class="p">,</span>
+        <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sharelabel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">xlabel</span><span class="o">=</span><span class="s2">"$E_</span><span class="se">\\</span><span class="s2">mathrm</span><span class="si">{mean}</span><span class="se">\\</span><span class="s2">,/</span><span class="se">\\</span><span class="s2">,E_</span><span class="se">\\</span><span class="s2">mathrm</span><span class="si">{bound}</span><span class="s2">$ / 1"</span><span class="p">,</span>
+        <span class="n">ylabel</span><span class="o">=</span><span class="s2">"Homogeneity Index / 1"</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">led</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">leds</span><span class="p">):</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">process_led</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">led</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">t_values</span><span class="p">,</span> <span class="n">results_path</span><span class="p">,</span> <span class="n">sim_filename</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">load_previous</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_near_optimal_configs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">handles</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">'upper center'</span><span class="p">,</span> <span class="n">ncol</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">bbox_to_anchor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.94</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">figure_path</span><span class="p">,</span> <span class="s2">"pareto_plots_8_leds_13cm.svg"</span><span class="p">))</span>
+    <span class="n">finish</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">show</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

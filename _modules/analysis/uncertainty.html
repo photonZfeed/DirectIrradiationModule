@@ -1,0 +1,403 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>analysis.uncertainty &mdash; Multi-Batch Screening Reactor - Direct Irradiation Module Design  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Multi-Batch Screening Reactor - Direct Irradiation Module Design
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_assembly.html">Direct Irradiation Module Assembly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../radiometry.html">Radiometric Measurements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../raytracing.html">Ray Tracing Simulations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Getting Started: Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial.html">Getting Started: Full Optimization Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reproduce.html">Reproducing the Publication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Multi-Batch Screening Reactor - Direct Irradiation Module Design</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">analysis.uncertainty</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for analysis.uncertainty</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">Mean irradiance and homogeneity of all methods, reflector effects and uncertainties.</span>
+
+<span class="sd">This module computes the numbers of the validation and reflector sections of the manuscript and of</span>
+<span class="sd">Supporting Information S10 that are not part of a figure:</span>
+
+<span class="sd">* :func:`metrics_all_methods`: E_mean and H of the geometric model, ray tracing and radiometry for</span>
+<span class="sd">  all investigated configurations with and without reflectors, with the conventions of Figures 3,</span>
+<span class="sd">  7, 8 and S17 (deviation of the homogeneity in the Model Validation section).</span>
+<span class="sd">* :func:`reflector_effects` and :func:`reflector_spread`: gain of the mean irradiance by the</span>
+<span class="sd">  reflectors, the ratio between the highest and the lowest mean irradiance of UV1-UV3 / GRN1-GRN3</span>
+<span class="sd">  and their range of homogeneity, with and without reflectors.</span>
+<span class="sd">* :func:`radiometry_corrections`: Table S4, the corrections of the radiometric mean irradiance for</span>
+<span class="sd">  the share of the emitted flux that reaches the scanned area and for the 1 cm safety offset of the</span>
+<span class="sd">  scans, both estimated with the geometric model.</span>
+<span class="sd">* :func:`ray_tracing_noise`: share of the rays that reach the detection plane, the resulting</span>
+<span class="sd">  statistical uncertainty of the mean irradiance, and the effect of the Monte-Carlo noise on the</span>
+<span class="sd">  homogeneity estimated from the ray independence study of Supporting Information S3.</span>
+
+<span class="sd">**Usage Example**::</span>
+
+<span class="sd">    from analysis.uncertainty import metrics_all_methods, radiometry_corrections</span>
+<span class="sd">    metrics = metrics_all_methods()</span>
+<span class="sd">    table_s4 = radiometry_corrections()</span>
+<span class="sd">"""</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.compare_methods</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_configuration</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.fast_evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">GRID_KW</span><span class="p">,</span> <span class="n">LEDS</span><span class="p">,</span> <span class="n">PREFIX</span><span class="p">,</span> <span class="n">RESOLUTION</span><span class="p">,</span> <span class="n">configuration_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.process_radiometry_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">calculate_correction_factor</span><span class="p">,</span> <span class="n">process_radiometry_file</span><span class="p">,</span> <span class="n">read_radiometry_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analysis.process_raytracing_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">calc_metrics</span><span class="p">,</span> <span class="n">process_raytracing_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">geometric_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeometricModel</span><span class="p">,</span> <span class="n">calculate_irradiance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">utils.grid</span><span class="w"> </span><span class="kn">import</span> <span class="n">Grid</span>
+
+<span class="c1">#: Number of rays of every ray-tracing simulation.</span>
+<span class="n">N_RAYS</span> <span class="o">=</span> <span class="mf">1.6e7</span>
+<span class="c1">#: Area of the detection plane in m2.</span>
+<span class="n">PLANE_AREA_M2</span> <span class="o">=</span> <span class="mf">0.33</span> <span class="o">*</span> <span class="mf">0.34</span>
+<span class="c1">#: Width and height of the detection plane in cm, as passed to the radiometry processing.</span>
+<span class="n">PLANE_HEIGHT_CM</span><span class="p">,</span> <span class="n">PLANE_WIDTH_CM</span> <span class="o">=</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">34</span>
+<span class="c1">#: Safety offset of the radiometric scans in cm.</span>
+<span class="n">SCAN_OFFSET_CM</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="c1">#: Height of the reference scans of UV1-UV3 / GRN1-GRN3 (UV3 / GRN3, nominal 6 cm) in cm.</span>
+<span class="n">REFERENCE_SCAN_DISTANCE_CM</span> <span class="o">=</span> <span class="mf">7.0</span>
+<span class="c1">#: Pitch of the fine grid on which the flux on the scanned area is integrated, in cm.</span>
+<span class="n">FINE_PITCH_CM</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="c1">#: Ray counts of the ray independence study compared in Supporting Information S10.</span>
+<span class="n">RAYS_COMPARED</span> <span class="o">=</span> <span class="p">(</span><span class="mf">6.4e7</span><span class="p">,</span> <span class="mf">1.2e8</span><span class="p">)</span>
+<span class="c1">#: Blocks of ``results/raytracing/ray_independence_test.xlsx``: (LED type, reflector) -&gt; rows, columns.</span>
+<span class="n">RAY_INDEPENDENCE_BLOCKS</span> <span class="o">=</span> <span class="p">{(</span><span class="s2">"UV"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s2">"UV"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)),</span>
+                           <span class="p">(</span><span class="s2">"GRN"</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">22</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="p">(</span><span class="s2">"GRN"</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">22</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">))}</span>
+
+
+<div class="viewcode-block" id="configuration_names">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.uncertainty.configuration_names">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configuration_names</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Names of the investigated configurations of one LED type: best manual, X1, X2, X3."""</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s2">"best manual"</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PREFIX</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_stem</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">"best_manual"</span> <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"best manual"</span> <span class="k">else</span> <span class="n">name</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Radiometric reference scan and its number of LEDs, as in the manuscript."""</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"best manual"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"best_manual_no_reflector"</span><span class="p">,</span> <span class="mi">8</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PREFIX</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">3_reflector"</span><span class="p">,</span> <span class="mi">16</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stem</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"radiometry"</span><span class="p">,</span> <span class="n">LEDS</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.csv"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_model_field</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">led</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Irradiance of the geometric model in W m-2 on an arbitrary grid (positions and z in cm)."""</span>
+    <span class="n">led</span><span class="o">.</span><span class="n">calc_radiant_intensity</span><span class="p">()</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">calculate_irradiance</span><span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Y</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">float</span><span class="p">(</span><span class="n">z</span><span class="p">),</span> <span class="n">led</span><span class="o">.</span><span class="n">angle_data</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">intensity_data</span><span class="p">)</span>
+               <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e4</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_captured_fraction</span><span class="p">(</span><span class="n">scan_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">led</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Share of the emitted flux that the geometric model puts onto the square covered by a scan."""</span>
+    <span class="n">scan</span> <span class="o">=</span> <span class="n">read_radiometry_file</span><span class="p">(</span><span class="n">scan_file</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">scan</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">side</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">fine</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="n">side</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">FINE_PITCH_CM</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">side</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">FINE_PITCH_CM</span><span class="p">)</span>
+    <span class="n">Xf</span><span class="p">,</span> <span class="n">Yf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">fine</span><span class="p">,</span> <span class="n">fine</span><span class="p">)</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="n">_model_field</span><span class="p">(</span><span class="n">Xf</span><span class="p">,</span> <span class="n">Yf</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">led</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">E</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="n">FINE_PITCH_CM</span> <span class="o">/</span> <span class="mi">100</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="metrics_all_methods">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.uncertainty.metrics_all_methods">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">metrics_all_methods</span><span class="p">(</span><span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    E_mean and H of the geometric model, ray tracing and radiometry for all investigated configurations.</span>
+
+<span class="sd">    The radiometric scans are scaled as in the manuscript: the best manual configuration with its</span>
+<span class="sd">    own reflector-free scan, UV1-UV3 / GRN1-GRN3 with the scan of UV3 / GRN3 with reflectors, each</span>
+<span class="sd">    set to N x P_LED. The geometric model is given for the reflector-free cases only.</span>
+
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :returns: One row per LED type, configuration and reflector setting, including the share of</span>
+<span class="sd">        the rays that reach the detection plane and the resulting relative standard uncertainty of</span>
+<span class="sd">        the ray-tracing mean irradiance, 1 / sqrt(n).</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">led</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">Grid</span><span class="p">(</span><span class="o">**</span><span class="n">GRID_KW</span><span class="p">),</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="n">RESOLUTION</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">configuration_names</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            <span class="n">positions</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">read_configuration</span><span class="p">(</span><span class="n">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">results_path</span><span class="p">))</span>
+            <span class="n">Eg</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+            <span class="n">ref_stem</span><span class="p">,</span> <span class="n">n_ref</span> <span class="o">=</span> <span class="n">_reference</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">cf</span> <span class="o">=</span> <span class="n">calculate_correction_factor</span><span class="p">(</span><span class="n">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ref_stem</span><span class="p">,</span> <span class="n">results_path</span><span class="p">),</span> <span class="n">n_ref</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">reflector</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+                <span class="n">stem</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_stem</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="s1">'reflector'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">reflector</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'no_reflector'</span><span class="si">}</span><span class="s2">"</span>
+                <span class="n">rt</span> <span class="o">=</span> <span class="n">process_raytracing_file</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">.txt"</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"raytracing"</span><span class="p">,</span> <span class="n">led</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="n">rt_E</span><span class="p">,</span> <span class="n">rt_H</span> <span class="o">=</span> <span class="n">calc_metrics</span><span class="p">(</span><span class="n">rt</span><span class="p">[</span><span class="s2">"Irradiance"</span><span class="p">])</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">rad_E</span><span class="p">,</span> <span class="n">rad_H</span> <span class="o">=</span> <span class="n">process_radiometry_file</span><span class="p">(</span><span class="n">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">stem</span><span class="p">,</span> <span class="n">results_path</span><span class="p">),</span> <span class="n">cf</span><span class="p">,</span>
+                                                          <span class="n">PLANE_HEIGHT_CM</span><span class="p">,</span> <span class="n">PLANE_WIDTH_CM</span><span class="p">)</span>
+                <span class="n">share</span> <span class="o">=</span> <span class="n">rt_E</span> <span class="o">*</span> <span class="n">PLANE_AREA_M2</span> <span class="o">/</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span><span class="p">)</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">z_cm</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">n_leds</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">),</span> <span class="n">reflector</span><span class="o">=</span><span class="n">reflector</span><span class="p">,</span>
+                                 <span class="n">model_E</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">if</span> <span class="n">reflector</span> <span class="k">else</span> <span class="n">Eg</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+                                 <span class="n">model_H</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">if</span> <span class="n">reflector</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">Eg</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">Eg</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
+                                 <span class="n">rt_E</span><span class="o">=</span><span class="n">rt_E</span><span class="p">,</span> <span class="n">rt_H</span><span class="o">=</span><span class="n">rt_H</span><span class="p">,</span> <span class="n">rad_E</span><span class="o">=</span><span class="n">rad_E</span><span class="p">,</span> <span class="n">rad_H</span><span class="o">=</span><span class="n">rad_H</span><span class="p">,</span> <span class="n">rad_reference</span><span class="o">=</span><span class="n">ref_stem</span><span class="p">,</span>
+                                 <span class="n">rt_rays_on_plane_share</span><span class="o">=</span><span class="n">share</span><span class="p">,</span>
+                                 <span class="n">rt_E_mean_stat_rel_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">N_RAYS</span> <span class="o">*</span> <span class="n">share</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="reflector_effects">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.uncertainty.reflector_effects">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reflector_effects</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Reflector gains and the deviations between the methods, per configuration.</span>
+
+<span class="sd">    :param metrics: Result of :func:`metrics_all_methods`.</span>
+<span class="sd">    :type metrics: pandas.DataFrame</span>
+<span class="sd">    :returns: Gain of the mean irradiance by the reflectors (radiometry and ray tracing), the</span>
+<span class="sd">        homogeneities with and without reflectors, and the relative (%) and absolute deviations of</span>
+<span class="sd">        the geometric model and of the ray tracing from the radiometry.</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"led"</span><span class="p">,</span> <span class="s2">"config"</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="o">~</span><span class="n">g</span><span class="o">.</span><span class="n">reflector</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">g</span><span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">reflector</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">z_cm</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">z_cm</span><span class="p">,</span>
+                         <span class="n">gain_rad_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">rad_E</span> <span class="o">/</span> <span class="n">a</span><span class="o">.</span><span class="n">rad_E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">gain_rt_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">rt_E</span> <span class="o">/</span> <span class="n">a</span><span class="o">.</span><span class="n">rt_E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                         <span class="n">E_rad_no</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">rad_E</span><span class="p">,</span> <span class="n">E_rad_refl</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">rad_E</span><span class="p">,</span> <span class="n">H_rad_no</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">rad_H</span><span class="p">,</span> <span class="n">H_rad_refl</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">rad_H</span><span class="p">,</span>
+                         <span class="n">H_rt_no</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">rt_H</span><span class="p">,</span> <span class="n">H_rt_refl</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">rt_H</span><span class="p">,</span>
+                         <span class="n">model_vs_rad_E_rel_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">model_E</span> <span class="o">/</span> <span class="n">a</span><span class="o">.</span><span class="n">rad_E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                         <span class="n">model_vs_rad_H_rel_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">model_H</span> <span class="o">/</span> <span class="n">a</span><span class="o">.</span><span class="n">rad_H</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                         <span class="n">model_vs_rad_H_abs</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">model_H</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">rad_H</span><span class="p">,</span>
+                         <span class="n">rt_vs_rad_E_rel_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">rt_E</span> <span class="o">/</span> <span class="n">a</span><span class="o">.</span><span class="n">rad_E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">rt_vs_rad_H_abs</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">rt_H</span> <span class="o">-</span> <span class="n">a</span><span class="o">.</span><span class="n">rad_H</span><span class="p">,</span>
+                         <span class="n">rt_vs_rad_reflector_E_rel_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">rt_E</span> <span class="o">/</span> <span class="n">b</span><span class="o">.</span><span class="n">rad_E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                         <span class="n">rt_vs_rad_reflector_H_abs</span><span class="o">=</span><span class="n">b</span><span class="o">.</span><span class="n">rt_H</span> <span class="o">-</span> <span class="n">b</span><span class="o">.</span><span class="n">rad_H</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="reflector_spread">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.uncertainty.reflector_spread">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reflector_spread</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Spread of the measured mean irradiance and homogeneity between UV1-UV3 / GRN1-GRN3.</span>
+
+<span class="sd">    :param metrics: Result of :func:`metrics_all_methods`.</span>
+<span class="sd">    :type metrics: pandas.DataFrame</span>
+<span class="sd">    :returns: Per LED type and reflector setting: the measured E_mean and H of the three</span>
+<span class="sd">        configurations, the ratio of the highest to the lowest E_mean and the range of H.</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">reflector</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[(</span><span class="n">metrics</span><span class="o">.</span><span class="n">led</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">config</span> <span class="o">!=</span> <span class="s2">"best manual"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">reflector</span> <span class="o">==</span> <span class="n">reflector</span><span class="p">)]</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reflector</span><span class="o">=</span><span class="n">reflector</span><span class="p">,</span>
+                             <span class="n">E_rad</span><span class="o">=</span><span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">rad_E</span><span class="p">),</span> <span class="n">H_rad</span><span class="o">=</span><span class="s2">" / "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">rad_H</span><span class="p">),</span>
+                             <span class="n">E_max_over_min</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">rad_E</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">/</span> <span class="n">g</span><span class="o">.</span><span class="n">rad_E</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">H_range</span><span class="o">=</span><span class="n">g</span><span class="o">.</span><span class="n">rad_H</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">g</span><span class="o">.</span><span class="n">rad_H</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="radiometry_corrections">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.uncertainty.radiometry_corrections">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">radiometry_corrections</span><span class="p">(</span><span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compute Table S4: corrections of the radiometric mean irradiance of the reflector-free configurations.</span>
+
+<span class="sd">    *Detected share.* A reference scan is scaled such that its integral equals N x P_LED, i.e. it is</span>
+<span class="sd">    assumed that the entire emitted flux reaches the scanned area. For the best manual configuration</span>
+<span class="sd">    (its own reflector-free reference, scanned at 14 cm) the share that actually reaches the scanned</span>
+<span class="sd">    square is integrated from the geometric model at the scan distance. UV1-UV3 / GRN1-GRN3 were</span>
+<span class="sd">    scaled with the scan of UV3 / GRN3 with reflectors, which the model does not describe; its share</span>
+<span class="sd">    is the model share of the reflector-free scan of the same configuration at the same distance</span>
+<span class="sd">    (7 cm) times the ratio of the integrated signals of the two scans.</span>
+
+<span class="sd">    *Scan distance.* The scans were recorded 1 cm further from the LEDs than the nominal height. The</span>
+<span class="sd">    change from z to z + 1 cm is taken from the geometric model.</span>
+
+<span class="sd">    The corrected radiometric mean irradiance is the published one times the detected share times</span>
+<span class="sd">    E_model(z) / E_model(z + 1 cm).</span>
+
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :returns: One row per reflector-free configuration.</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    """</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">led</span> <span class="ow">in</span> <span class="n">LEDS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">GeometricModel</span><span class="p">(</span><span class="n">Grid</span><span class="p">(</span><span class="o">**</span><span class="n">GRID_KW</span><span class="p">),</span> <span class="n">led</span><span class="p">,</span> <span class="n">resolution_xy</span><span class="o">=</span><span class="n">RESOLUTION</span><span class="p">)</span>
+        <span class="n">x3</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">PREFIX</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">3"</span>
+        <span class="n">positions3</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_configuration</span><span class="p">(</span><span class="n">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">results_path</span><span class="p">))</span>
+        <span class="n">scan_no_reflector</span> <span class="o">=</span> <span class="n">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x3</span><span class="si">}</span><span class="s2">_no_reflector"</span><span class="p">,</span> <span class="n">results_path</span><span class="p">)</span>
+        <span class="n">scan_reflector</span> <span class="o">=</span> <span class="n">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x3</span><span class="si">}</span><span class="s2">_reflector"</span><span class="p">,</span> <span class="n">results_path</span><span class="p">)</span>
+        <span class="n">model_share_x3</span> <span class="o">=</span> <span class="n">_captured_fraction</span><span class="p">(</span><span class="n">scan_no_reflector</span><span class="p">,</span> <span class="n">positions3</span><span class="p">,</span> <span class="n">REFERENCE_SCAN_DISTANCE_CM</span><span class="p">,</span> <span class="n">led</span><span class="p">)</span>
+        <span class="c1"># integrated signal of the reflector scan relative to the reflector-free scan (both in raw units)</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="mi">16</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span>
+        <span class="n">signal_ratio</span> <span class="o">=</span> <span class="p">(</span><span class="n">calculate_correction_factor</span><span class="p">(</span><span class="n">scan_no_reflector</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
+                        <span class="o">/</span> <span class="n">calculate_correction_factor</span><span class="p">(</span><span class="n">scan_reflector</span><span class="p">,</span> <span class="n">expected</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">configuration_names</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            <span class="n">positions</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">read_configuration</span><span class="p">(</span><span class="n">configuration_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">results_path</span><span class="p">))</span>
+            <span class="n">ref_stem</span><span class="p">,</span> <span class="n">n_ref</span> <span class="o">=</span> <span class="n">_reference</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">"best manual"</span><span class="p">:</span>
+                <span class="n">share</span> <span class="o">=</span> <span class="n">_captured_fraction</span><span class="p">(</span><span class="n">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ref_stem</span><span class="p">,</span> <span class="n">results_path</span><span class="p">),</span> <span class="n">positions</span><span class="p">,</span>
+                                           <span class="n">z</span> <span class="o">+</span> <span class="n">SCAN_OFFSET_CM</span><span class="p">,</span> <span class="n">led</span><span class="p">)</span>
+                <span class="n">model_share</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="n">share</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">share</span><span class="p">,</span> <span class="n">model_share</span><span class="p">,</span> <span class="n">ratio</span> <span class="o">=</span> <span class="n">model_share_x3</span> <span class="o">*</span> <span class="n">signal_ratio</span><span class="p">,</span> <span class="n">model_share_x3</span><span class="p">,</span> <span class="n">signal_ratio</span>
+            <span class="n">cf</span> <span class="o">=</span> <span class="n">calculate_correction_factor</span><span class="p">(</span><span class="n">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ref_stem</span><span class="p">,</span> <span class="n">results_path</span><span class="p">),</span> <span class="n">n_ref</span> <span class="o">*</span> <span class="n">led</span><span class="o">.</span><span class="n">total_power</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">rad_E</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">process_radiometry_file</span><span class="p">(</span><span class="n">_radiometry_file</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_stem</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="si">}</span><span class="s2">_no_reflector"</span><span class="p">,</span> <span class="n">results_path</span><span class="p">),</span>
+                                                  <span class="n">cf</span><span class="p">,</span> <span class="n">PLANE_HEIGHT_CM</span><span class="p">,</span> <span class="n">PLANE_WIDTH_CM</span><span class="p">)</span>
+            <span class="n">E0</span><span class="p">,</span> <span class="n">E1</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">z</span><span class="p">),</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">z</span> <span class="o">+</span> <span class="n">SCAN_OFFSET_CM</span><span class="p">)</span>
+            <span class="n">m0</span><span class="p">,</span> <span class="n">m1</span> <span class="o">=</span> <span class="n">E0</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">E1</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">distance_factor</span> <span class="o">=</span> <span class="n">m0</span> <span class="o">/</span> <span class="n">m1</span>
+            <span class="n">rad_E_corrected</span> <span class="o">=</span> <span class="n">rad_E</span> <span class="o">*</span> <span class="n">share</span> <span class="o">*</span> <span class="n">distance_factor</span>
+            <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">z_cm</span><span class="o">=</span><span class="n">z</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">ref_stem</span><span class="p">,</span>
+                             <span class="n">model_share_of_reference_scan</span><span class="o">=</span><span class="n">model_share</span><span class="p">,</span> <span class="n">signal_ratio_reflector_to_no_reflector</span><span class="o">=</span><span class="n">ratio</span><span class="p">,</span>
+                             <span class="n">detected_share</span><span class="o">=</span><span class="n">share</span><span class="p">,</span> <span class="n">implied_overestimate_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">share</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                             <span class="n">dE_mean_scan_distance_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">m1</span> <span class="o">/</span> <span class="n">m0</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                             <span class="n">dH_scan_distance</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">E1</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">m1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">E0</span><span class="o">.</span><span class="n">std</span><span class="p">()</span> <span class="o">/</span> <span class="n">m0</span><span class="p">),</span>
+                             <span class="n">distance_factor</span><span class="o">=</span><span class="n">distance_factor</span><span class="p">,</span> <span class="n">net_factor</span><span class="o">=</span><span class="n">share</span> <span class="o">*</span> <span class="n">distance_factor</span><span class="p">,</span>
+                             <span class="n">rad_E_published</span><span class="o">=</span><span class="n">rad_E</span><span class="p">,</span> <span class="n">rad_E_corrected</span><span class="o">=</span><span class="n">rad_E_corrected</span><span class="p">,</span> <span class="n">model_E</span><span class="o">=</span><span class="n">m0</span><span class="p">,</span>
+                             <span class="n">model_vs_rad_published_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">m0</span> <span class="o">/</span> <span class="n">rad_E</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                             <span class="n">model_vs_rad_corrected_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">m0</span> <span class="o">/</span> <span class="n">rad_E_corrected</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ray_tracing_noise">
+<a class="viewcode-back" href="../../api/analysis.html#analysis.uncertainty.ray_tracing_noise">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ray_tracing_noise</span><span class="p">(</span><span class="n">metrics</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">results_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"results/"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Effect of the Monte-Carlo noise of the ray tracing on the homogeneity (Supporting Information S10).</span>
+
+<span class="sd">    The ray independence study (Supporting Information S3, Figure S5) gives the standard deviation</span>
+<span class="sd">    sigma of the irradiance data set of the best manual configuration for 2e6 ... 1.2e8 rays. sigma</span>
+<span class="sd">    at 1.2e8 rays serves as a rough estimate of the noise-free standard deviation; combined with the</span>
+<span class="sd">    published ray-tracing mean irradiance it gives the homogeneity without most of the noise. The</span>
+<span class="sd">    difference to the published ray-tracing homogeneity (1.6e7 rays) is a lower estimate of the</span>
+<span class="sd">    effect of the noise.</span>
+
+<span class="sd">    :param metrics: Result of :func:`metrics_all_methods`.</span>
+<span class="sd">    :type metrics: pandas.DataFrame</span>
+<span class="sd">    :param results_path: Path of the results directory.</span>
+<span class="sd">    :type results_path: str, optional</span>
+<span class="sd">    :returns: One row per LED type and reflector setting.</span>
+<span class="sd">    :rtype: pandas.DataFrame</span>
+<span class="sd">    """</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results_path</span><span class="p">,</span> <span class="s2">"raytracing"</span><span class="p">,</span> <span class="s2">"ray_independence_test.xlsx"</span><span class="p">),</span>
+                        <span class="n">sheet_name</span><span class="o">=</span><span class="s2">"Planilha1"</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">reflector</span><span class="p">),</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="n">RAY_INDEPENDENCE_BLOCKS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">rays</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">block</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">block</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="n">s_lo</span><span class="p">,</span> <span class="n">s_hi</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sigma</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">rays</span> <span class="o">-</span> <span class="n">n</span><span class="p">))])</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">RAYS_COMPARED</span><span class="p">)</span>
+        <span class="n">bm</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[(</span><span class="n">metrics</span><span class="o">.</span><span class="n">led</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">config</span> <span class="o">==</span> <span class="s2">"best manual"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">reflector</span> <span class="o">==</span> <span class="n">reflector</span><span class="p">)]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">h_hi</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">s_hi</span> <span class="o">/</span> <span class="n">bm</span><span class="o">.</span><span class="n">rt_E</span>
+        <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">led</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">reflector</span><span class="o">=</span><span class="n">reflector</span><span class="p">,</span> <span class="n">sigma_6_4e7</span><span class="o">=</span><span class="n">s_lo</span><span class="p">,</span> <span class="n">sigma_1_2e8</span><span class="o">=</span><span class="n">s_hi</span><span class="p">,</span>
+                         <span class="n">sigma_change_pct</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">s_hi</span> <span class="o">/</span> <span class="n">s_lo</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">rt_E_published</span><span class="o">=</span><span class="n">bm</span><span class="o">.</span><span class="n">rt_E</span><span class="p">,</span> <span class="n">rt_H_published</span><span class="o">=</span><span class="n">bm</span><span class="o">.</span><span class="n">rt_H</span><span class="p">,</span>
+                         <span class="n">H_from_sigma_1_2e8</span><span class="o">=</span><span class="n">h_hi</span><span class="p">,</span> <span class="n">dH_noise</span><span class="o">=</span><span class="n">h_hi</span> <span class="o">-</span> <span class="n">bm</span><span class="o">.</span><span class="n">rt_H</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Benedikt Wiedemann, Daniel Kowalczyk et al..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
